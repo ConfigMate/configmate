@@ -1,1 +1,1 @@
-# configmate
+# ConfigMate
