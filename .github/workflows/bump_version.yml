@@ -27,7 +27,7 @@ jobs:
           echo "$GITHUB_CONTEXT"
 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2          
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -38,7 +38,7 @@ jobs:
         run: |
           pip install bump2version
           pip install pipenv
-          pipenv --where --venv --py --envs --support install --three --dev
+          pipenv --where --venv --py --envs --support install --dev
 
       - name: Stage changes
         run: |
@@ -47,10 +47,6 @@ jobs:
           export COMMIT_AUTHOR_EMAIL=$(git log --format=%ae -n1)
           git config --global user.name "$COMMIT_AUTHOR"
           git config --global user.email "$COMMIT_AUTHOR_EMAIL"
-
-      - name: Save current version
-        run: |
-          echo CURR_VERSION=$(grep '^VERSION :=' Makefile | cut -d' ' -f3) >> $GITHUB_ENV
 
       # Bump version depending on pull request title convention
       - name: Bump patch version
@@ -72,7 +68,6 @@ jobs:
 
       # amend last pr commit with  and push
       - name: Amend PR commit with bumped version
-        id: pushtag
         run: |
           if [[ $VERSION != $CURR_VERSION ]]; then
               git add .bumpversion.cfg

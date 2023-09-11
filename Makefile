@@ -1,7 +1,7 @@
 # ConfigMate
 
 ## Do not modify; this is maintained by a Github Action. 
-VERSION := 0.0.0
+VERSION := 0.0.0-beta
 
 GOOS := linux
 ifeq ($(OS), Windows_NT)
