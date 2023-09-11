@@ -1,6 +1,6 @@
 # ConfigMate - Your Configs' Best Friend 🤝
 
-ConfigMate is a tool designed to validate configuration files against a predefined set of rules. The goal is to reduce errors and streamline the validation process, thereby alleviating the mental burden on developers and improving operational efficiency for businesses.
+ConfigMate is a tool designed to validate configuration files against custom sets of rules. The goal is to reduce errors and streamline the validation process, thereby alleviating the mental burden on developers and improving operational efficiency for businesses.
 
 
 ## Table of Contents
