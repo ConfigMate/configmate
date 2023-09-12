@@ -1,7 +1,13 @@
-### ConfigMate
+# ConfigMate
 
+## Do not modify; this is maintained by a Github Action. 
 VERSION := 0.0.0
+
 GOOS := linux
+ifeq ($(OS), Windows_NT)
+	GOOS := windows
+	EXT := ".exe"
+endif
 
 GO_PKG := github.com/ConfigMate/configmate
 GO_DEBUG_FLAGS := -gcflags="all=-N -l"
@@ -14,8 +20,8 @@ bin/:
 	mkdir bin/
 
 configm: bin/
-	go build $(GO_FLAGS) -o bin/configm $(GO_PKG)
+	go build $(GO_FLAGS) -o bin/configm$(EXT) $(GO_PKG)
 
 configm-debug: bin/
-	go build $(GO_FLAGS) $(GO_DEBUG_FLAGS) -o bin/configm $(GO_PKG)
+	go build $(GO_FLAGS) $(GO_DEBUG_FLAGS) -o "bin/configm$(EXT)" $(GO_PKG)
 
