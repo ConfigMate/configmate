@@ -78,10 +78,11 @@ jobs:
         run: |
           git add .bumpversion.cfg
           git commit --amend --no-edit
-          git tag -a "v$VERSION" -m "$(git log --format=%B -n1)"
+          git tag -a "v$(grep 'current_version =' .bumpversion.cfg | sed 's/^[[:space:]]*current_version = //')" -m "$(git log --format=%B -n1)"
 
       - name: Push changes
         if: ${{ env.BUMPED == 'true' }}
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.ACCESS_TOKEN }}
+          force: true
