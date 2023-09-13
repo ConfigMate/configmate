@@ -1,0 +1,21 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - master
+    # [default types] + [edited, review_requested]
+    types: [opened, synchronize, reopened, edited, review_requested]
+
+jobs:
+  naming:
+    name: PR Naming Convention Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: deepakputhraya/action-pr-title@master
+        with:
+          regex: '([a-z]+)\/(.+)'
+          allowed_prefixes: 'release,feature,patch,major,docs,devops'
+          prefix_case_sensitive: true
+          min_length: 5
+          max_length: 180
