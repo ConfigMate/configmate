@@ -1,7 +1,7 @@
 # ConfigMate
 
 ## Do not modify; this is maintained by a Github Action. 
-VERSION := 0.0.0-beta
+VERSION := $(shell grep 'current_version =' .bumpversion.cfg | sed 's/^[[:space:]]*current_version = //')
 
 GOOS := linux
 ifeq ($(OS), Windows_NT)

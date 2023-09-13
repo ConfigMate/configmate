@@ -1,36 +1,38 @@
-name: Bump Version
+name: Bump version
 
 on:
   pull_request:
     branches:
       - master
-      - development
     types:
       - closed
     paths-ignore:
       - '.bumpversion.cfg'
 
 env:
-  BUMPVERSION_FLAGS: "--verbose --allow-dirty"
+  BUMPVERSION_FLAGS: "--verbose --allow-dirty --tag"
 
 jobs:
   bumpversion:
     if: github.event.pull_request.merged
     name: Bump version
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Log GitHub Context
+      - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: |
           echo "$GITHUB_CONTEXT"
-
+      
       - name: Checkout repository
-        uses: actions/checkout@v2          
+        uses: actions/checkout@v3.3.0
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.ACCESS_TOKEN }}
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4.5.0
         with:
             python-version: '3.x'
 
@@ -42,38 +44,44 @@ jobs:
 
       - name: Stage changes
         run: |
-          export COMMIT_OLD_MSG=$(git log --format=%B -n1)
-          export COMMIT_AUTHOR=$(git log --format=%an -n1)
-          export COMMIT_AUTHOR_EMAIL=$(git log --format=%ae -n1)
-          git config --global user.name "$COMMIT_AUTHOR"
-          git config --global user.email "$COMMIT_AUTHOR_EMAIL"
-
-      # Bump version depending on pull request title convention
+          git config --global user.name "$(git log --format=%an -n1)"
+          git config --global user.email "$(git log --format=%ae -n1)"
+      
+      # bump version depending on pull request title convention
       - name: Bump patch version
         if: startsWith(github.event.pull_request.title, 'patch')
         run: |
           pipenv run bump2version patch ${{ env.BUMPVERSION_FLAGS }}
+          echo BUMPED=true >> $GITHUB_ENV
+
       - name: Bump minor version
         if: startsWith(github.event.pull_request.title, 'feature')
         run: |
           pipenv run bump2version minor ${{ env.BUMPVERSION_FLAGS }}
+          echo BUMPED=true >> $GITHUB_ENV
+
       - name: Bump major version
         if: startsWith(github.event.pull_request.title, 'major')
         run: |
           pipenv run bump2version major ${{ env.BUMPVERSION_FLAGS }}
+          echo BUMPED=true >> $GITHUB_ENV
+
       - name: Bump release
         if: startsWith(github.event.pull_request.title, 'release')
         run: |
           pipenv run bump2version release ${{ env.BUMPVERSION_FLAGS }}
+          echo BUMPED=true >> $GITHUB_ENV
 
       # amend last pr commit with  and push
       - name: Amend PR commit with bumped version
+        if: ${{ env.BUMPED == 'true' }}
         run: |
-          if [[ $VERSION != $CURR_VERSION ]]; then
-              git add .bumpversion.cfg
-              git add Makefile
-              git commit --amend -m "${{ github.event.pull_request.title }}"
-              git push --force
-              git tag -a "v$VERSION" -m "v$CURR_VERSION -> v$VERSION : ${{ github.event.pull_request.title }}"
-              git push --tag
-          fi
+          git add .bumpversion.cfg
+          git commit --amend --no-edit
+          git tag -a "v$VERSION" -m "$(git log --format=%B -n1)"
+
+      - name: Push changes
+        if: ${{ env.BUMPED == 'true' }}
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.ACCESS_TOKEN }}
