@@ -5,10 +5,11 @@ ConfigMate is a tool designed to validate configuration files against custom set
 
 ## Table of Contents
 
-- 🌟 [Features](#features)
-- 👏 [Contributors](#contributors)
-- :memo: [License](#license)
-
+- [ConfigMate - Your Configs' Best Friend 🤝](#configmate---your-configs-best-friend-)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Contributors](#contributors)
+  - [License](#license)
 
 ## Features
 - **Custom Rule-Based Validation**: Define your own custom rules to validate various configuration fields.
