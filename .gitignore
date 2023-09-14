@@ -15,3 +15,10 @@ vendor/
 
 # Othes
 .secrets
+
+# Ignore all mock files
+*_mock.go
+*_mocks.go
+
+# Ignore all mocks directories
+test/mocks/

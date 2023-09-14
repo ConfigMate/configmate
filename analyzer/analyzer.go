@@ -1,4 +1,4 @@
-package anaylzer
+package analyzer
 
 type Analyzer interface{}
 
