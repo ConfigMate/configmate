@@ -25,3 +25,13 @@ configm: bin/
 configm-debug: bin/
 	go build $(GO_FLAGS) $(GO_DEBUG_FLAGS) -o "bin/configm$(EXT)" $(GO_PKG)
 
+## Testing
+test: mocks
+	go test ./...
+
+mocks:
+	chmod +x ./scripts/generate_mocks.sh
+	./scripts/generate_mocks.sh
+
+clean_mocks:
+	find ./ -type d -name 'mocks' -exec rm -rf {} +
