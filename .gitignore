@@ -14,4 +14,4 @@ bin/
 vendor/
 
 # Othes
-.secrets/
+.secrets
