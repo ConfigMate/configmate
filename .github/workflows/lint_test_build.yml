@@ -1,0 +1,81 @@
+name: Lint Test and Build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.0.0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4.1.0
+        with:
+          go-version: 1.19
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3.7.0
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Credentials
+        uses: de-vri-es/setup-git-credentials@v2
+        with:
+          credentials: ${{secrets.ACCESS_TOKEN}}
+
+      - name: Checkout code
+        uses: actions/checkout@v4.0.0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4.1.0
+        with:
+          go-version: 1.19
+
+      - name: Test
+        run: |
+          go test ./... -coverprofile coverage.out -covermode count
+          go tool cover -func coverage.out
+
+      - name: Test Coverage
+        env:
+            TESTCOVERAGE_THRESHOLD: 90
+        run: |
+          echo "Quality Gate: checking test coverage is above threshold ..."
+          echo "Threshold             : $TESTCOVERAGE_THRESHOLD %"
+          totalCoverage=`go tool cover -func=coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
+          echo "Current test coverage : $totalCoverage %"
+          if (( $(echo "$totalCoverage $TESTCOVERAGE_THRESHOLD" | awk '{print ($1 > $2)}') )); then
+              echo "OK"
+          else
+              echo "Current test coverage is below threshold. Please add more unit tests or adjust threshold to a lower value."
+              echo "Failed"
+              exit 1
+          fi
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.0.0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4.1.0
+        with:
+          go-version: 1.19
+
+      - name: Build
+        run: go build ./...
