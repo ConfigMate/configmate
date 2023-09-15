@@ -13,6 +13,17 @@ GO_PKG := github.com/ConfigMate/configmate
 GO_DEBUG_FLAGS := -gcflags="all=-N -l"
 GO_FLAGS = -ldflags '-X "main.Version=$(VERSION)" -X "main.BuildDate=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")" -X "main.GitHash=$(shell git rev-parse HEAD)"'
 
+
+# Setup the ANTLR parser
+ANTLR4_VER := 4.13.1
+ANTLR4_JAR := ./lib/antlr-$(ANTLR4_VER)-complete.jar
+
+generate-parser:
+	find grammar -name '*.g4' -exec sh -c 'java -Xmx500M -cp $(ANTLR4_JAR):$(CLASSPATH) org.antlr.v4.Tool -Dlanguage=Go -o tmp "{}"' \;
+
+clean-parser:
+	rm -rf tmp/
+
 clean:
 	rm -rf bin/
 
