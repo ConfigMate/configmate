@@ -29,7 +29,7 @@ generate-parser: ./lib/antlr-*-complete.jar
 	find $(GRAMMAR_DIR) -name '*.g4' -exec sh -c 'java -Xmx500M -cp $(ANTLR4_JAR):$(CLASSPATH) org.antlr.v4.Tool -Dlanguage=Go -o $(ANTLR4_OUTPUT_DIR) "{}"' \;
 
 clean-parser:
-	rm -rf lib/antlr-4.13.1-complete.jar
+	rm -rf lib/
 	rm -rf gen/
 
 clean:
