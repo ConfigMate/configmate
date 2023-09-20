@@ -15,14 +15,22 @@ GO_FLAGS = -ldflags '-X "main.Version=$(VERSION)" -X "main.BuildDate=$(shell dat
 
 
 # Setup the ANTLR parser
-ANTLR4_VER := 4.13.1
-ANTLR4_JAR := ./lib/antlr-$(ANTLR4_VER)-complete.jar
+ANTLR_VERSION := 4.13.1
+GRAMMAR_DIR := ./grammar
+ANTLR4_OUTPUT_DIR := ./gen
+ANTLR4_JAR := ./lib/antlr-$(ANTLR_VERSION)-complete.jar
+ANTLR4_JAR_OUTPUT_DIR := ./lib
 
-generate-parser:
-	find grammar -name '*.g4' -exec sh -c 'java -Xmx500M -cp $(ANTLR4_JAR):$(CLASSPATH) org.antlr.v4.Tool -Dlanguage=Go -o tmp "{}"' \;
+./lib/antlr-*-complete.jar:
+	chmod +x ./scripts/download_antlr_jar.sh
+	./scripts/download_antlr_jar.sh $(ANTLR_VERSION) $(ANTLR4_JAR) $(ANTLR4_JAR_OUTPUT_DIR)
+
+generate-parser: ./lib/antlr-*-complete.jar
+	find $(GRAMMAR_DIR) -name '*.g4' -exec sh -c 'java -Xmx500M -cp $(ANTLR4_JAR):$(CLASSPATH) org.antlr.v4.Tool -Dlanguage=Go -o $(ANTLR4_OUTPUT_DIR) "{}"' \;
 
 clean-parser:
-	rm -rf tmp/
+	rm -rf lib/antlr-4.13.1-complete.jar
+	rm -rf gen/
 
 clean:
 	rm -rf bin/
