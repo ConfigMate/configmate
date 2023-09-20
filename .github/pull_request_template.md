@@ -1,29 +1,12 @@
-## Description :memo:
+### Instructions
+1. Make sure your PR is named according to the [Contributing Instructions](https://github.com/ConfigMate/configmate/blob/master/CONTRIBUTING.md).
+2. Link PR to the corresponding Issue.
+3. Fill out: Reviewers, Assignees, Labels, and Project.
+4. Fill out the sections below.
+5. Delete these instructions.
 
-Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change.
+## Description
+<What was done? How was the corresponding issue solved?>
 
-Fixes #(Issue Number)
-
-## Type of change :hammer_and_wrench:
-
-Please tick the relevant options:
-
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Documentation Update (if none of the other choices apply)
-
-## Checklist :white_check_mark:
-
-- [ ] I have read the [CONTRIBUTING](https://github.com/ConfigMate/configmate/blob/master/CONTRIBUTING.md) guidelines.
-- [ ] My code follows the code style of this project.
-- [ ] I have performed a self-review of my own code.
-- [ ] I have commented my code, particularly in hard-to-understand areas.
-- [ ] I have made corresponding changes to the documentation.
-- [ ] My changes generate no new warnings.
-- [ ] I have added tests that prove my fix is effective or that my feature works.
-- [ ] New and existing unit tests pass locally with my changes.
-
-## Additional Information :books:
-
-Any additional information, configuration or data that might be necessary to know for this pull request.
+## References
+<Include URLs from where you got any information that helped you do this work?>
