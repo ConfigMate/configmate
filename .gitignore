@@ -28,7 +28,10 @@ vendor/
 test/mocks/
 
 # Output from ANTLR parser generator
-temp/
+gen/
+
+# ANTLR Jar file
+lib/
 
 # Generater code by ANTLR parser generator
 .antlr/
