@@ -1,7 +1,7 @@
 package analyzer
 
-type Analyzer interface{}
+type Analyzer interface {
+	Analyze(rb Rulebook) (res Result, err error)
+}
 
-type Rule interface{}
-
-type Check interface{}
+type Result struct{}
