@@ -13,6 +13,27 @@ GO_PKG := github.com/ConfigMate/configmate
 GO_DEBUG_FLAGS := -gcflags="all=-N -l"
 GO_FLAGS = -ldflags '-X "main.Version=$(VERSION)" -X "main.BuildDate=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")" -X "main.GitHash=$(shell git rev-parse HEAD)"'
 
+
+# Setup the ANTLR parser
+ANTLR_VERSION := 4.13.1
+ANTLR4_JAR_OUTPUT_DIR := ./lib
+
+./lib/antlr-*-complete.jar:
+	chmod +x ./scripts/download_antlr_jar.sh
+	./scripts/download_antlr_jar.sh $(ANTLR_VERSION) $(ANTLR4_JAR_OUTPUT_DIR)
+
+# Generate the parsers
+GRAMMAR_DIR := ./parsers/grammars
+ANTLR4_OUTPUT_DIR := ./parsers/gen
+
+generate-parsers: ./lib/antlr-*-complete.jar
+	export CLASSPATH=".:$(ANTLR4_JAR_OUTPUT_DIR)/antlr-$(ANTLR_VERSION)-complete.jar:$$CLASSPATH"
+	find $(GRAMMAR_DIR) -name '*.g4' -exec sh -c 'file="{}"; filename=$$(basename "$$file"); package="parser_$${filename%.g4*}"; java -jar $(ANTLR4_JAR_OUTPUT_DIR)/antlr-$(ANTLR_VERSION)-complete.jar -Dlanguage=Go -package "$$package" -o $(ANTLR4_OUTPUT_DIR)/$$package "$$file"' \;
+
+clean-parsers:
+	rm -rf lib/
+	rm -rf parsers/gen/
+
 clean:
 	rm -rf bin/
 

@@ -1,6 +1,10 @@
 # If you prefer the allow list template instead of the deny list, see community template:
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
 #
+
+# Mac OS X files
+.DS_Store
+
 # Binaries
 bin/
 
@@ -22,3 +26,12 @@ vendor/
 
 # Ignore all mocks directories
 test/mocks/
+
+# Output from ANTLR parser generator
+parsers/gen/
+
+# ANTLR Jar file
+lib/
+
+# Generater code by ANTLR parser generator
+.antlr/
