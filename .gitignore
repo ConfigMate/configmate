@@ -28,7 +28,7 @@ vendor/
 test/mocks/
 
 # Output from ANTLR parser generator
-./parsers/gen/
+parsers/gen/
 
 # ANTLR Jar file
 lib/
