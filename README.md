@@ -13,13 +13,10 @@ ConfigMate is a tool designed to validate configuration files against custom set
 
 ## Features
 - **Custom Rule-Based Validation**: Define your own custom rules to validate various configuration fields.
-- **Pre-defined Rulesets**: Comes with a set of commonly used rules to get you started.
 - **Multi-file & Multi-field Checks**: Ability to apply rules that span multiple configuration files and fields.
 - **CLI Interface**: Easily run configuration checks directly from your command line.
 - **VS Code Extension**: Get in-editor validation and error highlighting within Visual Studio Code.
 - **Meaningful Error Messages**: Receive detailed error descriptions and exactly where the issue occurs (file, line number, and column).
-- **ANTLR-Based Custom Parsers**: Utilizes ANTLR for specialized parsing to validate files beyond simple syntax checks.
-
 
 ## Contributors
 Thanks go to these wonderful people
