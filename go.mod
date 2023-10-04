@@ -2,7 +2,10 @@ module github.com/ConfigMate/configmate
 
 go 1.19
 
-require github.com/antlr4-go/antlr/v4 v4.13.0
+require (
+	github.com/antlr4-go/antlr/v4 v4.13.0
+	github.com/pkg/errors v0.9.1
+)
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect

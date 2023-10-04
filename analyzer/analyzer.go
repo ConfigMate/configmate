@@ -16,3 +16,23 @@ type TokenLocation struct {
 	Column int    `json:"column"`
 	Length int    `json:"length"`
 }
+
+type AnalyzerImpl struct {
+}
+
+func (a *AnalyzerImpl) Analyze(rb Rulebook) (res []Result, err error) {
+	return []Result{
+		{
+			Passed:        true,
+			ResultComment: "This is a test",
+			TokenList: []TokenLocation{
+				{
+					File:   "test.toml",
+					Line:   1,
+					Column: 1,
+					Length: 1,
+				},
+			},
+		},
+	}, nil
+}

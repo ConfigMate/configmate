@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ConfigMate/configmate/analyzer"
+	"github.com/ConfigMate/configmate/server"
 	"github.com/urfave/cli/v2"
 )
 
@@ -77,7 +79,15 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					// Implement serve command
+					// Get analyzer
+					analyzer := &analyzer.AnalyzerImpl{}
+
+					// Create server
+					srv := server.CreateServer(c.Int("port"), analyzer)
+
+					// Start server
+					srv.Serve()
+
 					return nil
 				},
 			},
