@@ -37,7 +37,7 @@ func CreateServer(port int, analyzer analyzer.Analyzer) *Server {
 	return server
 }
 
-func (server *Server) Serve() {
+func (server *Server) Serve() error {
 	fmt.Printf("Starting server on :%d\n", server.port)
 
 	stop := make(chan os.Signal, 1)
@@ -56,9 +56,13 @@ func (server *Server) Serve() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	server.srv.Shutdown(ctx)
+	if err := server.srv.Shutdown(ctx); err != nil {
+		fmt.Printf("Server shutdown failed: %s\n", err.Error())
+		return err
+	}
 
 	fmt.Println("Server gracefully stopped!")
+	return nil
 }
 
 // checkHandler returns a handler for the check endpoint.
@@ -80,6 +84,9 @@ func (server *Server) checkHandler() http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(result)
+		if err := json.NewEncoder(w).Encode(result); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }

@@ -86,7 +86,9 @@ func main() {
 					srv := server.CreateServer(c.Int("port"), analyzer)
 
 					// Start server
-					srv.Serve()
+					if err := srv.Serve(); err != nil {
+						return err
+					}
 
 					return nil
 				},
