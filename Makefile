@@ -40,10 +40,10 @@ clean:
 bin/:
 	mkdir bin/
 
-configm: bin/
+configm: generate-parsers bin/
 	go build $(GO_FLAGS) -o bin/configm$(EXT) $(GO_PKG)
 
-configm-debug: bin/
+configm-debug: generate-parsers bin/
 	go build $(GO_FLAGS) $(GO_DEBUG_FLAGS) -o "bin/configm$(EXT)" $(GO_PKG)
 
 ## Testing
