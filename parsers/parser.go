@@ -1,3 +1,5 @@
 package parsers
 
-type Parser interface{}
+type Parser interface {
+	Parse(filename string) (ConfigFile, error)
+}
