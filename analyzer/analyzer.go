@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/ConfigMate/configmate/parsers"
 )
@@ -26,11 +27,6 @@ type TokenLocation struct {
 	Length int    `json:"length"`
 }
 
-type Check interface {
-	Check(values []interface{}) (passed bool, comment string, err error)
-	// TODO: move to different file and define proper types
-}
-
 type AnalyzerImpl struct {
 	checks map[string]Check // map of available checks
 }
@@ -38,43 +34,240 @@ type AnalyzerImpl struct {
 func (a *AnalyzerImpl) AnalyzeConfigFiles(files map[string]parsers.ConfigFile, rules []Rule) (res []Result, err error) {
 	// Check rules
 	for _, rule := range rules {
-		args := make([]interface{}, 0)
-		allValueTokenLocations := make([]TokenLocation, 0)
+		errors := false                               // true if there were errors in rule arguments
+		args := make([]interface{}, 0)                // list of arguments for the check
+		allTokenLocations := make([]TokenLocation, 0) // list of token locations for the check
+
 		// Get values for arguments
 		for _, arg := range rule.Args {
-			if isFile, alias, key := decodeFileValue(arg); isFile {
-				// Get value from config file
-				value, err := getNodeFromConfigFileNode(files[alias], key)
-				if err != nil {
-					return nil, fmt.Errorf("failed to get value from config file %s: %s", alias, err.Error())
-				}
-				allValueTokenLocations = append(allValueTokenLocations, TokenLocation{
-					File:   alias,
-					Line:   value.ValueLocation.Line,
-					Column: value.ValueLocation.Column,
-					Length: value.ValueLocation.Length,
-				})
-				args = append(args, value.Value)
-			} else if isLiteral, value := decodeLiteralValue(arg); isLiteral {
-				args = append(args, value)
+			// Validate argument
+			if err := CheckArg(arg).Valid(); err != nil {
+				return nil, fmt.Errorf("failed to validate argument %s: %s", arg, err.Error())
+			}
 
-			} else {
-				return nil, fmt.Errorf("failed to decode argument %s", arg)
+			// Get argument source, type and value
+			argSource := CheckArg(arg).Source()
+			argType := CheckArg(arg).Type()
+			argValue := CheckArg(arg).Value()
+
+			switch argSource {
+			case File:
+				// Get file alias and path
+				fileAlias, path := decodeFileValue(argValue)
+
+				// Get value
+				if value, err := getNodeFromConfigFileNode(files[fileAlias], path); err != nil {
+					res = append(res, Result{
+						Passed:        false,
+						ResultComment: fmt.Sprintf("Value at %s in file %s could not be found: %s", path, fileAlias, err.Error()),
+						TokenList:     []TokenLocation{{File: fileAlias}},
+					})
+					errors = true
+				} else {
+					switch argType {
+					case Int:
+						// Verify value is an integer
+						if value.Type != parsers.Int {
+							res = append(res, Result{
+								Passed:        false,
+								ResultComment: fmt.Sprintf("Value at %s in file %s must be an int, got %s", path, fileAlias, value.Type.String()),
+								TokenList: []TokenLocation{
+									{
+										File:   fileAlias,
+										Line:   value.ValueLocation.Line,
+										Column: value.ValueLocation.Column,
+										Length: value.ValueLocation.Length,
+									},
+								},
+							})
+							errors = true
+						} else if _, ok := value.Value.(int); !ok {
+							res = append(res, Result{
+								Passed:        false,
+								ResultComment: fmt.Sprintf("Value at %s in file %s must be an int, got %s", path, fileAlias, value.Type.String()),
+								TokenList: []TokenLocation{
+									{
+										File:   fileAlias,
+										Line:   value.ValueLocation.Line,
+										Column: value.ValueLocation.Column,
+										Length: value.ValueLocation.Length,
+									},
+								},
+							})
+							errors = true
+						}
+					case Float:
+						// Verify value is a float
+						if value.Type != parsers.Float {
+							res = append(res, Result{
+								Passed:        false,
+								ResultComment: fmt.Sprintf("Value at %s in file %s must be a float, got %s", path, fileAlias, value.Type.String()),
+								TokenList: []TokenLocation{
+									{
+										File:   fileAlias,
+										Line:   value.ValueLocation.Line,
+										Column: value.ValueLocation.Column,
+										Length: value.ValueLocation.Length,
+									},
+								},
+							})
+							errors = true
+						} else if _, ok := value.Value.(float64); !ok {
+							res = append(res, Result{
+								Passed:        false,
+								ResultComment: fmt.Sprintf("Value at %s in file %s must be a float, got %s", path, fileAlias, value.Type.String()),
+								TokenList: []TokenLocation{
+									{
+										File:   fileAlias,
+										Line:   value.ValueLocation.Line,
+										Column: value.ValueLocation.Column,
+										Length: value.ValueLocation.Length,
+									},
+								},
+							})
+							errors = true
+						}
+					case Bool:
+						// Verify value is a bool
+						if value.Type != parsers.Bool {
+							res = append(res, Result{
+								Passed:        false,
+								ResultComment: fmt.Sprintf("Value at %s in file %s must be a bool, got %s", path, fileAlias, value.Type.String()),
+								TokenList: []TokenLocation{
+									{
+										File:   fileAlias,
+										Line:   value.ValueLocation.Line,
+										Column: value.ValueLocation.Column,
+										Length: value.ValueLocation.Length,
+									},
+								},
+							})
+							errors = true
+						} else if _, ok := value.Value.(bool); !ok {
+							res = append(res, Result{
+								Passed:        false,
+								ResultComment: fmt.Sprintf("Value at %s in file %s must be a bool, got %s", path, fileAlias, value.Type.String()),
+								TokenList: []TokenLocation{
+									{
+										File:   fileAlias,
+										Line:   value.ValueLocation.Line,
+										Column: value.ValueLocation.Column,
+										Length: value.ValueLocation.Length,
+									},
+								},
+							})
+							errors = true
+						}
+					case String:
+						// Verify value is a string
+						if value.Type != parsers.String {
+							res = append(res, Result{
+								Passed:        false,
+								ResultComment: fmt.Sprintf("Value at %s in file %s must be a string, got %s", path, fileAlias, value.Type.String()),
+								TokenList: []TokenLocation{
+									{
+										File:   fileAlias,
+										Line:   value.ValueLocation.Line,
+										Column: value.ValueLocation.Column,
+										Length: value.ValueLocation.Length,
+									},
+								},
+							})
+							errors = true
+						} else if _, ok := value.Value.(string); !ok {
+							res = append(res, Result{
+								Passed:        false,
+								ResultComment: fmt.Sprintf("Value at %s in file %s must be a string, got %s", path, fileAlias, value.Type.String()),
+								TokenList: []TokenLocation{
+									{
+										File:   fileAlias,
+										Line:   value.ValueLocation.Line,
+										Column: value.ValueLocation.Column,
+										Length: value.ValueLocation.Length,
+									},
+								},
+							})
+							errors = true
+						}
+					}
+
+					// Add value
+					args = append(args, value.Value)
+
+					// Add token location
+					allTokenLocations = append(allTokenLocations, TokenLocation{
+						File:   fileAlias,
+						Line:   value.ValueLocation.Line,
+						Column: value.ValueLocation.Column,
+						Length: value.ValueLocation.Length,
+					})
+				}
+
+			case Literal:
+				// Get value
+				switch argType {
+				case Int:
+					// Verify value is an integer
+					if value, err := strconv.Atoi(argValue); err != nil {
+						res = append(res, Result{
+							Passed:        false,
+							ResultComment: fmt.Sprintf("Value %s must be an int, got %s", argValue, err.Error()),
+							TokenList:     []TokenLocation{{File: rulebookFileAlias}},
+						})
+						errors = true
+					} else {
+						// Add value
+						args = append(args, value)
+					}
+				case Float:
+					// Verify value is a float
+					if value, err := strconv.ParseFloat(argValue, 64); err != nil {
+						res = append(res, Result{
+							Passed:        false,
+							ResultComment: fmt.Sprintf("Value %s must be a float, got %s", argValue, err.Error()),
+							TokenList:     []TokenLocation{{File: rulebookFileAlias}},
+						})
+						errors = true
+					} else {
+						// Add value
+						args = append(args, value)
+					}
+				case Bool:
+					// Verify value is a bool
+					if value, err := strconv.ParseBool(argValue); err != nil {
+						res = append(res, Result{
+							Passed:        false,
+							ResultComment: fmt.Sprintf("Value %s must be a bool, got %s", argValue, err.Error()),
+							TokenList:     []TokenLocation{{File: rulebookFileAlias}},
+						})
+						errors = true
+					} else {
+						// Add value
+						args = append(args, value)
+					}
+				case String:
+					// Add value
+					args = append(args, argValue)
+				}
 			}
 		}
 
-		// Apply check
-		passed, comment, err := a.checks[rule.CheckName].Check(args)
-		if err != nil {
-			return nil, fmt.Errorf("failed to apply check %s: %s", rule.CheckName, err.Error())
+		// Apply check if there were no errors getting arguments
+		if !errors {
+			// Apply check
+			passed, comment, err := a.checks[rule.CheckName].Check(args)
+			if err != nil {
+				return nil, fmt.Errorf("failed to apply check %s: %s", rule.CheckName, err.Error())
+			}
+
+			// Add result
+			res = append(res, Result{
+				Passed:        passed,
+				ResultComment: fmt.Sprintf("%s:%s", rule.CheckName, comment),
+				TokenList:     allTokenLocations,
+			})
 		}
 
-		// Add result
-		res = append(res, Result{
-			Passed:        passed,
-			ResultComment: fmt.Sprintf("%s:%s", rule.CheckName, comment),
-			TokenList:     allValueTokenLocations,
-		})
 	}
 
 	return res, nil

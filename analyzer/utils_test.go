@@ -202,49 +202,20 @@ func TestGetNodeFromConfigFile(t *testing.T) {
 // TestDecodeFileValue tests the decodeFileValue function.
 func TestDecodeFileValue(t *testing.T) {
 	type testCase struct {
-		input  string
-		isFile bool
-		alias  string
-		key    string
+		input string
+		alias string
+		key   string
 	}
 
 	tests := []testCase{
-		{"f:file_alias.server.port", true, "file_alias", "server.port"},
-		{"f:file_alias.settings.users[0].name", true, "file_alias", "settings.users[0].name"},
-		{"server.port", false, "", ""},
-		{"f:file_alias", false, "", ""},   // Missing dot after alias
-		{"f:.server.port", false, "", ""}, // Missing alias before dot
+		{"file_alias.server.port", "file_alias", "server.port"},
+		{"file_alias.settings.users[0].name", "file_alias", "settings.users[0].name"},
 	}
 
 	for _, test := range tests {
-		isFile, alias, key := decodeFileValue(test.input)
-		if isFile != test.isFile || alias != test.alias || key != test.key {
-			t.Errorf("decodeFileValue(%q) = (%v, %q, %q), want (%v, %q, %q)", test.input, isFile, alias, key, test.isFile, test.alias, test.key)
-		}
-	}
-}
-
-// TestDecodeLiteralValue tests the decodeLiteralValue function.
-func TestDecodeLiteralValue(t *testing.T) {
-	type testCase struct {
-		input     string
-		isLiteral bool
-		value     string
-	}
-
-	tests := []testCase{
-		{"l:100", true, "100"},
-		{"l:hello world", true, "hello world"},
-		{"l:true", true, "true"},
-		{"100", false, ""},
-		{"l:", true, ""},           // Edge case: Literal with empty value
-		{"l:l:100", true, "l:100"}, // Nested "l:"
-	}
-
-	for _, tt := range tests {
-		isLiteral, value := decodeLiteralValue(tt.input)
-		if isLiteral != tt.isLiteral || value != tt.value {
-			t.Errorf("decodeLiteralValue(%q) = (%v, %q), want (%v, %q)", tt.input, isLiteral, value, tt.isLiteral, tt.value)
+		alias, key := decodeFileValue(test.input)
+		if alias != test.alias || key != test.key {
+			t.Errorf("decodeFileValue(%q) = (%v, %q), want (%v, %q)", test.input, alias, key, test.alias, test.key)
 		}
 	}
 }

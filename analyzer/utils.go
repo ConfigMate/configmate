@@ -120,39 +120,11 @@ func splitKey(key string) []string {
 	return segments
 }
 
-// decodeFileValue returns true if the given value is a file value. It also returns the file alias
-// and the key of the value in the file.
-// File values look like these: "f:file_alias.server.port", "f:file_alias.settings.users[0].name".
-func decodeFileValue(value string) (bool, string, string) {
-	// Check if the value starts with "f:"
-	if !strings.HasPrefix(value, "f:") {
-		return false, "", ""
-	}
-
-	// Remove the "f:" prefix
-	value = value[2:]
-
-	// Split value into file alias and key
+// decodeFileValue returns the alias and path of the given file value.
+// File values look like these: "file_alias.server.port", "file_alias.settings.users[0].name".
+func decodeFileValue(value string) (string, string) {
+	// Split the value based on the dot
 	segments := strings.SplitN(value, ".", 2)
 
-	// Check if there are two none empty segments
-	if len(segments) != 2 || len(segments[0]) == 0 || len(segments[1]) == 0 {
-		return false, "", ""
-	}
-
-	return true, segments[0], segments[1]
-}
-
-// decodeLiteralValue returns true if the given value is a literal value.
-// Literal values look like these: "l:100", "l:hello world", "l:true".
-func decodeLiteralValue(value string) (bool, string) {
-	// Check if the value starts with "l:"
-	if !strings.HasPrefix(value, "l:") {
-		return false, ""
-	}
-
-	// Remove the "l:" prefix
-	value = value[2:]
-
-	return true, value
+	return segments[0], segments[1]
 }
