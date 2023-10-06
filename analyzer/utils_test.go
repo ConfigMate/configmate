@@ -1,7 +1,6 @@
 package analyzer
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/ConfigMate/configmate/parsers"
@@ -94,22 +93,8 @@ func TestSplitKey(t *testing.T) {
 	}
 }
 
-// splitRuleFileArgument splits the argument of a rule that
-// references a field in a file into file and key.
-// The argument looks like this: "file_alias:server.port", the
-// returned values will be "file_alias" and "server.port".
-func splitRuleFileArgument(arg string) (string, string) {
-	// Split the argument based on the colon
-	segments := strings.Split(arg, ":")
-	if len(segments) == 1 {
-		return "", segments[0]
-	}
-
-	return segments[0], segments[1]
-}
-
-// TestGetValueFromConfigFile tests the getValueFromConfigFile function.
-func TestGetValueFromConfigFile(t *testing.T) {
+// TestGetNodeFromConfigFile tests the getNodeFromConfigFile function.
+func TestGetNodeFromConfigFile(t *testing.T) {
 	// Test cases
 	type testCase struct {
 		configFile parsers.ConfigFile
@@ -127,15 +112,15 @@ func TestGetValueFromConfigFile(t *testing.T) {
 						Type: parsers.Object,
 						Value: map[string]*parsers.Node{
 							"port": {
-								Type:  parsers.String,
-								Value: "8080",
+								Type:  parsers.Int,
+								Value: 8080,
 							},
 						},
 					},
 				},
 			},
 			key:      "server.port",
-			expected: "8080",
+			expected: &parsers.Node{Type: parsers.Int, Value: "8080"},
 			err:      false,
 		},
 		{
@@ -196,14 +181,14 @@ func TestGetValueFromConfigFile(t *testing.T) {
 				},
 			},
 			key:      "server.dns_servers[1]",
-			expected: "some.other.dns.server",
+			expected: &parsers.Node{Type: parsers.String, Value: "some.other.dns.server"},
 			err:      false,
 		},
 	}
 
 	// Run tests
 	for _, test := range testCases {
-		actual, err := getValueFromConfigFile(test.configFile, test.key)
+		actual, err := getNodeFromConfigFileNode(test.configFile, test.key)
 		if err != nil && !test.err {
 			t.Errorf("getValueFromConfigFile(%+v, %s) returned error %s, expected no error", test.configFile, test.key, err.Error())
 		} else if err == nil && test.err {

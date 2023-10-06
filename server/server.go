@@ -77,11 +77,13 @@ func (server *Server) checkHandler() http.HandlerFunc {
 			return
 		}
 
-		result, err := server.analyzer.Analyze(rb)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		var result analyzer.Result
+
+		// result, err := server.analyzer.AnalyzeConfigFiles(nil, rb)
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
 
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(result); err != nil {

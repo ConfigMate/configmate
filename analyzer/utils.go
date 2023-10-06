@@ -38,10 +38,10 @@ func getFileFormat(filename string) FileFormat {
 	}
 }
 
-// getValueFromConfigFile returns the value of the given key from the given config file.
-// If the key does not exist, the second return value will be false.
+// getNodeFromConfigFileNode returns the value of the given key from the given config file.
+// If the key does not exist, the first return value will be false.
 // Keys look like these: "server.port", "settings.users[0].name", "logLevel"
-func getValueFromConfigFile(configFile parsers.ConfigFile, key string) (interface{}, error) {
+func getNodeFromConfigFileNode(configFile parsers.ConfigFile, key string) (*parsers.Node, error) {
 	// Split the key
 	segments := splitKey(key)
 	currentNode := configFile
@@ -84,7 +84,7 @@ func getValueFromConfigFile(configFile parsers.ConfigFile, key string) (interfac
 		}
 	}
 
-	return currentNode.Value, nil
+	return currentNode, nil
 }
 
 // splitKey splits the given key into a list of segments.
