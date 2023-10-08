@@ -28,7 +28,7 @@ ANTLR4_OUTPUT_DIR := ./parsers/gen
 
 generate-parsers: ./lib/antlr-*-complete.jar
 	export CLASSPATH=".:$(ANTLR4_JAR_OUTPUT_DIR)/antlr-$(ANTLR_VERSION)-complete.jar:$$CLASSPATH"
-	find $(GRAMMAR_DIR) -name '*.g4' -exec sh -c 'file="{}"; filename=$$(basename "$$file"); package="parser_$${filename%.g4*}"; java -jar $(ANTLR4_JAR_OUTPUT_DIR)/antlr-$(ANTLR_VERSION)-complete.jar -Dlanguage=Go -visitor -package "$$package" -o $(ANTLR4_OUTPUT_DIR)/$$package "$$file"' \;
+	find $(GRAMMAR_DIR) -name '*.g4' -exec sh -c 'file="{}"; filename=$$(basename "$$file"); package="parser_$${filename%.g4*}"; java -jar $(ANTLR4_JAR_OUTPUT_DIR)/antlr-$(ANTLR_VERSION)-complete.jar -Dlanguage=Go -package "$$package" -o $(ANTLR4_OUTPUT_DIR)/$$package "$$file"' \;
 
 clean-parsers:
 	rm -rf lib/

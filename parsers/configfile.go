@@ -6,19 +6,6 @@ import (
 	"strings"
 )
 
-// FieldType is the type of a field in a configuration file.
-type FieldType int
-
-const (
-	Null FieldType = iota
-	Bool
-	Int
-	Float
-	String
-	Array
-	Object
-)
-
 // Node is a node in a configuration file. Fields of type Object will be encoded as
 // a map[string]*Node and fields of type Array will be encoded as a []*Node.
 type Node struct {
@@ -42,7 +29,8 @@ type Node struct {
 type FieldType int
 
 const (
-	Bool FieldType = iota
+	Null FieldType = iota
+	Bool
 	Int
 	Float
 	String
@@ -52,6 +40,8 @@ const (
 
 func (ft FieldType) String() string {
 	switch ft {
+	case Null:
+		return "null"
 	case Bool:
 		return "bool"
 	case Int:

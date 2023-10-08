@@ -47,7 +47,7 @@ func (a *AnalyzerImpl) AnalyzeConfigFiles(files map[string]*parsers.Node, rules 
 
 			switch arg.s { // Switch based on the argument source
 			case File:
-				fArg := arg.v.(FileValue)                                       // Cast value as FileValue (unsafe)
+				fArg := arg.v.(FileValue)                                       // Cast value as *FileValue (unsafe)
 				if value, err := files[fArg.alias].Get(fArg.path); err != nil { // Get value from file
 					res = append(res, Result{
 						Passed:        false,

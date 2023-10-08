@@ -128,14 +128,16 @@ func TestParseCheckArg(t *testing.T) {
 			continue
 		}
 
-		if !reflect.DeepEqual(actual.v, test.expected.v) {
-			t.Errorf("parseCheckArg(%s) returned %+v, expected %+v", test.arg, actual, test.expected)
-		}
-		if actual.s != test.expected.s {
-			t.Errorf("parseCheckArg(%s) returned %+v, expected %+v", test.arg, actual, test.expected)
-		}
-		if actual.t != test.expected.t {
-			t.Errorf("parseCheckArg(%s) returned %+v, expected %+v", test.arg, actual, test.expected)
+		if err == nil {
+			if !reflect.DeepEqual(actual.v, test.expected.v) {
+				t.Errorf("parseCheckArg(%s) returned %+v, expected %+v", test.arg, actual, test.expected)
+			}
+			if actual.s != test.expected.s {
+				t.Errorf("parseCheckArg(%s) returned %+v, expected %+v", test.arg, actual, test.expected)
+			}
+			if actual.t != test.expected.t {
+				t.Errorf("parseCheckArg(%s) returned %+v, expected %+v", test.arg, actual, test.expected)
+			}
 		}
 	}
 }

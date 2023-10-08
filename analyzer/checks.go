@@ -118,7 +118,7 @@ func ParseCheckArg(arg string) (*CheckArg, error) {
 		if fileValue, err := decodeFileValue(segments[2]); err != nil {
 			return nil, fmt.Errorf("failed to decode file value: %s", err.Error())
 		} else {
-			v = fileValue
+			v = *fileValue
 		}
 	case Literal:
 		// Decode literal value
