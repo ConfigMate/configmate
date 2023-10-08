@@ -2,41 +2,11 @@ package analyzer
 
 import (
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/ConfigMate/configmate/parsers"
 )
-
-type FileFormat int
-
-const (
-	Unknown FileFormat = iota
-	HOCON
-	JSON
-	TOML
-	YAML
-)
-
-// getFileFormat returns the file format of the given filename.
-func getFileFormat(filename string) FileFormat {
-	ext := filepath.Ext(filename)
-	switch ext {
-	case ".hocon":
-		return HOCON
-	case ".json":
-		return JSON
-	case ".toml":
-		return TOML
-	case ".yaml":
-		return YAML
-	case ".yml":
-		return YAML
-	default:
-		return Unknown
-	}
-}
 
 // getNodeFromConfigFileNode returns the value of the given key from the given config file.
 // If the key does not exist, the first return value will be false.
@@ -127,4 +97,52 @@ func decodeFileValue(value string) (string, string) {
 	segments := strings.SplitN(value, ".", 2)
 
 	return segments[0], segments[1]
+}
+
+// equalType returns true if the given node type is equal to the given argument type.
+func equalType(nodeType parsers.FieldType, argType CheckArgType) bool {
+	switch argType {
+	case Int:
+		return nodeType == parsers.Int
+	case Float:
+		return nodeType == parsers.Float
+	case Bool:
+		return nodeType == parsers.Bool
+	case String:
+		return nodeType == parsers.String
+	default:
+		return false
+	}
+}
+
+// interpretLiteralOutput attempts to convert the given literal argument to the given type.
+func interpretLiteralOutput(argType CheckArgType, argValue string) (interface{}, error) {
+	switch argType {
+	case Int:
+		// Verify value is an integer
+		if value, err := strconv.Atoi(argValue); err != nil {
+			return nil, fmt.Errorf("failed to interpret %s as int: %s", argValue, err.Error())
+		} else {
+			return value, nil
+		}
+	case Float:
+		// Verify value is a float
+		if value, err := strconv.ParseFloat(argValue, 64); err != nil {
+			return nil, fmt.Errorf("failed to interpret %s as float: %s", argValue, err.Error())
+		} else {
+			return value, nil
+		}
+	case Bool:
+		// Verify value is a bool
+		if value, err := strconv.ParseBool(argValue); err != nil {
+			return nil, fmt.Errorf("failed to interpret %s as bool: %s", argValue, err.Error())
+		} else {
+			return value, nil
+		}
+	case String:
+		// Add value
+		return argValue, nil
+	default:
+		return nil, fmt.Errorf("unknown argument type: %s", argType.String())
+	}
 }

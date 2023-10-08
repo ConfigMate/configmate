@@ -45,6 +45,17 @@ const (
 	Literal                       // represented with "l:"
 )
 
+func (s CheckArgSource) String() string {
+	switch s {
+	case File:
+		return "file"
+	case Literal:
+		return "literal"
+	default:
+		return ""
+	}
+}
+
 // CheckArgType is the type of a rule argument.
 // It can either be an int, float, bool, string, array or object.
 type CheckArgType int
@@ -55,6 +66,21 @@ const (
 	Bool                       // represented with "b:"
 	String                     // represented with "s:"
 )
+
+func (t CheckArgType) String() string {
+	switch t {
+	case Int:
+		return "int"
+	case Float:
+		return "float"
+	case Bool:
+		return "bool"
+	case String:
+		return "string"
+	default:
+		return ""
+	}
+}
 
 func (r CheckArg) Valid() error {
 	// Split argument

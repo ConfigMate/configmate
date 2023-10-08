@@ -6,50 +6,6 @@ import (
 	"github.com/ConfigMate/configmate/parsers"
 )
 
-// TestGetFileFormat tests the getFileFormat function.
-func TestGetFileFormat(t *testing.T) {
-	// Test cases
-	type testCase struct {
-		filename string
-		expected FileFormat
-	}
-
-	testCases := []testCase{
-		{
-			filename: "test.hocon",
-			expected: HOCON,
-		},
-		{
-			filename: "test.json",
-			expected: JSON,
-		},
-		{
-			filename: "test.toml",
-			expected: TOML,
-		},
-		{
-			filename: "test.yaml",
-			expected: YAML,
-		},
-		{
-			filename: "test.yml",
-			expected: YAML,
-		},
-		{
-			filename: "test",
-			expected: Unknown,
-		},
-	}
-
-	// Run tests
-	for _, test := range testCases {
-		actual := getFileFormat(test.filename)
-		if actual != test.expected {
-			t.Errorf("getFileFormat(%s) returned %d, expected %d", test.filename, actual, test.expected)
-		}
-	}
-}
-
 // TestSplitKey tests the splitKey function.
 func TestSplitKey(t *testing.T) {
 	// Test cases
@@ -216,6 +172,128 @@ func TestDecodeFileValue(t *testing.T) {
 		alias, key := decodeFileValue(test.input)
 		if alias != test.alias || key != test.key {
 			t.Errorf("decodeFileValue(%q) = (%v, %q), want (%v, %q)", test.input, alias, key, test.alias, test.key)
+		}
+	}
+}
+
+// TestEqualType tests the equalType function.
+func TestEqualType(t *testing.T) {
+	// Test cases
+	type testCase struct {
+		nodeType parsers.FieldType
+		argType  CheckArgType
+		expected bool
+	}
+
+	testCases := []testCase{
+		{
+			nodeType: parsers.Int,
+			argType:  Int,
+			expected: true,
+		},
+		{
+			nodeType: parsers.Float,
+			argType:  Float,
+			expected: true,
+		},
+		{
+			nodeType: parsers.Bool,
+			argType:  Bool,
+			expected: true,
+		},
+		{
+			nodeType: parsers.String,
+			argType:  String,
+			expected: true,
+		},
+		{
+			nodeType: parsers.Int,
+			argType:  Float,
+			expected: false,
+		},
+		{
+			nodeType: parsers.Float,
+			argType:  Int,
+			expected: false,
+		},
+		{
+			nodeType: parsers.Bool,
+			argType:  String,
+			expected: false,
+		},
+		{
+			nodeType: parsers.String,
+			argType:  Bool,
+			expected: false,
+		},
+	}
+
+	// Run tests
+	for _, test := range testCases {
+		actual := equalType(test.nodeType, test.argType)
+		if actual != test.expected {
+			t.Errorf("equalType(%d, %d) returned %t, expected %t", test.nodeType, test.argType, actual, test.expected)
+		}
+	}
+}
+
+// TestInterpretLiteralOutput tests the interpretLiteralOutput function.
+func TestInterpretLiteralOutput(t *testing.T) {
+	// Test cases
+	type testCase struct {
+		argType  CheckArgType
+		argValue string
+		expected interface{}
+	}
+
+	testCases := []testCase{
+		{
+			argType:  Int,
+			argValue: "8080",
+			expected: 8080,
+		},
+		{
+			argType:  Int,
+			argValue: "8080.0",
+			expected: nil,
+		},
+		{
+			argType:  Float,
+			argValue: "8080.5",
+			expected: 8080.5,
+		},
+		{
+			argType:  Float,
+			argValue: "8080",
+			expected: 8080.0,
+		},
+		{
+			argType:  Bool,
+			argValue: "true",
+			expected: true,
+		},
+		{
+			argType:  Bool,
+			argValue: "false",
+			expected: false,
+		},
+		{
+			argType:  Bool,
+			argValue: "8080",
+			expected: nil,
+		},
+		{
+			argType:  String,
+			argValue: "8080",
+			expected: "8080",
+		},
+	}
+
+	// Run tests
+	for _, test := range testCases {
+		actual, _ := interpretLiteralOutput(test.argType, test.argValue)
+		if actual != test.expected {
+			t.Errorf("interpretLiteralOutput(%d, %s) returned %+v, expected %+v", test.argType, test.argValue, actual, test.expected)
 		}
 	}
 }

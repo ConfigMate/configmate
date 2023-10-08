@@ -16,21 +16,21 @@ const (
 func (ft FieldType) String() string {
 	switch ft {
 	case Unknown:
-		return "Unknown"
+		return "unknown"
 	case Bool:
-		return "Bool"
+		return "bool"
 	case Int:
-		return "Int"
+		return "int"
 	case Float:
-		return "Float"
+		return "float"
 	case String:
-		return "String"
+		return "string"
 	case Array:
-		return "Array"
+		return "array"
 	case Object:
-		return "Object"
+		return "object"
 	default:
-		return "Unknown"
+		return "unknown"
 	}
 }
 
