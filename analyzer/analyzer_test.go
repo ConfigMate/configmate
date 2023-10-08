@@ -39,7 +39,7 @@ func TestAnalyzeConfigFiles_ValidRuleArgument(t *testing.T) {
 	}
 
 	// Test configFilesMap
-	files := map[string]parsers.ConfigFile{
+	files := map[string]*parsers.Node{
 		"test": configFile,
 	}
 
@@ -48,7 +48,7 @@ func TestAnalyzeConfigFiles_ValidRuleArgument(t *testing.T) {
 		{
 			Description: "Sample rule",
 			CheckName:   "sampleCheck",
-			Args:        []CheckArg{"f:i:test.server.port"},
+			Args:        []string{"f:i:test.server.port"},
 		},
 	}
 
@@ -100,7 +100,7 @@ func TestAnalyzeConfigFiles_InvalidRuleArgument(t *testing.T) {
 	}
 
 	// Test configFilesMap
-	files := map[string]parsers.ConfigFile{
+	files := map[string]*parsers.Node{
 		"test": configFile,
 	}
 
@@ -109,7 +109,7 @@ func TestAnalyzeConfigFiles_InvalidRuleArgument(t *testing.T) {
 		{
 			Description: "Sample rule",
 			CheckName:   "sampleCheck",
-			Args:        []CheckArg{"f:i:test.server.port[0]"},
+			Args:        []string{"f:i:test.server.port[0]"},
 		},
 	}
 
@@ -161,7 +161,7 @@ func TestAnalyzeConfigFiles_InvalidRuleArgumentType(t *testing.T) {
 	}
 
 	// Test configFilesMap
-	files := map[string]parsers.ConfigFile{
+	files := map[string]*parsers.Node{
 		"test": configFile,
 	}
 
@@ -170,7 +170,7 @@ func TestAnalyzeConfigFiles_InvalidRuleArgumentType(t *testing.T) {
 		{
 			Description: "Sample rule",
 			CheckName:   "sampleCheck",
-			Args:        []CheckArg{"f:i:test.server.port"},
+			Args:        []string{"f:i:test.server.port"},
 		},
 	}
 
