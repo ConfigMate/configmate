@@ -1,14 +1,11 @@
-package analyzer
-
-// ConfigFile describes a configuration file in
-// a format optimized for internal purposes.
-type ConfigFile *Node
+package parsers
 
 // FieldType is the type of a field in a configuration file.
 type FieldType int
 
 const (
-	Bool FieldType = iota
+	Null FieldType = iota
+	Bool
 	Int
 	Float
 	String
