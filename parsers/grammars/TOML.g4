@@ -1,4 +1,4 @@
-grammar Toml;
+grammar TOML;
 
 /*
  * Parser Rules

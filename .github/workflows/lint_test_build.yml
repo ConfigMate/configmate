@@ -25,6 +25,11 @@ jobs:
       - name: Generate parsers
         run: make generate-parsers
 
+      - name: Setup Mocks
+        run: |
+          go install github.com/golang/mock/mockgen@v1.6.0
+          make mocks
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3.7.0
 
@@ -48,6 +53,11 @@ jobs:
 
       - name: Generate parsers
         run: make generate-parsers
+
+      - name: Setup Mocks
+        run: |
+          go install github.com/golang/mock/mockgen@v1.6.0
+          make mocks
 
       - name: Test
         run: |
@@ -85,6 +95,11 @@ jobs:
 
       - name: Generate parsers
         run: make generate-parsers
+
+      - name: Setup Mocks
+        run: |
+          go install github.com/golang/mock/mockgen@v1.6.0
+          make mocks
 
       - name: Build
         run: go build ./...
