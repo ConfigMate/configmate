@@ -20,13 +20,13 @@ arr
    ;
 
 value
-   : STRING
-   | NUMBER
-   | obj
-   | arr
-   | 'true'
-   | 'false'
-   | 'null'
+   : STRING  # string
+   | NUMBER  # number
+   | obj     # object
+   | arr     # array
+   | 'true'  # booleanTrue
+   | 'false' # booleanFalse
+   | 'null'  # null
    ;
 
 
