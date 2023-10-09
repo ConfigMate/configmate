@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	parser_json "github.com/ConfigMate/configmate/parsers/gen/parser_JSON/parsers/grammars"
+	parser_json "github.com/ConfigMate/configmate/parsers/gen/parser_json/parsers/grammars"
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/golang-collections/collections/stack"
 )

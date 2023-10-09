@@ -26,9 +26,20 @@ ANTLR4_JAR_OUTPUT_DIR := ./lib
 GRAMMAR_DIR := ./parsers/grammars
 ANTLR4_OUTPUT_DIR := ./parsers/gen
 
+ANTLR4_CMD = java -jar $(ANTLR4_JAR_OUTPUT_DIR)/antlr-$(ANTLR_VERSION)-complete.jar
+ANTLR_FLAGS = -Dlanguage=Go
+CLASSPATH = .:$(ANTLR4_JAR_OUTPUT_DIR)/antlr-$(ANTLR_VERSION)-complete.jar:$$CLASSPATH
+
 generate-parsers: ./lib/antlr-*-complete.jar
-	export CLASSPATH=".:$(ANTLR4_JAR_OUTPUT_DIR)/antlr-$(ANTLR_VERSION)-complete.jar:$$CLASSPATH"
-	find $(GRAMMAR_DIR) -name '*.g4' -exec sh -c 'file="{}"; filename=$$(basename "$$file"); package="parser_$${filename%.g4*}"; java -jar $(ANTLR4_JAR_OUTPUT_DIR)/antlr-$(ANTLR_VERSION)-complete.jar -Dlanguage=Go -package "$$package" -o $(ANTLR4_OUTPUT_DIR)/$$package "$$file"' \;
+	export CLASSPATH=$(CLASSPATH)
+
+	find $(GRAMMAR_DIR) -name '*.g4' -exec sh -c '\
+		file="{}"; \
+		filename=$$(basename "$$file"); \
+		package="parser_$${filename%.g4*}"; \
+		lower_case_package=$$(echo "$$package" | tr "[:upper:]" "[:lower:]"); \
+		$(ANTLR4_CMD) $(ANTLR_FLAGS) -package "$$lower_case_package" -o $(ANTLR4_OUTPUT_DIR)/$$lower_case_package "$$file" \
+	' \;
 
 clean-parsers:
 	rm -rf lib/
