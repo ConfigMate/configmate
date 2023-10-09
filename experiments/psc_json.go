@@ -10,7 +10,7 @@ import (
 
 func main() {
 	// Load file: ../examples/sample_config.json
-	file, err := os.Open("../../examples/sample_config.json")
+	file, err := os.Open("../examples/sample_config.json")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

@@ -17,16 +17,16 @@ const (
 // Fields of type Object will be encoded as a map[string]*Node and fields of type Array will be
 // encoded as a []*Node.
 type Node struct {
-	FieldPath []string // e.g. ["server.port", "settings.users[0].name", "logLevel"]
-	Type      FieldType
-	Value     interface{}
+	Type      FieldType   // Type of field
+	ArrayType FieldType   // Type of elements in array (if Type == Array)
+	Value     interface{} // Value of field
 
-	NameLocation struct {
+	NameLocation struct { // Location of field name in configuration file
 		Line   int
 		Column int
 		Length int
 	}
-	ValueLocation struct {
+	ValueLocation struct { // Location of field value in configuration file
 		Line   int
 		Column int
 		Length int
