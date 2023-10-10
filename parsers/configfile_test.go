@@ -110,3 +110,89 @@ func TestNode_Get(t *testing.T) {
 		}
 	}
 }
+
+// TestNode_Get_SyntacticallyWrong tests the Get function of a *Node for syntactically incorrect content.
+func TestNode_Get_SyntacticallyWrong(t *testing.T) {
+	type testCase struct {
+		configFile *Node
+		path       string
+		err        bool
+	}
+
+	testCases := []testCase{
+		{
+			configFile: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"server": {
+						Type: Object,
+						Value: map[string]*Node{
+							"port": {
+								Type:  Int,
+								Value: 8080,
+							},
+						},
+					},
+				},
+			},
+			path: "server..port",  // Double dots should trigger an error
+			err:  true,
+		},
+		{
+			configFile: &Node{
+				Type: Object,
+				Value: map[string]*Node{},
+			},
+			path: "server[port]",  // Malformed index should trigger an error
+			err:  true,
+		},
+		{
+			configFile: &Node{
+				Type: Object,
+				Value: map[string]*Node{},
+			},
+			path: "",  // Empty path should trigger an error
+			err:  true,
+		},
+	}
+
+	for _, test := range testCases {
+		_, err := test.configFile.Get(test.path)
+		if err == nil && test.err {
+			t.Errorf("Get(%s) returned no error, expected error", test.path)
+		} else if err != nil && !test.err {
+			t.Errorf("Get(%s) returned error %s, expected no error", test.path, err.Error())
+		}
+	}
+}
+
+func Test_SplitKey(t *testing.T) {
+    // Test cases
+    type testCase struct {
+        path     string
+        expected []string
+    }
+
+    testCases := []testCase{
+        {
+            path:     "server.port",
+            expected: []string{"server", "port"},
+        },
+        {
+            path:     "settings.users[0].name",
+            expected: []string{"settings", "users", "0", "name"},
+        },
+        {
+            path:     "logLevel",
+            expected: []string{"logLevel"},
+        },
+    }
+
+    // Run tests
+    for _, test := range testCases {
+        actual := splitKey(test.path)
+        if !reflect.DeepEqual(actual, test.expected) {
+            t.Errorf("splitKey(%s) returned %+v, expected %+v", test.path, actual, test.expected)
+        }
+    }
+}
