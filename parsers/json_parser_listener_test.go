@@ -1,11 +1,12 @@
 package parsers
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
 
-var JSONInput = []byte(`{
+var simpleJSONInput = []byte(`{
 		"name": "sample",
 		"version": 1.3,
 		"active": true,
@@ -17,9 +18,15 @@ var JSONInput = []byte(`{
 		"features": ["auth", "logs"]
 }`)
 
+var wrongJSONInput = []byte(`{
+	"name": "sample",
+	"version": 1.3,
+	"active": true
+	"features": ["auth", "logs"]
+`)
 
-// TestNode_Get tests the Get function of a *Node.
-func Test_Parse(t *testing.T) {
+// TestSimple_Parse tests the Parse function of a *JsonParser using a simple json config.
+func TestSimple_Parse(t *testing.T) {
 	// Test cases
 	type testCase struct {
 		input    []byte
@@ -38,12 +45,12 @@ func Test_Parse(t *testing.T) {
 					Line   int
 					Column int
 					Length int
-				} {Line: 2, Column: 2, Length: 6},
+				} {Line: 2, Column: 3, Length: 6},
 				ValueLocation: struct {
 					Line   int
 					Column int
 					Length int
-				} {Line: 2, Column: 10, Length: 8},
+				} {Line: 2, Column: 11, Length: 8},
 			},
 			"version": {
 				Type: Float, 
@@ -52,12 +59,12 @@ func Test_Parse(t *testing.T) {
 					Line   int
 					Column int
 					Length int
-				} {Line: 3, Column: 2, Length: 9},
+				} {Line: 3, Column: 3, Length: 9},
 				ValueLocation: struct {
 					Line   int
 					Column int
 					Length int
-				} {Line: 3, Column: 13, Length: 3},
+				} {Line: 3, Column: 14, Length: 3},
 			},
 			"active": {
 				Type: Bool, 
@@ -66,12 +73,12 @@ func Test_Parse(t *testing.T) {
 					Line   int
 					Column int
 					Length int
-				} {Line: 4, Column: 2, Length: 8},
+				} {Line: 4, Column: 3, Length: 8},
 				ValueLocation: struct {
 					Line   int
 					Column int
 					Length int
-				} {Line: 4, Column: 12, Length: 4},
+				} {Line: 4, Column: 13, Length: 4},
 			},
 			"settings": {
 				Type: Object,
@@ -83,12 +90,12 @@ func Test_Parse(t *testing.T) {
 							Line   int
 							Column int
 							Length int
-						} {Line: 6, Column: 3, Length: 7},
+						} {Line: 6, Column: 4, Length: 7},
 						ValueLocation: struct {
 							Line   int
 							Column int
 							Length int
-						} {Line: 6, Column: 12, Length: 6},
+						} {Line: 6, Column: 13, Length: 6},
 					},
 					"notifications": {
 						Type: Null, 
@@ -97,12 +104,12 @@ func Test_Parse(t *testing.T) {
 							Line   int
 							Column int
 							Length int
-						} {Line: 7, Column: 3, Length: 15},
+						} {Line: 7, Column: 4, Length: 15},
 						ValueLocation: struct {
 							Line   int
 							Column int
 							Length int
-						} {Line: 7, Column: 20, Length: 4},
+						} {Line: 7, Column: 21, Length: 4},
 					},
 					"retryCount": {
 						Type: Int, 
@@ -111,24 +118,24 @@ func Test_Parse(t *testing.T) {
 							Line   int
 							Column int
 							Length int
-						} {Line: 8, Column: 3, Length: 12},
+						} {Line: 8, Column: 4, Length: 12},
 						ValueLocation: struct {
 							Line   int
 							Column int
 							Length int
-						} {Line: 8, Column: 17, Length: 1},
+						} {Line: 8, Column: 18, Length: 1},
 					},
 				},
 				NameLocation: struct {
 					Line   int
 					Column int
 					Length int
-				} {Line: 5, Column: 2, Length: 10},
+				} {Line: 5, Column: 3, Length: 10},
 				ValueLocation: struct {
 					Line   int
 					Column int
 					Length int
-				} {Line: 5, Column: 14, Length: 52},
+				} {Line: 5, Column: 15, Length: 52},
 			},
 			"features": {
 				Type:      Array,
@@ -146,7 +153,7 @@ func Test_Parse(t *testing.T) {
 							Line   int
 							Column int
 							Length int
-						} {Line: 10, Column: 15, Length: 6},
+						} {Line: 10, Column: 16, Length: 6},
 					}, 
 					{
 							Type: String, 
@@ -160,19 +167,19 @@ func Test_Parse(t *testing.T) {
 								Line   int
 								Column int
 								Length int
-							} {Line: 10, Column: 23, Length: 6},
+							} {Line: 10, Column: 24, Length: 6},
 					},
 				},
 				NameLocation: struct {
 					Line   int
 					Column int
 					Length int
-				} {Line: 10, Column: 2, Length: 10},
+				} {Line: 10, Column: 3, Length: 10},
 				ValueLocation: struct {
 					Line   int
 					Column int
 					Length int
-				} {Line: 10, Column: 14, Length: 15},
+				} {Line: 10, Column: 15, Length: 15},
 			},
 		},
 		NameLocation: struct {
@@ -184,28 +191,58 @@ func Test_Parse(t *testing.T) {
 			Line   int
 			Column int
 			Length int
-		} {Line: 1, Column: 0, Length: 136},
+		} {Line: 1, Column: 1, Length: 136},
 	}
 
 	testCases := []testCase{
 		{
-			input: JSONInput,
+			input: simpleJSONInput,
 			expected: expectedNode,
 			err: false,
 		},
 	}
 
 	// Run tests
-	for i, test := range testCases {
+	for _, test := range testCases {
 		parser := &JsonParser{}
 		actual, err := parser.Parse(test.input)
 
 		if err != nil && !test.err {
-			t.Errorf("Test case %d: Unexpected error: %s", i, err)
+			t.Errorf("Unexpected error: %s", err)
 		} else if err == nil && test.err {
-			t.Errorf("Test case %d: Expected error, got nil", i)
+			t.Errorf("Expected error, got nil")
 		} else if !reflect.DeepEqual(actual, test.expected) {
-			t.Errorf("Test case %d: Expected %v, got %v", i, test.expected, actual)
+			t.Errorf("Expected %v, got %v", test.expected, actual)
+		}
+	}
+}
+
+// TestWrongSyntax_Parse tests the Parse function of a *JsonParser using a wrong json config.
+func TestWrongSyntax_Parse(t *testing.T) {
+	type testCase struct {
+		input    []byte
+		expected error
+		err      bool
+	}
+
+	testCases := []testCase{
+		{
+			input:    wrongJSONInput,
+			expected: fmt.Errorf(`Syntax errors: [line 5:1 extraneous input '"features"' expecting {',', '}'} line 5:28 mismatched input ']' expecting ':']`),
+			err:      true,
+		},
+	}
+
+	for _, test := range testCases {
+		parser := &JsonParser{}
+		_, err := parser.Parse(test.input)
+
+		if err != nil && !test.err {
+			t.Errorf("Unexpected error: %s", err)
+		} else if err == nil && test.err {
+			t.Errorf("Expected error, got nil")
+		} else if err != nil && test.err && err.Error() != test.expected.Error() {
+			t.Errorf("Expected %v, got %v", test.expected, err)
 		}
 	}
 }
