@@ -14,15 +14,19 @@ type Node struct {
 	Value     interface{} // Value of field
 
 	NameLocation struct { // Location of field name in configuration file
-		Line   int
-		Column int
-		Length int
+		Start Location
+		End   Location
 	}
 	ValueLocation struct { // Location of field value in configuration file
-		Line   int
-		Column int
-		Length int
+		Start Location
+		End   Location
 	}
+}
+
+// Location is the location of a field in a configuration file.
+type Location struct {
+	Line   int
+	Column int
 }
 
 // FieldType is the type of a field in a configuration file.

@@ -1,9 +1,9 @@
 package parsers
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
+	"fmt"
 )
 
 var simpleJSONInput = []byte(`{
@@ -25,6 +25,33 @@ var wrongJSONInput = []byte(`{
 	"features": ["auth", "logs"]
 `)
 
+// Helper method
+func printNode(node *Node, prefix string) {
+	// Print information about the current node
+	fmt.Printf("%s NameLocation: Start Location: %v, End Location: %v\n", prefix, node.NameLocation.Start, node.NameLocation.End)
+	fmt.Printf("%s ValueLocation: Start Location: %v, End Location: %v\n", prefix, node.ValueLocation.Start, node.ValueLocation.End)
+
+	// Determine what to do based on the type of the node
+	switch node.Type {
+	case Object:
+		for k, v := range node.Value.(map[string]*Node) {
+			printNode(v, prefix+"."+k)
+		}
+	case Array:
+		for i, v := range node.Value.([]*Node) {
+			printNode(v, fmt.Sprintf("%s[%d]", prefix, i))
+		}
+	default:
+		// For basic types (string, float, etc.)
+		fmt.Printf("%s Value: %v\n", prefix, node.Value)
+	}
+}
+
+type LocationRange struct {
+    Start Location
+    End   Location
+}
+
 // TestSimple_Parse tests the Parse function of a *JsonParser using a simple json config.
 func TestSimple_Parse(t *testing.T) {
 	// Test cases
@@ -39,160 +66,72 @@ func TestSimple_Parse(t *testing.T) {
 		Type: Object,
 		Value: map[string]*Node{
 			"name": {
-				Type: String, 
-				Value: "sample", 
-				NameLocation: struct {
-					Line   int
-					Column int
-					Length int
-				} {Line: 2, Column: 3, Length: 6},
-				ValueLocation: struct {
-					Line   int
-					Column int
-					Length int
-				} {Line: 2, Column: 11, Length: 8},
+				Type: String,
+				Value: "sample",
+				NameLocation: LocationRange{Start: Location{Line: 2, Column: 3}, End: Location{Line: 2, Column: 11}},
+				ValueLocation: LocationRange{Start: Location{Line: 2, Column: 11}, End: Location{Line: 2, Column: 11}},
 			},
 			"version": {
-				Type: Float, 
+				Type: Float,
 				Value: 1.3,
-				NameLocation: struct {
-					Line   int
-					Column int
-					Length int
-				} {Line: 3, Column: 3, Length: 9},
-				ValueLocation: struct {
-					Line   int
-					Column int
-					Length int
-				} {Line: 3, Column: 14, Length: 3},
+				NameLocation: LocationRange{Start: Location{Line: 3, Column: 3}, End: Location{Line: 3, Column: 14}},
+				ValueLocation: LocationRange{Start: Location{Line: 3, Column: 14}, End: Location{Line: 3, Column: 14}},
 			},
 			"active": {
-				Type: Bool, 
+				Type: Bool,
 				Value: true,
-				NameLocation: struct {
-					Line   int
-					Column int
-					Length int
-				} {Line: 4, Column: 3, Length: 8},
-				ValueLocation: struct {
-					Line   int
-					Column int
-					Length int
-				} {Line: 4, Column: 13, Length: 4},
+				NameLocation: LocationRange{Start: Location{Line: 4, Column: 3}, End: Location{Line: 4, Column: 13}},
+				ValueLocation: LocationRange{Start: Location{Line: 4, Column: 13}, End: Location{Line: 4, Column: 13}},
 			},
 			"settings": {
 				Type: Object,
 				Value: map[string]*Node{
 					"theme": {
-						Type: String, 
+						Type: String,
 						Value: "dark",
-						NameLocation: struct {
-							Line   int
-							Column int
-							Length int
-						} {Line: 6, Column: 4, Length: 7},
-						ValueLocation: struct {
-							Line   int
-							Column int
-							Length int
-						} {Line: 6, Column: 13, Length: 6},
+						NameLocation: LocationRange{Start: Location{Line: 6, Column: 4}, End: Location{Line: 6, Column: 13}},
+						ValueLocation: LocationRange{Start: Location{Line: 6, Column: 13}, End: Location{Line: 6, Column: 13}},
 					},
 					"notifications": {
-						Type: Null, 
+						Type: Null,
 						Value: nil,
-						NameLocation: struct {
-							Line   int
-							Column int
-							Length int
-						} {Line: 7, Column: 4, Length: 15},
-						ValueLocation: struct {
-							Line   int
-							Column int
-							Length int
-						} {Line: 7, Column: 21, Length: 4},
+						NameLocation: LocationRange{Start: Location{Line: 7, Column: 4}, End: Location{Line: 7, Column: 21}},
+						ValueLocation: LocationRange{Start: Location{Line: 7, Column: 21}, End: Location{Line: 7, Column: 21}},
 					},
 					"retryCount": {
-						Type: Int, 
+						Type: Int,
 						Value: 3,
-						NameLocation: struct {
-							Line   int
-							Column int
-							Length int
-						} {Line: 8, Column: 4, Length: 12},
-						ValueLocation: struct {
-							Line   int
-							Column int
-							Length int
-						} {Line: 8, Column: 18, Length: 1},
+						NameLocation: LocationRange{Start: Location{Line: 8, Column: 4}, End: Location{Line: 8, Column: 18}},
+						ValueLocation: LocationRange{Start: Location{Line: 8, Column: 18}, End: Location{Line: 8, Column: 18}},
 					},
 				},
-				NameLocation: struct {
-					Line   int
-					Column int
-					Length int
-				} {Line: 5, Column: 3, Length: 10},
-				ValueLocation: struct {
-					Line   int
-					Column int
-					Length int
-				} {Line: 5, Column: 15, Length: 52},
+				NameLocation: LocationRange{Start: Location{Line: 5, Column: 3}, End: Location{Line: 9, Column: 3}},
+				ValueLocation: LocationRange{Start: Location{Line: 5, Column: 15}, End: Location{Line: 9, Column: 3}},
 			},
 			"features": {
 				Type:      Array,
 				ArrayType: String,
 				Value:     []*Node{
 					{
-						Type: String, 
+						Type: String,
 						Value: "auth",
-						NameLocation: struct {
-							Line   int
-							Column int
-							Length int
-							} {Line: 0, Column: 0, Length: 0},
-						ValueLocation: struct {
-							Line   int
-							Column int
-							Length int
-						} {Line: 10, Column: 16, Length: 6},
-					}, 
+						NameLocation: LocationRange{Start: Location{Line: 0, Column: 0}, End: Location{Line: 0, Column: 0}},
+						ValueLocation: LocationRange{Start: Location{Line: 10, Column: 16}, End: Location{Line: 0, Column: 0}},
+					},
 					{
-							Type: String, 
-							Value: "logs",
-							NameLocation: struct {
-								Line   int
-								Column int
-								Length int
-							} {Line: 0, Column: 0, Length: 0},
-							ValueLocation: struct {
-								Line   int
-								Column int
-								Length int
-							} {Line: 10, Column: 24, Length: 6},
+						Type: String,
+						Value: "logs",
+						NameLocation: LocationRange{Start: Location{Line: 0, Column: 0}, End: Location{Line: 0, Column: 0}},
+						ValueLocation: LocationRange{Start: Location{Line: 10, Column: 24}, End: Location{Line: 0, Column: 0}},
 					},
 				},
-				NameLocation: struct {
-					Line   int
-					Column int
-					Length int
-				} {Line: 10, Column: 3, Length: 10},
-				ValueLocation: struct {
-					Line   int
-					Column int
-					Length int
-				} {Line: 10, Column: 15, Length: 15},
+				NameLocation: LocationRange{Start: Location{Line: 10, Column: 3}, End: Location{Line: 10, Column: 30}},
+				ValueLocation: LocationRange{Start: Location{Line: 10, Column: 15}, End: Location{Line: 10, Column: 30}},
 			},
 		},
-		NameLocation: struct {
-			Line   int
-			Column int
-			Length int
-		} {Line: 0, Column: 0, Length: 0},
-		ValueLocation: struct {
-			Line   int
-			Column int
-			Length int
-		} {Line: 1, Column: 1, Length: 136},
-	}
+		NameLocation: LocationRange{Start: Location{Line: 0, Column: 0}, End: Location{Line: 0, Column: 0}},
+		ValueLocation: LocationRange{Start: Location{Line: 1, Column: 1}, End: Location{Line: 11, Column: 1}},
+	}	
 
 	testCases := []testCase{
 		{
@@ -206,6 +145,10 @@ func TestSimple_Parse(t *testing.T) {
 	for _, test := range testCases {
 		parser := &JsonParser{}
 		actual, err := parser.Parse(test.input)
+
+		fmt.Println("===============================================================================")
+        printNode(actual, "")
+        fmt.Println("===============================================================================")
 
 		if err != nil && !test.err {
 			t.Errorf("Unexpected error: %s", err)
