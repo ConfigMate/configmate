@@ -1,12 +1,7 @@
 package utils
 
 import (
-	"utils"
 	"testing"
-
-	"github.com/ConfigMate/configmate/parsers"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestColorText(t *testing.T) {
@@ -14,61 +9,61 @@ func TestColorText(t *testing.T) {
     testCases := []struct {
         name     string
         text     string
-        color    utils.StdOutColor
+        color    StdOutColor
         expected string
     }{
         {
-            name:     "Red color",
+            name:     "Red Color",
             text:     "Test Red Color",
-            color:    utils.StdOutColor.Red,
+            color:    Red,
             expected: "\033[31mTest Red Color\033[0m",
         },
         {
-            name:     "Green color",
+            name:     "Green Color",
             text:     "Test Green Color",
-            color:    utils.StdOutColor.Green,
+            color:    Green,
             expected: "\033[32mTest Green Color\033[0m",
         },
 		{
-            name:     "Yellow color",
+            name:     "Yellow Color",
             text:     "Test Yellow Color",
-            color:    utils.StdOutColor.Red,
+            color:    Yellow,
             expected: "\033[33mTest Yellow Color\033[0m",
         },
         {
-            name:     "Blue color",
+            name:     "Blue Color",
             text:     "Test Blue Color",
-            color:    utils.StdOutColor.Green,
+            color:    Blue,
             expected: "\033[34mTest Blue Color\033[0m",
         },
 		{
-            name:     "Purple color",
+            name:     "Purple Color",
             text:     "Test Purple Color",
-            color:    utils.StdOutColor.Red,
+            color:    Purple,
             expected: "\033[35mTest Purple Color\033[0m",
         },
         {
-            name:     "Cyan color",
+            name:     "Cyan Color",
             text:     "Test Cyan Color",
-            color:    utils.StdOutColor.Green,
+            color:    Cyan,
             expected: "\033[36mTest Cyan Color\033[0m",
         },
 		{
-            name:     "Gray color",
+            name:     "Gray Color",
             text:     "Test Gray Color",
-            color:    utils.StdOutColor.Red,
+            color:    Gray,
             expected: "\033[37mTest Gray Color\033[0m",
         },
         {
-            name:     "White color",
+            name:     "White Color",
             text:     "Test White Color",
-            color:    utils.StdOutColor.Green,
+            color:    White,
             expected: "\033[97mTest White Color\033[0m",
         },
     }
 
 	for _, tc := range testCases {
-        result := utils.ColorText(tc.text, tc.color)
+        result := ColorText(tc.text, tc.color)
         if result != tc.expected {
             t.Errorf("ColorText(%s, %s) = %s, want %s", tc.text, tc.color, result, tc.expected)
         }
