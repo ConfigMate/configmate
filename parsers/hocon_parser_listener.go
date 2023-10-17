@@ -29,14 +29,12 @@ func (p *HoconParser) Parse(data []byte) (*Node, error) {
 	lexer := parser_hocon.NewHOCONLexer(input)
 
 	// Attach the error listener to the lexer
-	lexer.RemoveErrorListeners()
 	lexer.AddErrorListener(errorListener)
 
 	tokenStream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	parser := parser_hocon.NewHOCONParser(tokenStream)
 
 	// Attach the error listener to the parser
-	parser.RemoveErrorListeners()
 	parser.AddErrorListener(errorListener)
 
 	tree := parser.Hocon()
