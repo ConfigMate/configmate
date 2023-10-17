@@ -25,28 +25,6 @@ var wrongJSONInput = []byte(`{
 	"features": ["auth", "logs"]
 `)
 
-// Helper method
-func printNode(node *Node, prefix string) {
-	// Print information about the current node
-	fmt.Printf("%s NameLocation: Start Location: %v, End Location: %v\n", prefix, node.NameLocation.Start, node.NameLocation.End)
-	fmt.Printf("%s ValueLocation: Start Location: %v, End Location: %v\n", prefix, node.ValueLocation.Start, node.ValueLocation.End)
-
-	// Determine what to do based on the type of the node
-	switch node.Type {
-	case Object:
-		for k, v := range node.Value.(map[string]*Node) {
-			printNode(v, prefix+"."+k)
-		}
-	case Array:
-		for i, v := range node.Value.([]*Node) {
-			printNode(v, fmt.Sprintf("%s[%d]", prefix, i))
-		}
-	default:
-		// For basic types (string, float, etc.)
-		fmt.Printf("%s Value: %v\n", prefix, node.Value)
-	}
-}
-
 type LocationRange struct {
     Start Location
     End   Location
@@ -146,10 +124,6 @@ func TestSimple_Parse(t *testing.T) {
 		parser := &JsonParser{}
 		actual, err := parser.Parse(test.input)
 
-		fmt.Println("===============================================================================")
-        printNode(actual, "")
-        fmt.Println("===============================================================================")
-
 		if err != nil && !test.err {
 			t.Errorf("Unexpected error: %s", err)
 		} else if err == nil && test.err {
@@ -160,8 +134,8 @@ func TestSimple_Parse(t *testing.T) {
 	}
 }
 
-// TestWrongSyntax_Parse tests the Parse function of a *JsonParser using a wrong json config.
-func TestWrongSyntax_Parse(t *testing.T) {
+// TestSingleError_Parse tests the Parse function of a *JsonParser using a wrong json config.
+func TestSingleError_Parse(t *testing.T) {
 	type testCase struct {
 		input    []byte
 		expected error
