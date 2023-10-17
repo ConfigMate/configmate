@@ -13,24 +13,13 @@ import (
 type JsonParser struct{}
 
 type JsonErrorListener struct {
+	antlr.DefaultErrorListener
 	errors []error
 }
 
 // Error handling
 func (s *JsonErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol interface{}, line, column int, msg string, e antlr.RecognitionException) {
 	s.errors = append(s.errors, fmt.Errorf("line %d:%d %s", line, column, msg))
-}
-
-func (s *JsonErrorListener) ReportAmbiguity(recognizer antlr.Parser, dfa *antlr.DFA, startIndex int, stopIndex int, exact bool, ambigAlts *antlr.BitSet, configs *antlr.ATNConfigSet) {
-    s.errors = append(s.errors, fmt.Errorf("Ambiguity detected between positions %d and %d", startIndex, stopIndex))
-}
-
-func (s *JsonErrorListener) ReportAttemptingFullContext(recognizer antlr.Parser, dfa *antlr.DFA, startIndex int, stopIndex int, conflictingAlts *antlr.BitSet, configs *antlr.ATNConfigSet) {
-    s.errors = append(s.errors, fmt.Errorf("Attempting full context between positions %d and %d", startIndex, stopIndex))
-}
-
-func (s *JsonErrorListener) ReportContextSensitivity(recognizer antlr.Parser, dfa *antlr.DFA, startIndex int, stopIndex int, prediction int, configs *antlr.ATNConfigSet) {
-    s.errors = append(s.errors, fmt.Errorf("Context sensitivity detected between positions %d and %d", startIndex, stopIndex))
 }
 
 // Custom Json Parser
@@ -42,14 +31,12 @@ func (p *JsonParser) Parse(data []byte) (*Node, error) {
 	lexer := parser_json.NewJSONLexer(input)
 
 	// Attach the error listener to the lexer
-	lexer.RemoveErrorListeners()
 	lexer.AddErrorListener(errorListener)
 
 	tokenStream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	parser := parser_json.NewJSONParser(tokenStream)
 
 	// Attach the error listener to the parser
-	parser.RemoveErrorListeners()
 	parser.AddErrorListener(errorListener)
 
 	tree := parser.Json()

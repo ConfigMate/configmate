@@ -18,13 +18,6 @@ var simpleJSONInput = []byte(`{
 		"features": ["auth", "logs"]
 }`)
 
-var wrongJSONInput = []byte(`{
-	"name": "sample",
-	"version": 1.3,
-	"active": true
-	"features": ["auth", "logs"]
-`)
-
 type LocationRange struct {
     Start Location
     End   Location
@@ -136,20 +129,31 @@ func TestSimple_Parse(t *testing.T) {
 
 // TestSingleError_Parse tests the Parse function of a *JsonParser using a wrong json config.
 func TestSingleError_Parse(t *testing.T) {
+	// Input
+	var jsonConfig = []byte(`{
+		"name": "sample",
+		"version": 1.3,
+		"active": true
+		"features": ["auth", "logs"]
+	`)
+
+	// Test cases
 	type testCase struct {
 		input    []byte
 		expected error
 		err      bool
 	}
 
+	// Mock Node result
 	testCases := []testCase{
 		{
-			input:    wrongJSONInput,
-			expected: fmt.Errorf(`Syntax errors: [line 5:1 extraneous input '"features"' expecting {',', '}'} line 5:28 mismatched input ']' expecting ':']`),
+			input:    jsonConfig,
+			expected: fmt.Errorf(`Syntax errors: [line 5:2 extraneous input '"features"' expecting {',', '}'} line 5:29 mismatched input ']' expecting ':']`),
 			err:      true,
 		},
 	}
 
+	// Run tests 
 	for _, test := range testCases {
 		parser := &JsonParser{}
 		_, err := parser.Parse(test.input)
