@@ -13,6 +13,7 @@ import (
 type TomlParser struct{}
 
 type TomlErrorListener struct {
+	antlr.DefaultErrorListener
 	errors []error
 }
 
@@ -20,18 +21,6 @@ type TomlErrorListener struct {
 // Error handling
 func (s *TomlErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol interface{}, line, column int, msg string, e antlr.RecognitionException) {
 	s.errors = append(s.errors, fmt.Errorf("line %d:%d %s", line, column, msg))
-}
-
-func (s *TomlErrorListener) ReportAmbiguity(recognizer antlr.Parser, dfa *antlr.DFA, startIndex int, stopIndex int, exact bool, ambigAlts *antlr.BitSet, configs *antlr.ATNConfigSet) {
-    s.errors = append(s.errors, fmt.Errorf("Ambiguity detected between positions %d and %d", startIndex, stopIndex))
-}
-
-func (s *TomlErrorListener) ReportAttemptingFullContext(recognizer antlr.Parser, dfa *antlr.DFA, startIndex int, stopIndex int, conflictingAlts *antlr.BitSet, configs *antlr.ATNConfigSet) {
-    s.errors = append(s.errors, fmt.Errorf("Attempting full context between positions %d and %d", startIndex, stopIndex))
-}
-
-func (s *TomlErrorListener) ReportContextSensitivity(recognizer antlr.Parser, dfa *antlr.DFA, startIndex int, stopIndex int, prediction int, configs *antlr.ATNConfigSet) {
-    s.errors = append(s.errors, fmt.Errorf("Context sensitivity detected between positions %d and %d", startIndex, stopIndex))
 }
 
 
@@ -44,14 +33,12 @@ func (p *TomlParser) Parse(data []byte) (*Node, error) {
 	lexer := parser_toml.NewTOMLLexer(input)
 
 	// Attach the error listener to the lexer
-	lexer.RemoveErrorListeners()
 	lexer.AddErrorListener(errorListener)
 
 	tokenStream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	parser := parser_toml.NewTOMLParser(tokenStream)
 
 	// Attach the error listener to the parser
-	parser.RemoveErrorListeners()
 	parser.AddErrorListener(errorListener)
 
 	tree := parser.Toml()
