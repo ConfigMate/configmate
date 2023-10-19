@@ -72,12 +72,6 @@ func (l *HoconParserListener) ExitKey(ctx *parser_hocon.KeyContext) {
 	fmt.Println("KEY", ctx.Path().GetText())
 }
 
-// EnterHocon is called when production hocon is entered.
-func (l *HoconParserListener) EnterHocon(ctx *parser_hocon.HoconContext) {}
-
-// ExitHocon is called when production hocon is exited.
-func (l *HoconParserListener) ExitHocon(ctx *parser_hocon.HoconContext) {}
-
 // EnterObj is called when production obj is entered.
 func (l *HoconParserListener) EnterObj(ctx *parser_hocon.ObjContext) {}
 
