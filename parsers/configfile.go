@@ -13,20 +13,21 @@ type Node struct {
 	ArrayType FieldType   // Type of elements in array (if Type == Array)
 	Value     interface{} // Value of field
 
-	NameLocation struct { // Location of field name in configuration file
-		Start Location
-		End   Location
-	}
-	ValueLocation struct { // Location of field value in configuration file
-		Start Location
-		End   Location
-	}
+	NameLocation  TokenLocation // Location of field name in the file
+	ValueLocation TokenLocation // Location of field value in the file
 }
 
-// Location is the location of a field in a configuration file.
-type Location struct {
-	Line   int
-	Column int
+// CharLocation is the location of a character file.
+type CharLocation struct {
+	Line   int `json:"line"`
+	Column int `json:"column"`
+}
+
+// TokenLocation is the location of a token in a file. It is made
+// from the locations of the start and end character in the token.
+type TokenLocation struct {
+	Start CharLocation `json:"start"`
+	End   CharLocation `json:"end"`
 }
 
 // FieldType is the type of a field in a configuration file.
