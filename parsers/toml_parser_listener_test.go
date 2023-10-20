@@ -8,7 +8,7 @@ import (
 // TestSimple_Toml_Parse tests the Parse function of a *TomlParser using a simple toml config.
 func TestSimple_Toml_Parse(t *testing.T) {
 	// Input
-	var simpleTOMLInput = []byte(`
+	var tomlConfig = []byte(`
 		[server]
 		host = "localhost"
 
@@ -20,7 +20,7 @@ func TestSimple_Toml_Parse(t *testing.T) {
 		password = "mypassword"
 	`)
 
-	// Test cases
+	// Test case
 	type testCase struct {
 		input    []byte
 		expected error
@@ -30,13 +30,13 @@ func TestSimple_Toml_Parse(t *testing.T) {
 	// Mock Node result
 	testCases := []testCase{
 		{
-			input:    simpleTOMLInput,
+			input:    tomlConfig,
 			expected: nil,
 			err:      false,
 		},
 	}
 
-	// Run tests
+	// Run test cases
 	for _, test := range testCases {
 		parser := &TomlParser{}
 		_, err := parser.Parse(test.input)
