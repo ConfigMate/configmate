@@ -213,63 +213,54 @@ func (l *JsonParserListener) EnterNumber(ctx *parser_json.NumberContext) {
 		}
 	}
 
-	if l.configFile == nil && l.stack.Len() == 0 { // The only value in the config file
-		// Create new node for pair. The type will be set in Enter<Value>
+	// Create holder to store the node where the location information
+	// of the number value should be stored
+	var locationInfoDest *Node
+	if l.configFile == nil { // This number is the top level entity
+		// Create new node for number
 		node := &Node{Type: numberType, Value: value}
 
-		// Set config file to point to this string
+		// Set config file to point to this number
 		l.configFile = node
 
 		// Push object node to stack
 		l.stack.Push(node)
 
-		// Add location information of the pair key
-		node.NameLocation.Start.Line = ctx.GetStart().GetLine()
-		node.NameLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+		// Set location destination to the newly created node
+		locationInfoDest = node
+
+	} else if l.getTOS().Type == Null { // Is the value of a pair
+		// Set pair node to correct type
+		l.getTOS().Type = numberType
+
+		// Create value for number
+		l.getTOS().Value = value
+
+		// Set location destination to the pair node
+		locationInfoDest = l.getTOS()
+
+	} else if l.getTOS().Type == Array { // Is an element of an array
+		// Create new node for number
+		node := &Node{Type: numberType, Value: value}
+
+		// Add number node to array
+		l.getTOS().Value = append(l.getTOSArray(), node)
+
+		// Set array type to numberType. This might be incorrect in
+		// the case of mixed arrays, but it's the best we can do.
+		l.getTOS().ArrayType = numberType
+
+		// Set location destination to the newly created node
+		locationInfoDest = node
 
 	} else {
-		// Create holder to store the node where the location information
-		// of the number value should be stored
-		locationInfoDest := l.getTOS()
-		if l.configFile == nil { // This number is the top level entity
-			// Create new node for number
-			node := &Node{Type: numberType, Value: value}
-
-			// Set config file to point to this number
-			l.configFile = node
-
-			// Set location destination to the newly created node
-			locationInfoDest = node
-
-		} else if l.getTOS().Type == Null { // Is the value of a pair
-			// Set pair node to correct type
-			l.getTOS().Type = numberType
-
-			// Create value for number
-			l.getTOS().Value = value
-
-		} else if l.getTOS().Type == Array { // Is an element of an array
-			// Create new node for number
-			node := &Node{Type: numberType, Value: value}
-
-			// Add number node to array
-			l.getTOS().Value = append(l.getTOSArray(), node)
-
-			// Set array type to numberType. This might be incorrect in
-			// the case of mixed arrays, but it's the best we can do.
-			l.getTOS().ArrayType = numberType
-
-			// Set location destination to the newly created node
-			locationInfoDest = node
-
-		} else {
-			panic("Invalid state")
-		}
-
-		// Add location information of the number value
-		locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
-		locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+		panic("Invalid state")
 	}
+
+	// Add location information of the number value
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+
 }
 
 func (l *JsonParserListener) ExitNumber(ctx *parser_json.NumberContext) {
@@ -282,8 +273,11 @@ func (l *JsonParserListener) EnterString(ctx *parser_json.StringContext) {
 	// Get value
 	value := removeQuotes(ctx.STRING().GetText())
 
-	if l.configFile == nil && l.stack.Len() == 0 { // The only value in the config file
-		// Create new node for pair. The type will be set in Enter<Value>
+	// Create holder to store the node where the location information
+	// of the string value should be stored
+	var locationInfoDest *Node
+	if l.configFile == nil { // This string is the top level entity
+		// Create new node for string
 		node := &Node{Type: String, Value: value}
 
 		// Set config file to point to this string
@@ -292,53 +286,40 @@ func (l *JsonParserListener) EnterString(ctx *parser_json.StringContext) {
 		// Push object node to stack
 		l.stack.Push(node)
 
-		// Add location information of the pair key
-		node.NameLocation.Start.Line = ctx.GetStart().GetLine()
-		node.NameLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+		// Set location destination to the newly created node
+		locationInfoDest = node
+
+	} else if l.getTOS().Type == Null { // Is the value of a pair
+		// Set pair node to correct type
+		l.getTOS().Type = String
+
+		// Set value for string
+		l.getTOS().Value = value
+
+		// Set location destination to the pair node
+		locationInfoDest = l.getTOS()
+
+	} else if l.getTOS().Type == Array { // Is an element of an array
+		// Create new node for string
+		node := &Node{Type: String, Value: value}
+
+		// Add string node to array
+		l.getTOS().Value = append(l.getTOSArray(), node)
+
+		// Set array type to string. This might be incorrect in
+		// the case of mixed arrays, but it's the best we can do.
+		l.getTOS().ArrayType = String
+
+		// Set location destination to the newly created node
+		locationInfoDest = node
 
 	} else {
-		// Create holder to store the node where the location information
-		// of the string value should be stored
-		locationInfoDest := l.getTOS()
-		if l.configFile == nil { // This string is the top level entity
-			// Create new node for string
-			node := &Node{Type: String, Value: value}
-
-			// Set config file to point to this string
-			l.configFile = node
-
-			// Set location destination to the newly created node
-			locationInfoDest = node
-
-		} else if l.getTOS().Type == Null { // Is the value of a pair
-			// Set pair node to correct type
-			l.getTOS().Type = String
-
-			// Set value for string
-			l.getTOS().Value = value
-
-		} else if l.getTOS().Type == Array { // Is an element of an array
-			// Create new node for string
-			node := &Node{Type: String, Value: value}
-
-			// Add string node to array
-			l.getTOS().Value = append(l.getTOSArray(), node)
-
-			// Set array type to string. This might be incorrect in
-			// the case of mixed arrays, but it's the best we can do.
-			l.getTOS().ArrayType = String
-
-			// Set location destination to the newly created node
-			locationInfoDest = node
-
-		} else {
-			panic("Invalid state")
-		}
-
-		// Add location information of the string value
-		locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
-		locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+		panic("Invalid state")
 	}
+
+	// Add location information of the string value
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) ExitString(ctx *parser_json.StringContext) {
@@ -348,63 +329,55 @@ func (l *JsonParserListener) ExitString(ctx *parser_json.StringContext) {
 }
 
 func (l *JsonParserListener) EnterBooleanTrue(ctx *parser_json.BooleanTrueContext) {
-	if l.configFile == nil && l.stack.Len() == 0 { // The only value in the config file
-		// Create new node for pair. The type will be set in Enter<Value>
+
+	// Create holder to store the node where the location information
+	// of the boolean value should be stored
+	var locationInfoDest *Node
+	if l.configFile == nil { // This boolean is the top level entity
+		// Create new node for boolean
 		node := &Node{Type: Bool, Value: true}
 
-		// Set config file to point to this string
+		// Set config file to point to this boolean
 		l.configFile = node
 
 		// Push object node to stack
 		l.stack.Push(node)
 
-		// Add location information of the pair key
-		node.NameLocation.Start.Line = ctx.GetStart().GetLine()
-		node.NameLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+		// Set location destination to the newly created node
+		locationInfoDest = node
+
+	} else if l.getTOS().Type == Null { // Is the value of a pair
+		// Set pair node to correct type
+		l.getTOS().Type = Bool
+
+		// Set value for boolean
+		l.getTOS().Value = true
+
+		// Set location destination to the pair node
+		locationInfoDest = l.getTOS()
+
+	} else if l.getTOS().Type == Array { // Is an element of an array
+		// Create new node for boolean
+		node := &Node{Type: Bool, Value: true}
+
+		// Add boolean node to array
+		l.getTOS().Value = append(l.getTOSArray(), node)
+
+		// Set array type to bool. This might be incorrect in
+		// the case of mixed arrays, but it's the best we can do.
+		l.getTOS().ArrayType = Bool
+
+		// Set location destination to the newly created node
+		locationInfoDest = node
 
 	} else {
-		// Create holder to store the node where the location information
-		// of the boolean value should be stored
-		locationInfoDest := l.getTOS()
-		if l.configFile == nil { // This boolean is the top level entity
-			// Create new node for boolean
-			node := &Node{Type: Bool, Value: true}
-
-			// Set config file to point to this boolean
-			l.configFile = node
-
-			// Set location destination to the newly created node
-			locationInfoDest = node
-
-		} else if l.getTOS().Type == Null { // Is the value of a pair
-			// Set pair node to correct type
-			l.getTOS().Type = Bool
-
-			// Set value for boolean
-			l.getTOS().Value = true
-
-		} else if l.getTOS().Type == Array { // Is an element of an array
-			// Create new node for boolean
-			node := &Node{Type: Bool, Value: true}
-
-			// Add boolean node to array
-			l.getTOS().Value = append(l.getTOSArray(), node)
-
-			// Set array type to bool. This might be incorrect in
-			// the case of mixed arrays, but it's the best we can do.
-			l.getTOS().ArrayType = Bool
-
-			// Set location destination to the newly created node
-			locationInfoDest = node
-
-		} else {
-			panic("Invalid state")
-		}
-
-		// Add location information of the boolean value
-		locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
-		locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+		panic("Invalid state")
 	}
+
+	// Add location information of the boolean value
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+
 }
 
 func (l *JsonParserListener) ExitBooleanTrue(ctx *parser_json.BooleanTrueContext) {
@@ -414,63 +387,55 @@ func (l *JsonParserListener) ExitBooleanTrue(ctx *parser_json.BooleanTrueContext
 }
 
 func (l *JsonParserListener) EnterBooleanFalse(ctx *parser_json.BooleanFalseContext) {
-	if l.configFile == nil && l.stack.Len() == 0 { // The only value in the config file
-		// Create new node for pair. The type will be set in Enter<Value>
+
+	// Create holder to store the node where the location information
+	// of the boolean value should be stored
+	var locationInfoDest *Node
+	if l.configFile == nil { // This boolean is the top level entity
+		// Create new node for boolean
 		node := &Node{Type: Bool, Value: false}
 
-		// Set config file to point to this string
+		// Set config file to point to this boolean
 		l.configFile = node
 
 		// Push object node to stack
 		l.stack.Push(node)
 
-		// Add location information of the pair key
-		node.NameLocation.Start.Line = ctx.GetStart().GetLine()
-		node.NameLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+		// Set location destination to the newly created node
+		locationInfoDest = node
+
+	} else if l.getTOS().Type == Null { // Is the value of a pair
+		// Set pair node to correct type
+		l.getTOS().Type = Bool
+
+		// Set value for boolean
+		l.getTOS().Value = false
+
+		// Set location destination to the pair node
+		locationInfoDest = l.getTOS()
+
+	} else if l.getTOS().Type == Array { // Is an element of an array
+		// Create new node for boolean
+		node := &Node{Type: Bool, Value: false}
+
+		// Add boolean node to array
+		l.getTOS().Value = append(l.getTOSArray(), node)
+
+		// Set array type to bool. This might be incorrect in
+		// the case of mixed arrays, but it's the best we can do.
+		l.getTOS().ArrayType = Bool
+
+		// Set location destination to the newly created node
+		locationInfoDest = node
 
 	} else {
-		// Create holder to store the node where the location information
-		// of the boolean value should be stored
-		locationInfoDest := l.getTOS()
-		if l.configFile == nil { // This boolean is the top level entity
-			// Create new node for boolean
-			node := &Node{Type: Bool, Value: false}
-
-			// Set config file to point to this boolean
-			l.configFile = node
-
-			// Set location destination to the newly created node
-			locationInfoDest = node
-
-		} else if l.getTOS().Type == Null { // Is the value of a pair
-			// Set pair node to correct type
-			l.getTOS().Type = Bool
-
-			// Set value for boolean
-			l.getTOS().Value = false
-
-		} else if l.getTOS().Type == Array { // Is an element of an array
-			// Create new node for boolean
-			node := &Node{Type: Bool, Value: false}
-
-			// Add boolean node to array
-			l.getTOS().Value = append(l.getTOSArray(), node)
-
-			// Set array type to bool. This might be incorrect in
-			// the case of mixed arrays, but it's the best we can do.
-			l.getTOS().ArrayType = Bool
-
-			// Set location destination to the newly created node
-			locationInfoDest = node
-
-		} else {
-			panic("Invalid state")
-		}
-
-		// Add location information of the boolean value
-		locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
-		locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+		panic("Invalid state")
 	}
+
+	// Add location information of the boolean value
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+
 }
 
 func (l *JsonParserListener) ExitBooleanFalse(ctx *parser_json.BooleanFalseContext) {
@@ -480,63 +445,55 @@ func (l *JsonParserListener) ExitBooleanFalse(ctx *parser_json.BooleanFalseConte
 }
 
 func (l *JsonParserListener) EnterNull(ctx *parser_json.NullContext) {
-	if l.configFile == nil && l.stack.Len() == 0 { // The only value in the config file
-		// Create new node for pair. The type will be set in Enter<Value>
+
+	// Create holder to store the node where the location information
+	// of the null value should be stored
+	var locationInfoDest *Node
+	if l.configFile == nil { // This null is the top level entity
+		// Create new node for null
 		node := &Node{Type: Null, Value: nil}
 
-		// Set config file to point to this string
+		// Set config file to point to this null
 		l.configFile = node
 
 		// Push object node to stack
 		l.stack.Push(node)
 
-		// Add location information of the pair key
-		node.NameLocation.Start.Line = ctx.GetStart().GetLine()
-		node.NameLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+		// Set location destination to the newly created node
+		locationInfoDest = node
+
+	} else if l.getTOS().Type == Null { // Is the value of a pair
+		// Set pair node to correct type
+		l.getTOS().Type = Null
+
+		// Set value for null
+		l.getTOS().Value = nil
+
+		// Set location destination to the pair node
+		locationInfoDest = l.getTOS()
+
+	} else if l.getTOS().Type == Array { // Is an element of an array
+		// Create new node for null
+		node := &Node{Type: Null, Value: nil}
+
+		// Add null node to array
+		l.getTOS().Value = append(l.getTOSArray(), node)
+
+		// Set array type to null. This might be incorrect in
+		// the case of mixed arrays, but it's the best we can do.
+		l.getTOS().ArrayType = Null
+
+		// Set location destination to the newly created node
+		locationInfoDest = node
 
 	} else {
-		// Create holder to store the node where the location information
-		// of the null value should be stored
-		locationInfoDest := l.getTOS()
-		if l.configFile == nil { // This null is the top level entity
-			// Create new node for null
-			node := &Node{Type: Null, Value: nil}
-
-			// Set config file to point to this null
-			l.configFile = node
-
-			// Set location destination to the newly created node
-			locationInfoDest = node
-
-		} else if l.getTOS().Type == Null { // Is the value of a pair
-			// Set pair node to correct type
-			l.getTOS().Type = Null
-
-			// Set value for null
-			l.getTOS().Value = nil
-
-		} else if l.getTOS().Type == Array { // Is an element of an array
-			// Create new node for null
-			node := &Node{Type: Null, Value: nil}
-
-			// Add null node to array
-			l.getTOS().Value = append(l.getTOSArray(), node)
-
-			// Set array type to null. This might be incorrect in
-			// the case of mixed arrays, but it's the best we can do.
-			l.getTOS().ArrayType = Null
-
-			// Set location destination to the newly created node
-			locationInfoDest = node
-
-		} else {
-			panic("Invalid state")
-		}
-
-		// Add location information of the null value
-		locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
-		locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+		panic("Invalid state")
 	}
+
+	// Add location information of the null value
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+
 }
 
 func (l *JsonParserListener) ExitNull(ctx *parser_json.NullContext) {

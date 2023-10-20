@@ -275,8 +275,8 @@ func TestSingleString_Json_Parse(t *testing.T) {
 	expectedNode := &Node{
 		Type:          String,
 		Value:         "sample",
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 1, Column: 1}},
+		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 1}},
 	}
 
 	testCases := []testCase{
@@ -318,8 +318,8 @@ func TestSingleIntNumber_Json_Parse(t *testing.T) {
 	expectedNode := &Node{
 		Type:          Int,
 		Value:         12345,
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 1, Column: 1}},
+		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 1}},
 	}
 
 	testCases := []testCase{
@@ -361,8 +361,8 @@ func TestSingleFloatNumber_Json_Parse(t *testing.T) {
 	expectedNode := &Node{
 		Type:          Float,
 		Value:         123.45,
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 1, Column: 1}},
+		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 1}},
 	}
 
 	testCases := []testCase{
@@ -404,8 +404,8 @@ func TestSingleTrueBool_Json_Parse(t *testing.T) {
 	expectedNode := &Node{
 		Type:          Bool,
 		Value:         true,
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 1, Column: 1}},
+		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 1}},
 	}
 
 	testCases := []testCase{
@@ -447,8 +447,8 @@ func TestSingleFalseBool_Json_Parse(t *testing.T) {
 	expectedNode := &Node{
 		Type:          Bool,
 		Value:         false,
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 1, Column: 1}},
+		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 1}},
 	}
 
 	testCases := []testCase{
@@ -490,8 +490,8 @@ func TestSingleNull_Json_Parse(t *testing.T) {
 	expectedNode := &Node{
 		Type:          Null,
 		Value:         nil,
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 1, Column: 1}},
+		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 1}},
 	}
 
 	testCases := []testCase{
