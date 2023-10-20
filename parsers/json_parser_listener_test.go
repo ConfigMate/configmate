@@ -1,9 +1,9 @@
 package parsers
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
-	"fmt"
 )
 
 var simpleJSONInput = []byte(`{
@@ -17,11 +17,6 @@ var simpleJSONInput = []byte(`{
 		},
 		"features": ["auth", "logs"]
 }`)
-
-type LocationRange struct {
-    Start Location
-    End   Location
-}
 
 // TestSimple_Parse tests the Parse function of a *JsonParser using a simple json config.
 func TestSimple_Parse(t *testing.T) {
@@ -37,78 +32,78 @@ func TestSimple_Parse(t *testing.T) {
 		Type: Object,
 		Value: map[string]*Node{
 			"name": {
-				Type: String,
-				Value: "sample",
-				NameLocation: LocationRange{Start: Location{Line: 2, Column: 3}, End: Location{Line: 2, Column: 11}},
-				ValueLocation: LocationRange{Start: Location{Line: 2, Column: 11}, End: Location{Line: 2, Column: 11}},
+				Type:          String,
+				Value:         "sample",
+				NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 3}, End: CharLocation{Line: 2, Column: 11}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 11}, End: CharLocation{Line: 2, Column: 11}},
 			},
 			"version": {
-				Type: Float,
-				Value: 1.3,
-				NameLocation: LocationRange{Start: Location{Line: 3, Column: 3}, End: Location{Line: 3, Column: 14}},
-				ValueLocation: LocationRange{Start: Location{Line: 3, Column: 14}, End: Location{Line: 3, Column: 14}},
+				Type:          Float,
+				Value:         1.3,
+				NameLocation:  TokenLocation{Start: CharLocation{Line: 3, Column: 3}, End: CharLocation{Line: 3, Column: 14}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 3, Column: 14}, End: CharLocation{Line: 3, Column: 14}},
 			},
 			"active": {
-				Type: Bool,
-				Value: true,
-				NameLocation: LocationRange{Start: Location{Line: 4, Column: 3}, End: Location{Line: 4, Column: 13}},
-				ValueLocation: LocationRange{Start: Location{Line: 4, Column: 13}, End: Location{Line: 4, Column: 13}},
+				Type:          Bool,
+				Value:         true,
+				NameLocation:  TokenLocation{Start: CharLocation{Line: 4, Column: 3}, End: CharLocation{Line: 4, Column: 13}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 4, Column: 13}, End: CharLocation{Line: 4, Column: 13}},
 			},
 			"settings": {
 				Type: Object,
 				Value: map[string]*Node{
 					"theme": {
-						Type: String,
-						Value: "dark",
-						NameLocation: LocationRange{Start: Location{Line: 6, Column: 4}, End: Location{Line: 6, Column: 13}},
-						ValueLocation: LocationRange{Start: Location{Line: 6, Column: 13}, End: Location{Line: 6, Column: 13}},
+						Type:          String,
+						Value:         "dark",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 6, Column: 4}, End: CharLocation{Line: 6, Column: 13}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 6, Column: 13}, End: CharLocation{Line: 6, Column: 13}},
 					},
 					"notifications": {
-						Type: Null,
-						Value: nil,
-						NameLocation: LocationRange{Start: Location{Line: 7, Column: 4}, End: Location{Line: 7, Column: 21}},
-						ValueLocation: LocationRange{Start: Location{Line: 7, Column: 21}, End: Location{Line: 7, Column: 21}},
+						Type:          Null,
+						Value:         nil,
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 7, Column: 4}, End: CharLocation{Line: 7, Column: 21}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 7, Column: 21}, End: CharLocation{Line: 7, Column: 21}},
 					},
 					"retryCount": {
-						Type: Int,
-						Value: 3,
-						NameLocation: LocationRange{Start: Location{Line: 8, Column: 4}, End: Location{Line: 8, Column: 18}},
-						ValueLocation: LocationRange{Start: Location{Line: 8, Column: 18}, End: Location{Line: 8, Column: 18}},
+						Type:          Int,
+						Value:         3,
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 8, Column: 4}, End: CharLocation{Line: 8, Column: 18}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 8, Column: 18}, End: CharLocation{Line: 8, Column: 18}},
 					},
 				},
-				NameLocation: LocationRange{Start: Location{Line: 5, Column: 3}, End: Location{Line: 9, Column: 3}},
-				ValueLocation: LocationRange{Start: Location{Line: 5, Column: 15}, End: Location{Line: 9, Column: 3}},
+				NameLocation:  TokenLocation{Start: CharLocation{Line: 5, Column: 3}, End: CharLocation{Line: 9, Column: 3}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 5, Column: 15}, End: CharLocation{Line: 9, Column: 3}},
 			},
 			"features": {
 				Type:      Array,
 				ArrayType: String,
-				Value:     []*Node{
+				Value: []*Node{
 					{
-						Type: String,
-						Value: "auth",
-						NameLocation: LocationRange{Start: Location{Line: 0, Column: 0}, End: Location{Line: 0, Column: 0}},
-						ValueLocation: LocationRange{Start: Location{Line: 10, Column: 16}, End: Location{Line: 0, Column: 0}},
+						Type:          String,
+						Value:         "auth",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 10, Column: 16}, End: CharLocation{Line: 0, Column: 0}},
 					},
 					{
-						Type: String,
-						Value: "logs",
-						NameLocation: LocationRange{Start: Location{Line: 0, Column: 0}, End: Location{Line: 0, Column: 0}},
-						ValueLocation: LocationRange{Start: Location{Line: 10, Column: 24}, End: Location{Line: 0, Column: 0}},
+						Type:          String,
+						Value:         "logs",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 10, Column: 24}, End: CharLocation{Line: 0, Column: 0}},
 					},
 				},
-				NameLocation: LocationRange{Start: Location{Line: 10, Column: 3}, End: Location{Line: 10, Column: 30}},
-				ValueLocation: LocationRange{Start: Location{Line: 10, Column: 15}, End: Location{Line: 10, Column: 30}},
+				NameLocation:  TokenLocation{Start: CharLocation{Line: 10, Column: 3}, End: CharLocation{Line: 10, Column: 30}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 10, Column: 15}, End: CharLocation{Line: 10, Column: 30}},
 			},
 		},
-		NameLocation: LocationRange{Start: Location{Line: 0, Column: 0}, End: Location{Line: 0, Column: 0}},
-		ValueLocation: LocationRange{Start: Location{Line: 1, Column: 1}, End: Location{Line: 11, Column: 1}},
-	}	
+		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 11, Column: 1}},
+	}
 
 	testCases := []testCase{
 		{
-			input: simpleJSONInput,
+			input:    simpleJSONInput,
 			expected: expectedNode,
-			err: false,
+			err:      false,
 		},
 	}
 
@@ -148,12 +143,12 @@ func TestSingleError_Parse(t *testing.T) {
 	testCases := []testCase{
 		{
 			input:    jsonConfig,
-			expected: fmt.Errorf(`Syntax errors: [line 5:2 extraneous input '"features"' expecting {',', '}'} line 5:29 mismatched input ']' expecting ':']`),
+			expected: fmt.Errorf(`syntax errors: [line 5:2 extraneous input '"features"' expecting {',', '}'} line 5:29 mismatched input ']' expecting ':']`),
 			err:      true,
 		},
 	}
 
-	// Run tests 
+	// Run tests
 	for _, test := range testCases {
 		parser := &JsonParser{}
 		_, err := parser.Parse(test.input)

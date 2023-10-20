@@ -62,7 +62,8 @@ jobs:
       - name: Test
         run: |
           go test ./... -coverprofile coverage.out -covermode count
-          go tool cover -func coverage.out
+          grep -v "_mocks.go" coverage.out > filtered_coverage.out
+          go tool cover -func filtered_coverage.out
 
       - name: Test Coverage
         env:

@@ -1,9 +1,9 @@
 package parsers
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
-	"fmt"
 
 	parser_json "github.com/ConfigMate/configmate/parsers/gen/parser_json/parsers/grammars"
 	"github.com/antlr4-go/antlr/v4"
@@ -43,7 +43,7 @@ func (p *JsonParser) Parse(data []byte) (*Node, error) {
 
 	// Check for errors after parsing
 	if len(errorListener.errors) > 0 {
-		return nil, fmt.Errorf("Syntax errors: %v", errorListener.errors)
+		return nil, fmt.Errorf("syntax errors: %v", errorListener.errors)
 	}
 
 	walker := antlr.NewParseTreeWalker()
@@ -129,7 +129,7 @@ func (l *JsonParserListener) EnterPair(ctx *parser_json.PairContext) {
 
 	// Add location information of the pair key
 	node.NameLocation.Start.Line = ctx.GetStart().GetLine()
-	node.NameLocation.Start.Column = ctx.GetStart().GetColumn()  + 1 // ANTLR count columns from 0 instead of 1
+	node.NameLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) ExitPair(ctx *parser_json.PairContext) {
