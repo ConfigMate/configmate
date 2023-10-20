@@ -1,14 +1,13 @@
 package parsers
 
 import (
-	// "reflect"
-	"testing"
 	"fmt"
+	"testing"
 )
 
 type LocationRange struct {
-    Start Location
-    End   Location
+	Start Location
+	End   Location
 }
 
 // Test_HOCON_Parse tests the Parse function of a *JsonParser using a hocon config.
