@@ -13,6 +13,17 @@ GO_PKG := github.com/ConfigMate/configmate
 GO_DEBUG_FLAGS := -gcflags="all=-N -l"
 GO_FLAGS = -ldflags '-X "main.Version=$(VERSION)" -X "main.BuildDate=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")" -X "main.GitHash=$(shell git rev-parse HEAD)"'
 
+clean: clean_parsers clean_mocks
+	rm -rf bin/
+
+bin/:
+	mkdir bin/
+
+configm: generate_parsers bin/
+	go build $(GO_FLAGS) -o bin/configm$(EXT) $(GO_PKG)
+
+configm_debug: generate_parsers bin/
+	go build $(GO_FLAGS) $(GO_DEBUG_FLAGS) -o "bin/configm$(EXT)" $(GO_PKG)
 
 # Setup the ANTLR parser
 ANTLR_VERSION := 4.13.1
@@ -30,7 +41,7 @@ ANTLR4_CMD = java -jar $(ANTLR4_JAR_OUTPUT_DIR)/antlr-$(ANTLR_VERSION)-complete.
 ANTLR_FLAGS = -Dlanguage=Go
 CLASSPATH = .:$(ANTLR4_JAR_OUTPUT_DIR)/antlr-$(ANTLR_VERSION)-complete.jar:$$CLASSPATH
 
-generate-parsers: ./lib/antlr-*-complete.jar
+generate_parsers: ./lib/antlr-*-complete.jar
 	export CLASSPATH=$(CLASSPATH)
 
 	find $(GRAMMAR_DIR) -name '*.g4' -exec sh -c '\
@@ -41,21 +52,9 @@ generate-parsers: ./lib/antlr-*-complete.jar
 		$(ANTLR4_CMD) $(ANTLR_FLAGS) -package "$$lower_case_package" -o $(ANTLR4_OUTPUT_DIR)/$$lower_case_package "$$file" \
 	' \;
 
-clean-parsers:
+clean_parsers:
 	rm -rf lib/
 	rm -rf parsers/gen/
-
-clean:
-	rm -rf bin/
-
-bin/:
-	mkdir bin/
-
-configm: generate-parsers bin/
-	go build $(GO_FLAGS) -o bin/configm$(EXT) $(GO_PKG)
-
-configm-debug: generate-parsers bin/
-	go build $(GO_FLAGS) $(GO_DEBUG_FLAGS) -o "bin/configm$(EXT)" $(GO_PKG)
 
 ## Testing
 test: mocks

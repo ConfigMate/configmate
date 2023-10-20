@@ -20,10 +20,9 @@ type Result struct {
 }
 
 type TokenLocation struct {
-	File   string `json:"file"`
-	Line   int    `json:"line"`
-	Column int    `json:"column"`
-	Length int    `json:"length"`
+	File  string `json:"file"`
+	Start parsers.Location
+	End   parsers.Location
 }
 
 type AnalyzerImpl struct {

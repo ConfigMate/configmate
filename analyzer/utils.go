@@ -24,10 +24,9 @@ func equalType(nodeType parsers.FieldType, argType CheckArgType) bool {
 // using the ValueLocation of the node.
 func makeValueTokenLocation(fileAlias string, node *parsers.Node) TokenLocation {
 	return TokenLocation{
-		File:   fileAlias,
-		Line:   node.ValueLocation.Line,
-		Column: node.ValueLocation.Column,
-		Length: node.ValueLocation.Length,
+		File:  fileAlias,
+		Start: node.ValueLocation.Start,
+		End:   node.ValueLocation.End,
 	}
 }
 
@@ -35,10 +34,9 @@ func makeValueTokenLocation(fileAlias string, node *parsers.Node) TokenLocation 
 // using the NameLocation of the node.
 func makeNameTokenLocation(fileAlias string, node *parsers.Node) TokenLocation {
 	return TokenLocation{
-		File:   fileAlias,
-		Line:   node.NameLocation.Line,
-		Column: node.NameLocation.Column,
-		Length: node.NameLocation.Length,
+		File:  fileAlias,
+		Start: node.NameLocation.Start,
+		End:   node.NameLocation.End,
 	}
 }
 
@@ -46,9 +44,8 @@ func makeNameTokenLocation(fileAlias string, node *parsers.Node) TokenLocation {
 // line, column or length information; it sets them all to 0.
 func makeTOFTokenLocation(fileAlias string) TokenLocation {
 	return TokenLocation{
-		File:   fileAlias,
-		Line:   0,
-		Column: 0,
-		Length: 0,
+		File:  fileAlias,
+		Start: parsers.Location{Line: 0, Column: 0},
+		End:   parsers.Location{Line: 0, Column: 0},
 	}
 }
