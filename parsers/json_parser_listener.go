@@ -215,7 +215,7 @@ func (l *JsonParserListener) EnterNumber(ctx *parser_json.NumberContext) {
 
 	// Create holder to store the node where the location information
 	// of the number value should be stored
-	locationInfoDest := l.getTOS()
+	var locationInfoDest *Node
 	if l.configFile == nil { // This number is the top level entity
 		// Create new node for number
 		node := &Node{Type: numberType, Value: value}
@@ -232,6 +232,9 @@ func (l *JsonParserListener) EnterNumber(ctx *parser_json.NumberContext) {
 
 		// Create value for number
 		l.getTOS().Value = value
+
+		// Set location destination to the pair node
+		locationInfoDest = l.getTOS()
 
 	} else if l.getTOS().Type == Array { // Is an element of an array
 		// Create new node for number
@@ -251,15 +254,13 @@ func (l *JsonParserListener) EnterNumber(ctx *parser_json.NumberContext) {
 		panic("Invalid state")
 	}
 
-	// Add location information of the number value
+	// Add start location information of the string value
 	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
 	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
-}
 
-func (l *JsonParserListener) ExitNumber(ctx *parser_json.NumberContext) {
-	// Add location information of the number value
-	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
-	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+	// Add end location information of the string value
+	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
+	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) EnterString(ctx *parser_json.StringContext) {
@@ -268,7 +269,7 @@ func (l *JsonParserListener) EnterString(ctx *parser_json.StringContext) {
 
 	// Create holder to store the node where the location information
 	// of the string value should be stored
-	locationInfoDest := l.getTOS()
+	var locationInfoDest *Node
 	if l.configFile == nil { // This string is the top level entity
 		// Create new node for string
 		node := &Node{Type: String, Value: value}
@@ -285,6 +286,9 @@ func (l *JsonParserListener) EnterString(ctx *parser_json.StringContext) {
 
 		// Set value for string
 		l.getTOS().Value = value
+
+		// Set location destination to the pair node
+		locationInfoDest = l.getTOS()
 
 	} else if l.getTOS().Type == Array { // Is an element of an array
 		// Create new node for string
@@ -304,21 +308,20 @@ func (l *JsonParserListener) EnterString(ctx *parser_json.StringContext) {
 		panic("Invalid state")
 	}
 
-	// Add location information of the string value
+	// Add start location information of the string value
 	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
 	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
-}
 
-func (l *JsonParserListener) ExitString(ctx *parser_json.StringContext) {
-	// Add location information of the string value
-	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
-	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+	// Add end location information of the string value
+	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
+	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) EnterBooleanTrue(ctx *parser_json.BooleanTrueContext) {
+
 	// Create holder to store the node where the location information
 	// of the boolean value should be stored
-	locationInfoDest := l.getTOS()
+	var locationInfoDest *Node
 	if l.configFile == nil { // This boolean is the top level entity
 		// Create new node for boolean
 		node := &Node{Type: Bool, Value: true}
@@ -336,6 +339,9 @@ func (l *JsonParserListener) EnterBooleanTrue(ctx *parser_json.BooleanTrueContex
 		// Set value for boolean
 		l.getTOS().Value = true
 
+		// Set location destination to the pair node
+		locationInfoDest = l.getTOS()
+
 	} else if l.getTOS().Type == Array { // Is an element of an array
 		// Create new node for boolean
 		node := &Node{Type: Bool, Value: true}
@@ -354,21 +360,20 @@ func (l *JsonParserListener) EnterBooleanTrue(ctx *parser_json.BooleanTrueContex
 		panic("Invalid state")
 	}
 
-	// Add location information of the boolean value
+	// Add start location information of the string value
 	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
 	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
-}
 
-func (l *JsonParserListener) ExitBooleanTrue(ctx *parser_json.BooleanTrueContext) {
-	// Add location information of the string value
-	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
-	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+	// Add end location information of the string value
+	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
+	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) EnterBooleanFalse(ctx *parser_json.BooleanFalseContext) {
+
 	// Create holder to store the node where the location information
 	// of the boolean value should be stored
-	locationInfoDest := l.getTOS()
+	var locationInfoDest *Node
 	if l.configFile == nil { // This boolean is the top level entity
 		// Create new node for boolean
 		node := &Node{Type: Bool, Value: false}
@@ -385,6 +390,9 @@ func (l *JsonParserListener) EnterBooleanFalse(ctx *parser_json.BooleanFalseCont
 
 		// Set value for boolean
 		l.getTOS().Value = false
+
+		// Set location destination to the pair node
+		locationInfoDest = l.getTOS()
 
 	} else if l.getTOS().Type == Array { // Is an element of an array
 		// Create new node for boolean
@@ -404,21 +412,20 @@ func (l *JsonParserListener) EnterBooleanFalse(ctx *parser_json.BooleanFalseCont
 		panic("Invalid state")
 	}
 
-	// Add location information of the boolean value
+	// Add start location information of the string value
 	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
 	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
-}
 
-func (l *JsonParserListener) ExitBooleanFalse(ctx *parser_json.BooleanFalseContext) {
-	// Add location information of the string value
-	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
-	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+	// Add end location information of the string value
+	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
+	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) EnterNull(ctx *parser_json.NullContext) {
+
 	// Create holder to store the node where the location information
 	// of the null value should be stored
-	locationInfoDest := l.getTOS()
+	var locationInfoDest *Node
 	if l.configFile == nil { // This null is the top level entity
 		// Create new node for null
 		node := &Node{Type: Null, Value: nil}
@@ -435,6 +442,9 @@ func (l *JsonParserListener) EnterNull(ctx *parser_json.NullContext) {
 
 		// Set value for null
 		l.getTOS().Value = nil
+
+		// Set location destination to the pair node
+		locationInfoDest = l.getTOS()
 
 	} else if l.getTOS().Type == Array { // Is an element of an array
 		// Create new node for null
@@ -454,15 +464,13 @@ func (l *JsonParserListener) EnterNull(ctx *parser_json.NullContext) {
 		panic("Invalid state")
 	}
 
-	// Add location information of the null value
+	// Add start location information of the string value
 	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
 	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
-}
 
-func (l *JsonParserListener) ExitNull(ctx *parser_json.NullContext) {
-	// Add location information of the string value
-	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
-	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+	// Add end location information of the string value
+	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
+	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) getTOS() *Node {
