@@ -57,6 +57,3 @@ type TomlParserListener struct {
 	configFile *Node
 	stack      stack.Stack
 }
-
-// Example of a listener function
-func (l *TomlParserListener) EnterToml(ctx *parser_toml.TomlContext) {}
