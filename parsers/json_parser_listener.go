@@ -3,6 +3,7 @@ package parsers
 import (
 	"strconv"
 	"strings"
+	"fmt"
 
 	parser_json "github.com/ConfigMate/configmate/parsers/gen/parser_json/parsers/grammars"
 	"github.com/antlr4-go/antlr/v4"
@@ -11,15 +12,41 @@ import (
 
 type JsonParser struct{}
 
+type JsonErrorListener struct {
+	antlr.DefaultErrorListener
+	errors []error
+}
+
+// Error handling
+func (s *JsonErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol interface{}, line, column int, msg string, e antlr.RecognitionException) {
+	s.errors = append(s.errors, fmt.Errorf("line %d:%d %s", line, column, msg))
+}
+
+// Custom Json Parser
 func (p *JsonParser) Parse(data []byte) (*Node, error) {
+	// Initialize the error listener
+	errorListener := &JsonErrorListener{}
+
 	input := antlr.NewInputStream(string(data))
 	lexer := parser_json.NewJSONLexer(input)
+
+	// Attach the error listener to the lexer
+	lexer.AddErrorListener(errorListener)
+
 	tokenStream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	parser := parser_json.NewJSONParser(tokenStream)
+
+	// Attach the error listener to the parser
+	parser.AddErrorListener(errorListener)
+
 	tree := parser.Json()
 
-	walker := antlr.NewParseTreeWalker()
+	// Check for errors after parsing
+	if len(errorListener.errors) > 0 {
+		return nil, fmt.Errorf("Syntax errors: %v", errorListener.errors)
+	}
 
+	walker := antlr.NewParseTreeWalker()
 	jsonListener := &JsonParserListener{}
 	walker.Walk(jsonListener, tree)
 
@@ -75,12 +102,15 @@ func (l *JsonParserListener) EnterObj(ctx *parser_json.ObjContext) {
 	}
 
 	// Add location information of the object
-	l.getTOS().ValueLocation.Line = ctx.GetStart().GetLine()
-	l.getTOS().ValueLocation.Column = ctx.GetStart().GetColumn()
-	l.getTOS().ValueLocation.Length = len(ctx.GetText())
+	l.getTOS().ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	l.getTOS().ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) ExitObj(ctx *parser_json.ObjContext) {
+	// Add location information of the object
+	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
+	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+
 	l.stack.Pop()
 }
 
@@ -98,12 +128,15 @@ func (l *JsonParserListener) EnterPair(ctx *parser_json.PairContext) {
 	l.stack.Push(node)
 
 	// Add location information of the pair key
-	node.NameLocation.Line = ctx.GetStart().GetLine()
-	node.NameLocation.Column = ctx.GetStart().GetColumn()
-	node.NameLocation.Length = len(ctx.STRING().GetText())
+	node.NameLocation.Start.Line = ctx.GetStart().GetLine()
+	node.NameLocation.Start.Column = ctx.GetStart().GetColumn()  + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) ExitPair(ctx *parser_json.PairContext) {
+	// Add location information of the pair key
+	l.getTOS().NameLocation.End.Line = ctx.GetStop().GetLine()
+	l.getTOS().NameLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+
 	l.stack.Pop()
 }
 
@@ -149,12 +182,15 @@ func (l *JsonParserListener) EnterArr(ctx *parser_json.ArrContext) {
 	}
 
 	// Add location information of the array
-	l.getTOS().ValueLocation.Line = ctx.GetStart().GetLine()
-	l.getTOS().ValueLocation.Column = ctx.GetStart().GetColumn()
-	l.getTOS().ValueLocation.Length = len(ctx.GetText())
+	l.getTOS().ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	l.getTOS().ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) ExitArr(ctx *parser_json.ArrContext) {
+	// Add location information of the array
+	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
+	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+
 	l.stack.Pop()
 }
 
@@ -216,9 +252,14 @@ func (l *JsonParserListener) EnterNumber(ctx *parser_json.NumberContext) {
 	}
 
 	// Add location information of the number value
-	locationInfoDest.ValueLocation.Line = ctx.GetStart().GetLine()
-	locationInfoDest.ValueLocation.Column = ctx.GetStart().GetColumn()
-	locationInfoDest.ValueLocation.Length = len(ctx.NUMBER().GetText())
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+}
+
+func (l *JsonParserListener) ExitNumber(ctx *parser_json.NumberContext) {
+	// Add location information of the number value
+	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
+	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) EnterString(ctx *parser_json.StringContext) {
@@ -264,9 +305,14 @@ func (l *JsonParserListener) EnterString(ctx *parser_json.StringContext) {
 	}
 
 	// Add location information of the string value
-	locationInfoDest.ValueLocation.Line = ctx.GetStart().GetLine()
-	locationInfoDest.ValueLocation.Column = ctx.GetStart().GetColumn()
-	locationInfoDest.ValueLocation.Length = len(ctx.STRING().GetText())
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+}
+
+func (l *JsonParserListener) ExitString(ctx *parser_json.StringContext) {
+	// Add location information of the string value
+	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
+	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) EnterBooleanTrue(ctx *parser_json.BooleanTrueContext) {
@@ -309,9 +355,14 @@ func (l *JsonParserListener) EnterBooleanTrue(ctx *parser_json.BooleanTrueContex
 	}
 
 	// Add location information of the boolean value
-	locationInfoDest.ValueLocation.Line = ctx.GetStart().GetLine()
-	locationInfoDest.ValueLocation.Column = ctx.GetStart().GetColumn()
-	locationInfoDest.ValueLocation.Length = len(ctx.GetText())
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+}
+
+func (l *JsonParserListener) ExitBooleanTrue(ctx *parser_json.BooleanTrueContext) {
+	// Add location information of the string value
+	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
+	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) EnterBooleanFalse(ctx *parser_json.BooleanFalseContext) {
@@ -354,9 +405,14 @@ func (l *JsonParserListener) EnterBooleanFalse(ctx *parser_json.BooleanFalseCont
 	}
 
 	// Add location information of the boolean value
-	locationInfoDest.ValueLocation.Line = ctx.GetStart().GetLine()
-	locationInfoDest.ValueLocation.Column = ctx.GetStart().GetColumn()
-	locationInfoDest.ValueLocation.Length = len(ctx.GetText())
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+}
+
+func (l *JsonParserListener) ExitBooleanFalse(ctx *parser_json.BooleanFalseContext) {
+	// Add location information of the string value
+	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
+	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) EnterNull(ctx *parser_json.NullContext) {
@@ -399,9 +455,14 @@ func (l *JsonParserListener) EnterNull(ctx *parser_json.NullContext) {
 	}
 
 	// Add location information of the null value
-	locationInfoDest.ValueLocation.Line = ctx.GetStart().GetLine()
-	locationInfoDest.ValueLocation.Column = ctx.GetStart().GetColumn()
-	locationInfoDest.ValueLocation.Length = len(ctx.GetText())
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+}
+
+func (l *JsonParserListener) ExitNull(ctx *parser_json.NullContext) {
+	// Add location information of the string value
+	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
+	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
 }
 
 func (l *JsonParserListener) getTOS() *Node {
