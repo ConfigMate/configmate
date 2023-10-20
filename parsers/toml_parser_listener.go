@@ -1,8 +1,6 @@
 package parsers
 
 import (
-	// "strconv"
-	// "strings"
 	"fmt"
 
 	parser_toml "github.com/ConfigMate/configmate/parsers/gen/parser_toml/parsers/grammars"
