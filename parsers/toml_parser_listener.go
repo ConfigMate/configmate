@@ -5,7 +5,6 @@ import (
 
 	parser_toml "github.com/ConfigMate/configmate/parsers/gen/parser_toml/parsers/grammars"
 	"github.com/antlr4-go/antlr/v4"
-	"github.com/golang-collections/collections/stack"
 )
 
 type TomlParser struct{}
@@ -49,11 +48,4 @@ func (p *TomlParser) Parse(data []byte) (*Node, error) {
 	walker.Walk(tomlListener, tree)
 
 	return tomlListener.configFile, nil
-}
-
-type TomlParserListener struct {
-	*parser_toml.BaseTOMLListener
-
-	configFile *Node
-	stack      stack.Stack
 }
