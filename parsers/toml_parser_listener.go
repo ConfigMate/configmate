@@ -51,9 +51,9 @@ func (p *TomlParser) Parse(data []byte) (*Node, error) {
 	return tomlListener.configFile, nil
 }
 
-// type TomlParserListener struct {
-// 	*parser_toml.BaseTOMLListener
+type TomlParserListener struct {
+	*parser_toml.BaseTOMLListener
 
-// 	configFile *Node
-// 	stack      stack.Stack
-// }
+	configFile *Node
+	// stack      stack.Stack
+}
