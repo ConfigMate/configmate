@@ -5,7 +5,7 @@ import (
 
 	parser_hocon "github.com/ConfigMate/configmate/parsers/gen/parser_hocon/parsers/grammars"
 	"github.com/antlr4-go/antlr/v4"
-	"github.com/golang-collections/collections/stack"
+	// "github.com/golang-collections/collections/stack"
 )
 
 type HoconParser struct{}
@@ -55,5 +55,5 @@ type HoconParserListener struct {
 	*parser_hocon.BaseHOCONListener
 
 	configFile *Node
-	stack      stack.Stack
+	// stack      stack.Stack
 }
