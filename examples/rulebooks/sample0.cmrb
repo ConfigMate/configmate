@@ -52,3 +52,10 @@ description = "The key file"
 type = "file"
 checks = ["exists()"]
 default = "/path/to/key.pem"
+
+[[rules]]
+field = "dns_servers"
+description = "List of DNS servers"
+type = "list:host"
+checks = ["at(0).reachable()"]
+

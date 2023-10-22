@@ -2,7 +2,7 @@ package analyzer
 
 import (
 	"fmt"
-	reflect "reflect"
+	"reflect"
 	"testing"
 
 	"github.com/ConfigMate/configmate/analyzer/types"
