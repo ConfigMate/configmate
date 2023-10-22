@@ -1,68 +1,47 @@
 package analyzer
 
 import (
+	"errors"
 	"testing"
-
-	"github.com/ConfigMate/configmate/parsers"
 )
 
-// TestEqualType tests the equalType function.
-func TestEqualType(t *testing.T) {
-	// Test cases
-	type testCase struct {
-		nodeType parsers.FieldType
-		argType  CheckArgType
-		expected bool
-	}
-
-	testCases := []testCase{
+func TestSplitFileAliasAndPath(t *testing.T) {
+	tests := []struct {
+		input         string
+		expectedAlias string
+		expectedPath  string
+		expectedErr   error
+	}{
 		{
-			nodeType: parsers.Int,
-			argType:  Int,
-			expected: true,
+			input:         "alias:path.to.field",
+			expectedAlias: "alias",
+			expectedPath:  "path.to.field",
+			expectedErr:   nil,
 		},
 		{
-			nodeType: parsers.Float,
-			argType:  Float,
-			expected: true,
+			input:         "anotherAlias:path.to.another.field",
+			expectedAlias: "anotherAlias",
+			expectedPath:  "path.to.another.field",
+			expectedErr:   nil,
 		},
 		{
-			nodeType: parsers.Bool,
-			argType:  Bool,
-			expected: true,
+			input:         "noColonHere",
+			expectedAlias: "",
+			expectedPath:  "",
+			expectedErr:   errors.New("invalid field format: noColonHere"),
 		},
 		{
-			nodeType: parsers.String,
-			argType:  String,
-			expected: true,
-		},
-		{
-			nodeType: parsers.Int,
-			argType:  Float,
-			expected: false,
-		},
-		{
-			nodeType: parsers.Float,
-			argType:  Int,
-			expected: false,
-		},
-		{
-			nodeType: parsers.Bool,
-			argType:  String,
-			expected: false,
-		},
-		{
-			nodeType: parsers.String,
-			argType:  Bool,
-			expected: false,
+			input:         "multiple:colons:here",
+			expectedAlias: "",
+			expectedPath:  "",
+			expectedErr:   errors.New("invalid field format: multiple:colons:here"),
 		},
 	}
 
-	// Run tests
-	for _, test := range testCases {
-		actual := equalType(test.nodeType, test.argType)
-		if actual != test.expected {
-			t.Errorf("equalType(%d, %d) returned %t, expected %t", test.nodeType, test.argType, actual, test.expected)
+	for _, test := range tests {
+		alias, path, err := splitFileAliasAndPath(test.input)
+		if alias != test.expectedAlias || path != test.expectedPath || (err != nil && err.Error() != test.expectedErr.Error()) {
+			t.Errorf("SplitFileAliasAndPath(%q) = %q, %q, %v, want %q, %q, %v", test.input, alias, path, err, test.expectedAlias, test.expectedPath, test.expectedErr)
 		}
 	}
 }

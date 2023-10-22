@@ -7,12 +7,12 @@ type Rulebook struct {
 	Rules       []Rule            `json:"rules" toml:"rules"`             // List of rules
 }
 
-// Rule declares a check and it's arguments in a rulebook.
-// If argument is a fields/value in a config file, it should be in the format "f:<type>:file_alias.key",
-// where file_alias is the alias of the file in the rulebook and key is the path separeted by dots of the field/value.
-// If argument is a literal, it should be in the format "l:<type>:value".
 type Rule struct {
+	Field       string   `json:"field" toml:"field"`             // Field to check
 	Description string   `json:"description" toml:"description"` // Description of the rule
-	CheckName   string   `json:"check" toml:"check"`             // Name of the check
-	Args        []string `json:"args" toml:"args"`               // List of arguments to the check
+	Type        string   `json:"type" toml:"type"`               // Type of the field
+	Optional    bool     `json:"optional" toml:"optional"`       // Whether the field is optional
+	Default     string   `json:"default" toml:"default"`         // Default value of the field
+	Checks      []string `json:"checks" toml:"checks"`           // List of checks to perform
+	Notes       string   `json:"notes" toml:"notes"`             // Notes about the rule
 }
