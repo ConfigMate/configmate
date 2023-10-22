@@ -13,7 +13,7 @@ function
     | NAME LPAREN RPAREN;
 
 // An argument is either a primitive value, a function, or a field
-argument: primitive | field | field_function;
+argument: primitive | field;
 
 // A primitive value is a string, an int, a float, or a boolean
 primitive
@@ -23,12 +23,12 @@ primitive
     | BOOL # boolean
     ;
 
-// A field is a list of comma separated unquoted strings or index expressions
-// Such as "foo", "bar.xyz", "baz[0]", "[1].xyz"
-field: (NAME | LBRACKET INT RBRACKET) (DOT (NAME | LBRACKET INT RBRACKET))*;
+// A field is a field name followed by an optional check
+field: fieldname (DOT check)?;
 
-// A field-funcion is a field followed by one or more function call
-field_function: field DOT function (DOT function)*;
+// A field name is a list of comma separated unquoted strings or index expressions
+// Such as "foo", "bar.xyz", "baz[0]", "[1].xyz".
+fieldname: (NAME | LBRACKET INT RBRACKET) (DOT (NAME | LBRACKET INT RBRACKET))*;
 
 // Tokens
 NAME: [a-zA-Z_][a-zA-Z0-9_]*;
