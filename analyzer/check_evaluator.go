@@ -20,30 +20,26 @@ func (d *CMCLErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSy
 	d.errors = append(d.errors, fmt.Errorf("line %d:%d %s", line, column, msg))
 }
 
-// errSkipCheck is an error type that is used to skip a check
-type errSkipCheck struct{}
-
-func (e errSkipCheck) Error() string {
-	return "skip check"
-}
-
 type executionNode struct {
 	FuncName string
 	Value    types.IType
+	CheckErr error
 	Children []*executionNode
 }
 
 type CheckEvaluator struct {
 	*parser_cmcl.BaseCMCLListener
 
-	fields           map[string]types.IType
+	fields           map[string]FieldInfo
 	optMissingFields map[string]bool
+	stack            stack.Stack
 
-	stack stack.Stack
-	err   error
+	res      types.IType
+	skipping bool
+	err      error
 }
 
-func NewCheckEvaluator(primaryField types.IType, fields map[string]types.IType, optMissingFields map[string]bool) *CheckEvaluator {
+func NewCheckEvaluator(primaryField types.IType, fields map[string]FieldInfo, optMissingFields map[string]bool) *CheckEvaluator {
 	// Create evaluator
 	evaluator := &CheckEvaluator{
 		fields:           fields,
@@ -59,7 +55,7 @@ func NewCheckEvaluator(primaryField types.IType, fields map[string]types.IType, 
 	return evaluator
 }
 
-func (v *CheckEvaluator) Evaluate(check string) (res types.IType, skipped bool, err error) {
+func (ce *CheckEvaluator) Evaluate(check string) (types.IType, bool, error) {
 	// Parse check
 	input := antlr.NewInputStream(check)
 	lexer := parser_cmcl.NewCMCLLexer(input)
@@ -80,39 +76,42 @@ func (v *CheckEvaluator) Evaluate(check string) (res types.IType, skipped bool, 
 
 	// Evaluate check
 	walker := antlr.NewParseTreeWalker()
-	walker.Walk(v, tree)
+	walker.Walk(ce, tree)
 
-	return
+	return ce.res, ce.skipping, ce.err
 }
 
-// EnterCheck is called when production check is entered.
-func (s *CheckEvaluator) EnterCheck(ctx *parser_cmcl.CheckContext) {
+func (ce *CheckEvaluator) ExitCheck(ctx *parser_cmcl.CheckContext) {
 	// Return if error has already been encountered
-	if s.err != nil {
+	if ce.err != nil {
 		return
 	}
 
-	fmt.Println("EnterCheck: ", ctx.GetText())
-}
-
-// ExitCheck is called when production check is exited.
-func (s *CheckEvaluator) ExitCheck(ctx *parser_cmcl.CheckContext) {
-	// Return if error has already been encountered
-	if s.err != nil {
+	// Check that the stack only contains the root node.
+	// Otherwise this indicates the exiting check belongs
+	// to some parameter, not the primary field.
+	if ce.stack.Len() != 1 {
 		return
 	}
 
-	fmt.Println("ExitCheck: ", ctx.GetText())
+	// Get result node
+	resNode := ce.stack.Pop().(*executionNode)
+
+	// Check that the result is a boolean
+	if resNode.Value.TypeName() != "bool" {
+		ce.err = fmt.Errorf("check must return a boolean")
+	} else {
+		ce.res = resNode.Value
+		ce.err = resNode.CheckErr
+	}
 }
 
 // EnterFunction is called when production function is entered.
-func (s *CheckEvaluator) EnterFunction(ctx *parser_cmcl.FunctionContext) {
+func (ce *CheckEvaluator) EnterFunction(ctx *parser_cmcl.FunctionContext) {
 	// Return if error has already been encountered
-	if s.err != nil {
+	if ce.err != nil {
 		return
 	}
-
-	fmt.Println("EnterFunction: ", ctx.GetText())
 
 	// Get function name
 	funcName := ctx.NAME().GetText()
@@ -124,55 +123,105 @@ func (s *CheckEvaluator) EnterFunction(ctx *parser_cmcl.FunctionContext) {
 	}
 
 	// Add function to the children of the current node
-	currNode := s.stack.Peek().(*executionNode)
+	currNode := ce.stack.Peek().(*executionNode)
 	currNode.Children = append(currNode.Children, funcNode)
 
 	// Add function to the stack
-	s.stack.Push(funcNode)
+	ce.stack.Push(funcNode)
 }
 
 // ExitFunction is called when production function is exited.
-func (s *CheckEvaluator) ExitFunction(ctx *parser_cmcl.FunctionContext) {
+func (ce *CheckEvaluator) ExitFunction(ctx *parser_cmcl.FunctionContext) {
 	// Return if error has already been encountered
-	if s.err != nil {
+	if ce.err != nil {
 		return
 	}
 
-	fmt.Println("ExitFunction: ", ctx.GetText())
+	// Get and pop current node (function)
+	funcNode := ce.stack.Pop().(*executionNode)
 
-	// Get and pop current node
-	currNode := s.stack.Pop().(*executionNode)
+	// Get function name
+	funcName := funcNode.FuncName
 
 	// Get function arguments
-	args := make([]types.IType, len(currNode.Children))
-	for i, child := range currNode.Children {
+	args := make([]types.IType, len(funcNode.Children))
+	for i, child := range funcNode.Children {
 		args[i] = child.Value
 	}
 
-	// Get current node
-	currNode = s.stack.Peek().(*executionNode)
+	// Get current node (node the function is applied to)
+	currNode := ce.stack.Peek().(*executionNode)
 
-	// Apply function
-	res, err := currNode.Value.Checks()[currNode.FuncName](args)
-	if err != nil {
-		s.err = err
+	// Find function
+	f, exists := currNode.Value.Checks()[funcName]
+	if !exists {
+		ce.err = fmt.Errorf("function %s.%s not found", currNode.Value.TypeName(), funcName)
 		return
 	}
 
-	// Update current node
-	currNode.Value = res
+	// Apply function
+	res, err := f(args)
+	if res == nil {
+		ce.err = err
+		return
+	}
+
+	// Update current node with result
 	currNode.FuncName = ""
+	currNode.Value = res
+	currNode.CheckErr = err
 	currNode.Children = nil
 }
 
-// EnterString is called when production string is entered.
-func (s *CheckEvaluator) EnterString(ctx *parser_cmcl.StringContext) {
+// EnterField is called when production field is entered.
+func (ce *CheckEvaluator) EnterField(ctx *parser_cmcl.FieldContext) {
 	// Return if error has already been encountered
-	if s.err != nil {
+	if ce.err != nil {
 		return
 	}
 
-	fmt.Println("EnterString: ", ctx.GetText())
+	// Get field name
+	fieldName := ctx.Fieldname().GetText()
+
+	// Find field in fields map
+	if field, exists := ce.fields[fieldName]; exists {
+		// Create a node for this field
+		fieldNode := &executionNode{
+			Value:    field.Value,
+			Children: make([]*executionNode, 0),
+		}
+
+		// Add to the childe of the current node
+		currNode := ce.stack.Peek().(*executionNode)
+		currNode.Children = append(currNode.Children, fieldNode)
+
+		// Add field to the stack
+		ce.stack.Push(fieldNode)
+	} else if ce.optMissingFields[fieldName] {
+		ce.skipping = true
+		ce.err = fmt.Errorf("skipping check because referenced optional field %s is missing", fieldName)
+	} else {
+		ce.err = fmt.Errorf("field %s not found", fieldName)
+	}
+}
+
+// ExitField is called when production field is exited.
+func (ce *CheckEvaluator) ExitField(ctx *parser_cmcl.FieldContext) {
+	// Return if error has already been encountered
+	if ce.err != nil {
+		return
+	}
+
+	// Pop field from the stack
+	ce.stack.Pop()
+}
+
+// EnterString is called when production string is entered.
+func (ce *CheckEvaluator) EnterString(ctx *parser_cmcl.StringContext) {
+	// Return if error has already been encountered
+	if ce.err != nil {
+		return
+	}
 
 	// Get string value
 	strValue := removeStringQuotes(ctx.GetText())
@@ -180,151 +229,99 @@ func (s *CheckEvaluator) EnterString(ctx *parser_cmcl.StringContext) {
 	// Make string type
 	strType, err := types.MakeType("string", strValue)
 	if err != nil {
-		s.err = err
+		ce.err = err
 		return
 	}
 
 	// Add string type to the children of the current node
-	currNode := s.stack.Peek().(*executionNode)
+	currNode := ce.stack.Peek().(*executionNode)
 	currNode.Children = append(currNode.Children, &executionNode{
 		Value: strType,
 	})
 }
 
 // EnterInt is called when production int is entered.
-func (s *CheckEvaluator) EnterInt(ctx *parser_cmcl.IntContext) {
+func (ce *CheckEvaluator) EnterInt(ctx *parser_cmcl.IntContext) {
 	// Return if error has already been encountered
-	if s.err != nil {
+	if ce.err != nil {
 		return
 	}
-
-	fmt.Println("EnterInt: ", ctx.GetText())
 
 	// Get int value
 	intValue, err := strconv.Atoi(ctx.GetText())
 	if err != nil {
-		s.err = err
+		ce.err = err
 		return
 	}
 
 	// Make int type
 	intType, err := types.MakeType("int", intValue)
 	if err != nil {
-		s.err = err
+		ce.err = err
 		return
 	}
 
 	// Add int type to the children of the current node
-	currNode := s.stack.Peek().(*executionNode)
+	currNode := ce.stack.Peek().(*executionNode)
 	currNode.Children = append(currNode.Children, &executionNode{
 		Value: intType,
 	})
 }
 
 // EnterFloat is called when production float is entered.
-func (s *CheckEvaluator) EnterFloat(ctx *parser_cmcl.FloatContext) {
+func (ce *CheckEvaluator) EnterFloat(ctx *parser_cmcl.FloatContext) {
 	// Return if error has already been encountered
-	if s.err != nil {
+	if ce.err != nil {
 		return
 	}
-
-	fmt.Println("EnterFloat: ", ctx.GetText())
 
 	// Get float value
 	floatValue, err := strconv.ParseFloat(ctx.GetText(), 64)
 	if err != nil {
-		s.err = err
+		ce.err = err
 		return
 	}
 
 	// Make float type
 	floatType, err := types.MakeType("float", floatValue)
 	if err != nil {
-		s.err = err
+		ce.err = err
 		return
 	}
 
 	// Add float type to the children of the current node
-	currNode := s.stack.Peek().(*executionNode)
+	currNode := ce.stack.Peek().(*executionNode)
 	currNode.Children = append(currNode.Children, &executionNode{
 		Value: floatType,
 	})
 }
 
 // EnterBoolean is called when production boolean is entered.
-func (s *CheckEvaluator) EnterBoolean(ctx *parser_cmcl.BooleanContext) {
+func (ce *CheckEvaluator) EnterBoolean(ctx *parser_cmcl.BooleanContext) {
 	// Return if error has already been encountered
-	if s.err != nil {
+	if ce.err != nil {
 		return
 	}
-
-	fmt.Println("EnterBoolean: ", ctx.GetText())
 
 	// Get boolean value
 	boolValue, err := strconv.ParseBool(ctx.GetText())
 	if err != nil {
-		s.err = err
+		ce.err = err
 		return
 	}
 
 	// Make boolean type
 	boolType, err := types.MakeType("bool", boolValue)
 	if err != nil {
-		s.err = err
+		ce.err = err
 		return
 	}
 
 	// Add boolean type to the children of the current node
-	currNode := s.stack.Peek().(*executionNode)
+	currNode := ce.stack.Peek().(*executionNode)
 	currNode.Children = append(currNode.Children, &executionNode{
 		Value: boolType,
 	})
-}
-
-// EnterField is called when production field is entered.
-func (s *CheckEvaluator) EnterField(ctx *parser_cmcl.FieldContext) {
-	// Return if error has already been encountered
-	if s.err != nil {
-		return
-	}
-
-	fmt.Println("EnterField: ", ctx.GetText())
-
-	// Get field name
-	fieldName := ctx.Fieldname().GetText()
-
-	// Find field in fields map
-	if field, exists := s.fields[fieldName]; exists {
-		// Create a node for this field
-		fieldNode := &executionNode{
-			Value:    field,
-			Children: make([]*executionNode, 0),
-		}
-
-		// Add to the childe of the current node
-		currNode := s.stack.Peek().(*executionNode)
-		currNode.Children = append(currNode.Children, fieldNode)
-
-		// Add field to the stack
-		s.stack.Push(fieldNode)
-	} else if s.optMissingFields[fieldName] {
-		s.err = errSkipCheck{}
-	} else {
-		s.err = fmt.Errorf("field %s not found", fieldName)
-	}
-}
-
-// ExitField is called when production field is exited.
-func (s *CheckEvaluator) ExitField(ctx *parser_cmcl.FieldContext) {
-	// Return if error has already been encountered
-	if s.err != nil {
-		return
-	}
-
-	fmt.Println("ExitField: ", ctx.GetText())
-
-	// Pop field from the stack
-	s.stack.Pop()
 }
 
 func removeStringQuotes(s string) string {

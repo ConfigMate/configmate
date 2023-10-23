@@ -16,7 +16,14 @@ type Analyzer interface {
 type Result struct {
 	Passed        bool                         `json:"passed"`         // true if the check passed, false if it failed
 	ResultComment string                       `json:"result_comment"` // an error msg or comment about the result
+	Rule          *Rule                        `json:"rule"`           // the rule that was checked
 	TokenList     []TokenLocationWithFileAlias `json:"token_list"`     // a list of tokens that were involved in the rule
+}
+
+// FieldInfo is a struct that contains information about a field
+type FieldInfo struct {
+	Value    types.IType
+	Location TokenLocationWithFileAlias
 }
 
 // TokenLocationWithFileAlias is a TokenLocation enhanced with a file alias;
@@ -50,7 +57,7 @@ func (a *AnalyzerImpl) AnalyzeConfigFiles(files map[string]*parsers.Node, rules 
 	return res, nil
 }
 
-func (a *AnalyzerImpl) findAndParseAllFields(files map[string]*parsers.Node, rules []Rule, res []Result) (fields map[string]types.IType, optMissingFields map[string]bool, err error) {
+func (a *AnalyzerImpl) findAndParseAllFields(files map[string]*parsers.Node, rules []Rule, res []Result) (fields map[string]FieldInfo, optMissingFields map[string]bool, err error) {
 	// Sort rules by field lenght (shortest first)
 	// This guarantees parent fields are checked before child fields
 	sort.Slice(rules, func(i, j int) bool {
@@ -58,7 +65,7 @@ func (a *AnalyzerImpl) findAndParseAllFields(files map[string]*parsers.Node, rul
 	})
 
 	// Check rules and store all fields
-	fields = make(map[string]types.IType)
+	fields = make(map[string]FieldInfo)
 	optMissingFields = make(map[string]bool)
 	for _, rule := range rules {
 		// Check if a parent field is an optional
@@ -92,10 +99,14 @@ func (a *AnalyzerImpl) findAndParseAllFields(files map[string]*parsers.Node, rul
 				res = append(res, Result{
 					Passed:        false,
 					ResultComment: fmt.Sprintf("Field %s has incorrect type: %s", rule.Field, err.Error()),
+					Rule:          &rule,
 					TokenList:     []TokenLocationWithFileAlias{makeValueTokenLocation(fileAlias, field)},
 				})
 			} else {
-				fields[rule.Field] = t
+				fields[rule.Field] = FieldInfo{
+					Value:    t,
+					Location: makeValueTokenLocation(fileAlias, field),
+				}
 			}
 		}
 	}

@@ -31,10 +31,10 @@ field: fieldname (DOT check)?;
 fieldname: (NAME | LBRACKET INT RBRACKET) (DOT (NAME | LBRACKET INT RBRACKET))*;
 
 // Tokens
+BOOL: 'true' | 'false';
 NAME: [a-zA-Z_][a-zA-Z0-9_]*;
 INT: [0-9]+;
 FLOAT: [0-9]+[.][0-9]+;
-BOOL: 'true' | 'false';
 STRING: '"' (ESC | ~["\\])* '"';
 LPAREN: '(';
 RPAREN: ')';
