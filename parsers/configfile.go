@@ -93,7 +93,7 @@ func (n *Node) Get(field string) (*Node, error) {
 			// Convert segment to integer index
 			index, err := strconv.Atoi(segment)
 			if err != nil {
-				return nil, fmt.Errorf("failed to convert [%s] to int value in path %s", segment, field)
+				return nil, fmt.Errorf("failed to convert [%s] to int in path %s", segment, field)
 			}
 
 			// Check if the index is out of bounds
