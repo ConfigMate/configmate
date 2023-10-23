@@ -27,23 +27,23 @@ func makeValueTokenLocation(fileAlias string, node *parsers.Node) TokenLocationW
 	}
 }
 
-// makeNameTokenLocation returns a TokenLocation object from a given file alias and a parsers.Node
-// using the NameLocation of the node.
-func makeNameTokenLocation(fileAlias string, node *parsers.Node) TokenLocationWithFileAlias {
-	return TokenLocationWithFileAlias{
-		File:     fileAlias,
-		Location: node.NameLocation,
-	}
-}
+// // makeNameTokenLocation returns a TokenLocation object from a given file alias and a parsers.Node
+// // using the NameLocation of the node.
+// func makeNameTokenLocation(fileAlias string, node *parsers.Node) TokenLocationWithFileAlias {
+// 	return TokenLocationWithFileAlias{
+// 		File:     fileAlias,
+// 		Location: node.NameLocation,
+// 	}
+// }
 
-// makeTOFTokenLocation returns a TokenLocation object from a given file alias without any specific
-// line, column or length information; it sets them all to 0.
-func makeTOFTokenLocation(fileAlias string) TokenLocationWithFileAlias {
-	return TokenLocationWithFileAlias{
-		File: fileAlias,
-		Location: parsers.TokenLocation{
-			Start: parsers.CharLocation{Line: 0, Column: 0},
-			End:   parsers.CharLocation{Line: 0, Column: 0},
-		},
-	}
-}
+// // makeTOFTokenLocation returns a TokenLocation object from a given file alias without any specific
+// // line, column or length information; it sets them all to 0.
+// func makeTOFTokenLocation(fileAlias string) TokenLocationWithFileAlias {
+// 	return TokenLocationWithFileAlias{
+// 		File: fileAlias,
+// 		Location: parsers.TokenLocation{
+// 			Start: parsers.CharLocation{Line: 0, Column: 0},
+// 			End:   parsers.CharLocation{Line: 0, Column: 0},
+// 		},
+// 	}
+// }
