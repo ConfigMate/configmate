@@ -39,6 +39,8 @@ remoteDisplay = 5101
 remoteApp = "13000"
 
 [proxy.certification]
+cert = "cert.pem"
+key = "key.pem"
 nation = "XY"
 entity = "generic"
 

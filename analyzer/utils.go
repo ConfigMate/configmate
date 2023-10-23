@@ -1,23 +1,21 @@
 package analyzer
 
 import (
+	"errors"
+	"strings"
+
 	"github.com/ConfigMate/configmate/parsers"
 )
 
-// equalType returns true if the given node type is equal to the given argument type.
-func equalType(nodeType parsers.FieldType, argType CheckArgType) bool {
-	switch argType {
-	case Int:
-		return nodeType == parsers.Int
-	case Float:
-		return nodeType == parsers.Float
-	case Bool:
-		return nodeType == parsers.Bool
-	case String:
-		return nodeType == parsers.String
-	default:
-		return false
+// splitFileAliasAndPath splits a field represented as a string into a file alias and a path.
+// The separator used is a colon (:).
+func splitFileAliasAndPath(field string) (fileAlias string, path string, err error) {
+	split := strings.Split(field, ":")
+	if len(split) != 2 {
+		return "", "", errors.New("invalid field format: " + field)
 	}
+
+	return split[0], split[1], nil
 }
 
 // makeValueTokenLocation returns a TokenLocation object from a given file alias and a parsers.Node
@@ -29,23 +27,23 @@ func makeValueTokenLocation(fileAlias string, node *parsers.Node) TokenLocationW
 	}
 }
 
-// makeNameTokenLocation returns a TokenLocation object from a given file alias and a parsers.Node
-// using the NameLocation of the node.
-func makeNameTokenLocation(fileAlias string, node *parsers.Node) TokenLocationWithFileAlias {
-	return TokenLocationWithFileAlias{
-		File:     fileAlias,
-		Location: node.NameLocation,
-	}
-}
+// // makeNameTokenLocation returns a TokenLocation object from a given file alias and a parsers.Node
+// // using the NameLocation of the node.
+// func makeNameTokenLocation(fileAlias string, node *parsers.Node) TokenLocationWithFileAlias {
+// 	return TokenLocationWithFileAlias{
+// 		File:     fileAlias,
+// 		Location: node.NameLocation,
+// 	}
+// }
 
-// makeTOFTokenLocation returns a TokenLocation object from a given file alias without any specific
-// line, column or length information; it sets them all to 0.
-func makeTOFTokenLocation(fileAlias string) TokenLocationWithFileAlias {
-	return TokenLocationWithFileAlias{
-		File: fileAlias,
-		Location: parsers.TokenLocation{
-			Start: parsers.CharLocation{Line: 0, Column: 0},
-			End:   parsers.CharLocation{Line: 0, Column: 0},
-		},
-	}
-}
+// // makeTOFTokenLocation returns a TokenLocation object from a given file alias without any specific
+// // line, column or length information; it sets them all to 0.
+// func makeTOFTokenLocation(fileAlias string) TokenLocationWithFileAlias {
+// 	return TokenLocationWithFileAlias{
+// 		File: fileAlias,
+// 		Location: parsers.TokenLocation{
+// 			Start: parsers.CharLocation{Line: 0, Column: 0},
+// 			End:   parsers.CharLocation{Line: 0, Column: 0},
+// 		},
+// 	}
+// }

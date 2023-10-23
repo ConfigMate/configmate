@@ -66,56 +66,56 @@ func (ft FieldType) String() string {
 
 // Get returns the node at the given path from the current node.
 // Paths look like these: "server.port", "settings.users[0].name", "logLevel"
-func (n *Node) Get(path string) (*Node, error) {
+// If the node is found it is returned, otherwise nil is returned.
+// If the path is invalid, an error is returned.
+func (n *Node) Get(field string) (*Node, error) {
 	// Split the key
-	segments := splitKey(path)
+	segments := splitPathInSegments(field)
 	currentNode := n
 
-	for i, segment := range segments {
+	for _, segment := range segments {
 		switch currentNode.Type {
 		case Object:
-			objMap, ok := currentNode.Value.(map[string]*Node)
-			if !ok {
-				return nil, fmt.Errorf("failed to cast %s to object value in key %s", segment, path)
-			}
+			// Cast value as map[string]*Node (unsafe)
+			objMap := currentNode.Value.(map[string]*Node)
 
+			// Check if the segment exists in the map
 			if nextNode, exists := objMap[segment]; exists {
 				currentNode = nextNode
 			} else {
-				return nil, fmt.Errorf("field %s does not exist in key %s", segment, path)
+				return nil, nil
 			}
 
 		case Array:
+			// Cast value as []*Node (unsafe)
+			arrayValue := currentNode.Value.([]*Node)
+
+			// Convert segment to integer index
 			index, err := strconv.Atoi(segment)
 			if err != nil {
-				return nil, fmt.Errorf("failed to convert [%s] to int value in key %s", segment, path)
+				return nil, fmt.Errorf("failed to convert [%s] to int in path %s", segment, field)
 			}
 
-			// Try to cast the value to a slice of arrayValue
-			arrayValue, ok := currentNode.Value.([]*Node)
-			if !ok {
-				return nil, fmt.Errorf("failed to cast %s to array value in key %s", segments[i], path)
-			}
-
+			// Check if the index is out of bounds
 			if index >= len(arrayValue) {
-				return nil, fmt.Errorf("index [%d] out of bounds in key %s", index, path)
+				return nil, nil
 			}
 
 			currentNode = arrayValue[index]
 
 		default:
 			// If we are here, it means we're trying to traverse a leaf node
-			return nil, fmt.Errorf("cannot traverse leaf node %s in key %s", segment, path)
+			return nil, fmt.Errorf("cannot traverse leaf node %s in path %s", segment, field)
 		}
 	}
 
 	return currentNode, nil
 }
 
-// splitPath splits the given path into a list of segments appropiate for traversing a ConfigFile.
-// Paths look like these: "server.port", "settings.users[0].name", "logLevel".
+// splitPathInSegments splits the given path into a list of segments appropiate
+// for traversing a ConfigFile. Paths look like these: "server.port", "settings.users[0].name", "logLevel".
 // The segments are split based on the dot and the square brackets.
-func splitKey(path string) []string {
+func splitPathInSegments(path string) []string {
 	// Split the key based on the dot
 	segments := strings.Split(path, ".")
 

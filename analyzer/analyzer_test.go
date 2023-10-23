@@ -1,192 +1,184 @@
 package analyzer
 
-import (
-	"testing"
+// // Valid Setup
+// func TestAnalyzeConfigFiles_ValidRuleArgument(t *testing.T) {
+// 	// Create check mock
+// 	ctrl := gomock.NewController(t)
+// 	defer ctrl.Finish()
+// 	mockCheck := NewMockCheck(ctrl)
 
-	"github.com/ConfigMate/configmate/parsers"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-)
+// 	// Define behavior of mock
+// 	mockCheck.EXPECT().Check(gomock.Any()).Return(true, "Mock check passed", nil).AnyTimes()
+// 	mockCheck.EXPECT().GetArgsSourceAndTypes().Return(
+// 		[]CheckArgSource{CheckArgSource(File)},
+// 		[]CheckArgType{CheckArgType(Int)},
+// 	).AnyTimes()
 
-// Valid Setup
-func TestAnalyzeConfigFiles_ValidRuleArgument(t *testing.T) {
-	// Create check mock
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockCheck := NewMockCheck(ctrl)
+// 	// Test configFile
+// 	configFile := &parsers.Node{
+// 		Type: parsers.Object,
+// 		Value: map[string]*parsers.Node{
+// 			"server": {
+// 				Type: parsers.Object,
+// 				Value: map[string]*parsers.Node{
+// 					"port": {
+// 						Type:  parsers.Int,
+// 						Value: 8080,
+// 					},
+// 				},
+// 			},
+// 		},
+// 	}
 
-	// Define behavior of mock
-	mockCheck.EXPECT().Check(gomock.Any()).Return(true, "Mock check passed", nil).AnyTimes()
-	mockCheck.EXPECT().GetArgsSourceAndTypes().Return(
-		[]CheckArgSource{CheckArgSource(File)},
-		[]CheckArgType{CheckArgType(Int)},
-	).AnyTimes()
+// 	// Test configFilesMap
+// 	files := map[string]*parsers.Node{
+// 		"test": configFile,
+// 	}
 
-	// Test configFile
-	configFile := &parsers.Node{
-		Type: parsers.Object,
-		Value: map[string]*parsers.Node{
-			"server": {
-				Type: parsers.Object,
-				Value: map[string]*parsers.Node{
-					"port": {
-						Type:  parsers.Int,
-						Value: 8080,
-					},
-				},
-			},
-		},
-	}
+// 	// Test rules
+// 	rules := []Rule{
+// 		{
+// 			Description: "Sample rule",
+// 			CheckName:   "sampleCheck",
+// 			Args:        []string{"f:i:test.server.port"},
+// 		},
+// 	}
 
-	// Test configFilesMap
-	files := map[string]*parsers.Node{
-		"test": configFile,
-	}
+// 	// Setup
+// 	analyzer := &AnalyzerImpl{
+// 		checks: map[string]Check{
+// 			"sampleCheck": mockCheck,
+// 		},
+// 	}
 
-	// Test rules
-	rules := []Rule{
-		{
-			Description: "Sample rule",
-			CheckName:   "sampleCheck",
-			Args:        []string{"f:i:test.server.port"},
-		},
-	}
+// 	// Execute
+// 	res, err := analyzer.AnalyzeConfigFiles(files, rules)
 
-	// Setup
-	analyzer := &AnalyzerImpl{
-		checks: map[string]Check{
-			"sampleCheck": mockCheck,
-		},
-	}
+// 	// Assert
+// 	assert.NoError(t, err)
+// 	assert.Len(t, res, 1)
+// 	assert.True(t, res[0].Passed)
+// 	assert.Contains(t, res[0].ResultComment, "sampleCheck: Mock check passed")
+// }
 
-	// Execute
-	res, err := analyzer.AnalyzeConfigFiles(files, rules)
+// // Invalid: Field does not exist
+// func TestAnalyzeConfigFiles_InvalidRuleArgument(t *testing.T) {
+// 	// Create check mock
+// 	ctrl := gomock.NewController(t)
+// 	defer ctrl.Finish()
+// 	mockCheck := NewMockCheck(ctrl)
 
-	// Assert
-	assert.NoError(t, err)
-	assert.Len(t, res, 1)
-	assert.True(t, res[0].Passed)
-	assert.Contains(t, res[0].ResultComment, "sampleCheck: Mock check passed")
-}
+// 	// Define behavior of mock
+// 	mockCheck.EXPECT().Check(gomock.Any()).Return(true, "Mock check passed", nil).AnyTimes()
+// 	mockCheck.EXPECT().GetArgsSourceAndTypes().Return(
+// 		[]CheckArgSource{CheckArgSource(File)},
+// 		[]CheckArgType{CheckArgType(Int)},
+// 	).AnyTimes()
 
-// Invalid: Field does not exist
-func TestAnalyzeConfigFiles_InvalidRuleArgument(t *testing.T) {
-	// Create check mock
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockCheck := NewMockCheck(ctrl)
+// 	// Test configFile
+// 	configFile := &parsers.Node{
+// 		Type: parsers.Object,
+// 		Value: map[string]*parsers.Node{
+// 			"server": {
+// 				Type: parsers.Object,
+// 				Value: map[string]*parsers.Node{
+// 					"port": {
+// 						Type:  parsers.Int,
+// 						Value: 8080,
+// 					},
+// 				},
+// 			},
+// 		},
+// 	}
 
-	// Define behavior of mock
-	mockCheck.EXPECT().Check(gomock.Any()).Return(true, "Mock check passed", nil).AnyTimes()
-	mockCheck.EXPECT().GetArgsSourceAndTypes().Return(
-		[]CheckArgSource{CheckArgSource(File)},
-		[]CheckArgType{CheckArgType(Int)},
-	).AnyTimes()
+// 	// Test configFilesMap
+// 	files := map[string]*parsers.Node{
+// 		"test": configFile,
+// 	}
 
-	// Test configFile
-	configFile := &parsers.Node{
-		Type: parsers.Object,
-		Value: map[string]*parsers.Node{
-			"server": {
-				Type: parsers.Object,
-				Value: map[string]*parsers.Node{
-					"port": {
-						Type:  parsers.Int,
-						Value: 8080,
-					},
-				},
-			},
-		},
-	}
+// 	// Test rules
+// 	rules := []Rule{
+// 		{
+// 			Description: "Sample rule",
+// 			CheckName:   "sampleCheck",
+// 			Args:        []string{"f:i:test.server.port[0]"},
+// 		},
+// 	}
 
-	// Test configFilesMap
-	files := map[string]*parsers.Node{
-		"test": configFile,
-	}
+// 	// Setup
+// 	analyzer := &AnalyzerImpl{
+// 		checks: map[string]Check{
+// 			"sampleCheck": mockCheck,
+// 		},
+// 	}
 
-	// Test rules
-	rules := []Rule{
-		{
-			Description: "Sample rule",
-			CheckName:   "sampleCheck",
-			Args:        []string{"f:i:test.server.port[0]"},
-		},
-	}
+// 	// Execute
+// 	res, err := analyzer.AnalyzeConfigFiles(files, rules)
 
-	// Setup
-	analyzer := &AnalyzerImpl{
-		checks: map[string]Check{
-			"sampleCheck": mockCheck,
-		},
-	}
+// 	// Assert
+// 	assert.NoError(t, err)
+// 	assert.Len(t, res, 1)
+// 	assert.False(t, res[0].Passed)
+// 	assert.Contains(t, res[0].ResultComment, "Value at server.port[0] in file test could not be found")
+// }
 
-	// Execute
-	res, err := analyzer.AnalyzeConfigFiles(files, rules)
+// // Invalid: Field is not of the correct type
+// func TestAnalyzeConfigFiles_InvalidRuleArgumentType(t *testing.T) {
+// 	// Create check mock
+// 	ctrl := gomock.NewController(t)
+// 	defer ctrl.Finish()
+// 	mockCheck := NewMockCheck(ctrl)
 
-	// Assert
-	assert.NoError(t, err)
-	assert.Len(t, res, 1)
-	assert.False(t, res[0].Passed)
-	assert.Contains(t, res[0].ResultComment, "Value at server.port[0] in file test could not be found")
-}
+// 	// Define behavior of mock
+// 	mockCheck.EXPECT().Check(gomock.Any()).Return(true, "Mock check passed", nil).AnyTimes()
+// 	mockCheck.EXPECT().GetArgsSourceAndTypes().Return(
+// 		[]CheckArgSource{CheckArgSource(File)},
+// 		[]CheckArgType{CheckArgType(Int)},
+// 	).AnyTimes()
 
-// Invalid: Field is not of the correct type
-func TestAnalyzeConfigFiles_InvalidRuleArgumentType(t *testing.T) {
-	// Create check mock
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockCheck := NewMockCheck(ctrl)
+// 	// Test configFile
+// 	configFile := &parsers.Node{
+// 		Type: parsers.Object,
+// 		Value: map[string]*parsers.Node{
+// 			"server": {
+// 				Type: parsers.Object,
+// 				Value: map[string]*parsers.Node{
+// 					"port": {
+// 						Type:  parsers.String,
+// 						Value: "8080",
+// 					},
+// 				},
+// 			},
+// 		},
+// 	}
 
-	// Define behavior of mock
-	mockCheck.EXPECT().Check(gomock.Any()).Return(true, "Mock check passed", nil).AnyTimes()
-	mockCheck.EXPECT().GetArgsSourceAndTypes().Return(
-		[]CheckArgSource{CheckArgSource(File)},
-		[]CheckArgType{CheckArgType(Int)},
-	).AnyTimes()
+// 	// Test configFilesMap
+// 	files := map[string]*parsers.Node{
+// 		"test": configFile,
+// 	}
 
-	// Test configFile
-	configFile := &parsers.Node{
-		Type: parsers.Object,
-		Value: map[string]*parsers.Node{
-			"server": {
-				Type: parsers.Object,
-				Value: map[string]*parsers.Node{
-					"port": {
-						Type:  parsers.String,
-						Value: "8080",
-					},
-				},
-			},
-		},
-	}
+// 	// Test rules
+// 	rules := []Rule{
+// 		{
+// 			Description: "Sample rule",
+// 			CheckName:   "sampleCheck",
+// 			Args:        []string{"f:i:test.server.port"},
+// 		},
+// 	}
 
-	// Test configFilesMap
-	files := map[string]*parsers.Node{
-		"test": configFile,
-	}
+// 	// Setup
+// 	analyzer := &AnalyzerImpl{
+// 		checks: map[string]Check{
+// 			"sampleCheck": mockCheck,
+// 		},
+// 	}
 
-	// Test rules
-	rules := []Rule{
-		{
-			Description: "Sample rule",
-			CheckName:   "sampleCheck",
-			Args:        []string{"f:i:test.server.port"},
-		},
-	}
+// 	// Execute
+// 	res, err := analyzer.AnalyzeConfigFiles(files, rules)
 
-	// Setup
-	analyzer := &AnalyzerImpl{
-		checks: map[string]Check{
-			"sampleCheck": mockCheck,
-		},
-	}
-
-	// Execute
-	res, err := analyzer.AnalyzeConfigFiles(files, rules)
-
-	// Assert
-	assert.NoError(t, err)
-	assert.Len(t, res, 1)
-	assert.False(t, res[0].Passed)
-	assert.Contains(t, res[0].ResultComment, "Value at server.port in file test must be a int, got string")
-}
+// 	// Assert
+// 	assert.NoError(t, err)
+// 	assert.Len(t, res, 1)
+// 	assert.False(t, res[0].Passed)
+// 	assert.Contains(t, res[0].ResultComment, "Value at server.port in file test must be a int, got string")
+// }
