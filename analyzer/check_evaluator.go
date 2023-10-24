@@ -2,36 +2,33 @@ package analyzer
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ConfigMate/configmate/analyzer/types"
-	parser_cmcl "github.com/ConfigMate/configmate/parsers/gen/parser_cmcl/parsers/grammars"
-	"github.com/antlr4-go/antlr/v4"
 	"github.com/golang-collections/collections/stack"
 )
-
-type CMCLErrorListener struct {
-	*antlr.DefaultErrorListener
-	errors []error
-}
-
-func (d *CMCLErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol interface{},
-	line, column int, msg string, e antlr.RecognitionException) {
-	d.errors = append(d.errors, fmt.Errorf("line %d:%d %s", line, column, msg))
-}
 
 type cmclNodeType int
 
 const (
 	cmclIfCheck cmclNodeType = iota
 	cmclForeachCheck
+	cmclForeachItemAlias
 	cmclFieldExpr
 	cmclOrExpr
 	cmclAndExpr
 	cmclNotExpr
+	cmclParenExpr
+	cmclFunction
+	cmclString
+	cmclInt
+	cmclFloat
+	cmclBool
 )
 
 type cmclNode struct {
 	nodeType cmclNodeType
+	value    string
 	children []*cmclNode
 
 	// Used by cmclIfCheck
@@ -40,21 +37,17 @@ type cmclNode struct {
 }
 
 type CheckEvaluator struct {
-	*parser_cmcl.BaseCMCLListener
-
 	primaryField     string
-	fields           map[string]FieldInfo
+	fields           map[string]types.IType
 	optMissingFields map[string]bool
 
-	stack         stack.Stack
-	executionTree *cmclNode
-
-	res      types.IType
-	skipping bool
-	err      error
+	// The evalFieldStack stores the ITypes of
+	// the fields that functions
+	// are being evaluated on
+	evalFieldStack stack.Stack
 }
 
-func NewCheckEvaluator(primaryField string, fields map[string]FieldInfo, optMissingFields map[string]bool) *CheckEvaluator {
+func NewCheckEvaluator(primaryField string, fields map[string]types.IType, optMissingFields map[string]bool) *CheckEvaluator {
 	// Create evaluator
 	evaluator := &CheckEvaluator{
 		primaryField:     primaryField,
@@ -67,166 +60,254 @@ func NewCheckEvaluator(primaryField string, fields map[string]FieldInfo, optMiss
 
 func (ce *CheckEvaluator) Evaluate(check string) (types.IType, bool, error) {
 	// Parse check
-	input := antlr.NewInputStream(check)
-	lexer := parser_cmcl.NewCMCLLexer(input)
-	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
-	p := parser_cmcl.NewCMCLParser(stream)
+	parser := &CheckParser{}
+	node, err := parser.parse(check)
+	if err != nil {
+		return nil, false, err
+	}
 
-	// Add error listener
-	errorListener := &CMCLErrorListener{}
-	p.RemoveErrorListeners()
-	p.AddErrorListener(errorListener)
-
-	tree := p.Check()
-
-	// Check for errors
-	if len(errorListener.errors) > 0 {
-		return nil, false, fmt.Errorf("syntax errors: %v", errorListener.errors)
+	// Get primary field value
+	if pField, ok := ce.fields[ce.primaryField]; !ok {
+		return nil, false, fmt.Errorf("primary field %s does not exist", ce.primaryField)
+	} else {
+		ce.fields["this"] = pField
+		ce.evalFieldStack.Push(pField)
 	}
 
 	// Evaluate check
-	walker := antlr.NewParseTreeWalker()
-	walker.Walk(ce, tree)
-
-	return ce.res, ce.skipping, ce.err
+	return ce.visit(node)
 }
 
-// EnterExprCheck is called when production exprCheck is entered.
-func (ce *CheckEvaluator) EnterExprCheck(ctx *parser_cmcl.ExprCheckContext) {}
+func (ce *CheckEvaluator) visit(node *cmclNode) (types.IType, bool, error) {
+	switch node.nodeType {
+	case cmclIfCheck:
+		return ce.visitIfCheck(node)
+	case cmclForeachCheck:
+		return ce.visitForeachCheck(node)
+	case cmclFieldExpr:
+		return ce.visitFieldExpr(node)
+	case cmclOrExpr:
+		return ce.visitOrExpr(node)
+	case cmclAndExpr:
+		return ce.visitAndExpr(node)
+	case cmclNotExpr:
+		return ce.visitNotExpr(node)
+	case cmclParenExpr:
+		return ce.visitParenExpr(node)
+	case cmclFunction:
+		return ce.visitFunction(node)
+	case cmclString:
+		return ce.visitString(node)
+	case cmclInt:
+		return ce.visitInt(node)
+	case cmclFloat:
+		return ce.visitFloat(node)
+	case cmclBool:
+		return ce.visitBool(node)
+	default:
+		return nil, false, fmt.Errorf("unknown node type %v", node.nodeType)
+	}
+}
 
-// ExitExprCheck is called when production exprCheck is exited.
-func (ce *CheckEvaluator) ExitExprCheck(ctx *parser_cmcl.ExprCheckContext) {}
-
-// EnterIfCheck is called when production ifCheck is entered.
-func (ce *CheckEvaluator) EnterIfCheck(ctx *parser_cmcl.IfCheckContext) {
-	// Create new node for if statement
-	newNode := &cmclNode{
-		nodeType: cmclIfCheck,
-		children: make([]*cmclNode, 0),
+func (ce *CheckEvaluator) visitIfCheck(node *cmclNode) (types.IType, bool, error) {
+	// Evaluate if statement
+	condition, skipping, err := ce.visit(node.children[0])
+	if condition == nil {
+		return nil, false, err
+	} else if skipping {
+		return nil, true, nil
 	}
 
-	// Add node the the stack
-	ce.stack.Push(newNode)
-
-	// Add node to execution tree
-	if ce.executionTree == nil { // Root node
-		ce.executionTree = newNode
-	} else { // Child node
-		parentNode := ce.stack.Peek().(*cmclNode)
-		parentNode.children = append(parentNode.children, newNode)
+	// Check if the condition is bool
+	if _, ok := condition.Value().(bool); !ok {
+		return nil, false, fmt.Errorf("if statement condition must be a bool")
 	}
+
+	// Check if the condition is true
+	if condition.Value().(bool) {
+		// Evaluate if statement
+		return ce.visit(node.children[1])
+	}
+
+	// Evaluate else if statements
+	for _, elseIfStatement := range node.elseIfStatements {
+		condition, skipping, err := ce.visit(elseIfStatement.children[0])
+		if condition == nil {
+			return nil, false, err
+		} else if skipping {
+			return nil, true, nil
+		}
+
+		// Check if the condition is bool
+		if _, ok := condition.Value().(bool); !ok {
+			return nil, false, fmt.Errorf("else if statement condition must be a bool")
+		}
+
+		// Check if the condition is true
+		if condition.Value().(bool) {
+			// Evaluate else if statement
+			return ce.visit(elseIfStatement.children[1])
+		}
+	}
+
+	// Evaluate else statement
+	if node.elseStatement != nil {
+		return ce.visit(node.elseStatement.children[0])
+	}
+
+	// Make bool true to return
+	t, _ := types.MakeType("bool", true)
+	return t, false, nil
 }
 
-// ExitIfCheck is called when production ifCheck is exited.
-func (ce *CheckEvaluator) ExitIfCheck(ctx *parser_cmcl.IfCheckContext) {
-	// Pop node from the stack
-	ce.stack.Pop()
+func (ce *CheckEvaluator) visitForeachCheck(node *cmclNode) (types.IType, bool, error) {
+	// Get alias for list items during evaluation
+	alias := node.children[0].value
+
+	if _, ok := ce.fields[alias]; ok {
+		return nil, false, fmt.Errorf("alias %s in foreach conflicts with existing field", alias)
+	}
+
+	// Evaluate field expression. Result should be a list
+	list, skipping, err := ce.visit(node.children[1])
+	if list == nil {
+		return nil, false, err
+	} else if skipping {
+		return nil, true, nil
+	}
+
+	// Check if the list is a list
+	if !strings.HasSuffix(list.TypeName(), "list") {
+		return nil, false, fmt.Errorf("foreach statement must be a list")
+	}
+
+	// Evaluate foreach statement. Overall result will be true
+	// if all foreach body are true
+	resultErrors := make([]error, 0)
+	for i, value := range list.Value().([]types.IType) {
+		// Add alias to for list item
+		ce.fields[alias] = value
+
+		// Evaluate foreach body
+		result, skipping, err := ce.visit(node.children[2])
+		if err != nil {
+			return nil, false, err
+		} else if skipping {
+			return nil, true, nil
+		}
+
+		// Check if the result is a bool
+		if _, ok := result.Value().(bool); !ok {
+			return nil, false, fmt.Errorf("foreach body must evaluate to a bool")
+		}
+
+		// Return if the result is false
+		if !result.Value().(bool) {
+			resultErrors = append(resultErrors, fmt.Errorf("check failed for item %d", i))
+		}
+
+		// Pop value from stack
+		ce.evalFieldStack.Pop()
+	}
+
+	if len(resultErrors) > 0 {
+		return nil, false, fmt.Errorf("foreach body failed: %v", resultErrors)
+	}
+
+	// Make bool true to return
+	t, _ := types.MakeType("bool", true)
+	return t, false, nil
 }
 
-// EnterForeachCheck is called when production foreachCheck is entered.
-func (ce *CheckEvaluator) EnterForeachCheck(ctx *parser_cmcl.ForeachCheckContext) {}
+func (ce *CheckEvaluator) visitFieldExpr(node *cmclNode) (types.IType, bool, error) {
+	// Get field name
+	fieldName := node.value
+	// Check if the field exists
+	if field, ok := ce.fields[fieldName]; ok {
+		// Push field value to stack
+		ce.evalFieldStack.Push(field)
 
-// ExitForeachCheck is called when production foreachCheck is exited.
-func (ce *CheckEvaluator) ExitForeachCheck(ctx *parser_cmcl.ForeachCheckContext) {}
+		// Apply functions
+		var fErr error // Function error
+		for _, f := range node.children {
+			// Evaluate function
+			result, skipping, err := ce.visit(f)
+			if result == nil {
+				return nil, false, err
+			} else if skipping {
+				return nil, true, nil
+			} else {
+				fErr = err
+			}
+		}
 
-// EnterOrExpr is called when production orExpr is entered.
-func (ce *CheckEvaluator) EnterOrExpr(ctx *parser_cmcl.OrExprContext) {}
+		// Pop field value from stack
+		result := ce.evalFieldStack.Pop().(types.IType)
 
-// ExitOrExpr is called when production orExpr is exited.
-func (ce *CheckEvaluator) ExitOrExpr(ctx *parser_cmcl.OrExprContext) {}
+		// Return result
+		return result, false, fErr
 
-// EnterAndExpr is called when production andExpr is entered.
-func (ce *CheckEvaluator) EnterAndExpr(ctx *parser_cmcl.AndExprContext) {}
+	} else if ce.optMissingFields[fieldName] {
+		// Skipping check because optional field is missing
+		return nil, true, fmt.Errorf("skipping check because referenced optional field %s is missing", fieldName)
+	}
 
-// ExitAndExpr is called when production andExpr is exited.
-func (ce *CheckEvaluator) ExitAndExpr(ctx *parser_cmcl.AndExprContext) {}
+	return nil, false, fmt.Errorf("field %s does not exist", fieldName)
+}
 
-// EnterNotExpr is called when production notExpr is entered.
-func (ce *CheckEvaluator) EnterNotExpr(ctx *parser_cmcl.NotExprContext) {}
+func (ce *CheckEvaluator) visitOrExpr(node *cmclNode) (types.IType, bool, error) {
+	// Evaluate left expression
+	left, skipping, err := ce.visit(node.children[0])
+	if left == nil {
+		return nil, false, err
+	} else if skipping {
+		return nil, true, nil
+	}
 
-// ExitNotExpr is called when production notExpr is exited.
-func (ce *CheckEvaluator) ExitNotExpr(ctx *parser_cmcl.NotExprContext) {}
+	// Check if the left expression is bool
+	if left.TypeName() != "bool" {
+		return nil, false, fmt.Errorf("or expression left expression must be a bool")
+	}
 
-// EnterFieldCheck is called when production fieldCheck is entered.
-func (ce *CheckEvaluator) EnterFieldCheck(ctx *parser_cmcl.FieldCheckContext) {}
+	// Check if the left expression is true
+	if left.Value().(bool) {
+		// Make bool true to return
+		t, _ := types.MakeType("bool", true)
+		return t, false, nil
+	}
 
-// ExitFieldCheck is called when production fieldCheck is exited.
-func (ce *CheckEvaluator) ExitFieldCheck(ctx *parser_cmcl.FieldCheckContext) {}
+	// Check if there is a right expression
+	if len(node.children) < 2 {
+		// Make bool false to return
+		t, _ := types.MakeType("bool", false)
+		return t, false, err
+	}
 
-// EnterParenExpr is called when production parenExpr is entered.
-func (ce *CheckEvaluator) EnterParenExpr(ctx *parser_cmcl.ParenExprContext) {}
+	var errs []error
+	errs = append(errs, err)
 
-// ExitParenExpr is called when production parenExpr is exited.
-func (ce *CheckEvaluator) ExitParenExpr(ctx *parser_cmcl.ParenExprContext) {}
+	// Evaluate right expression
+	right, skipping, err := ce.visit(node.children[1])
+	if right == nil {
+		return nil, false, err
+	} else if skipping {
+		return nil, true, nil
+	}
 
-// EnterIf is called when production if is entered.
-func (ce *CheckEvaluator) EnterIf(ctx *parser_cmcl.IfContext) {}
+	// Check if the right expression is bool
+	if right.TypeName() != "bool" {
+		return nil, false, fmt.Errorf("or expression right expression must be a bool")
+	}
 
-// ExitIf is called when production if is exited.
-func (ce *CheckEvaluator) ExitIf(ctx *parser_cmcl.IfContext) {}
+	if right.Value().(bool) {
+		// Make bool true to return
+		t, _ := types.MakeType("bool", true)
+		return t, false, nil
+	}
 
-// EnterElseif is called when production elseif is entered.
-func (ce *CheckEvaluator) EnterElseif(ctx *parser_cmcl.ElseifContext) {}
+	// Add errors
+	errs = append(errs, err)
 
-// ExitElseif is called when production elseif is exited.
-func (ce *CheckEvaluator) ExitElseif(ctx *parser_cmcl.ElseifContext) {}
-
-// EnterElse is called when production else is entered.
-func (ce *CheckEvaluator) EnterElse(ctx *parser_cmcl.ElseContext) {}
-
-// ExitElse is called when production else is exited.
-func (ce *CheckEvaluator) ExitElse(ctx *parser_cmcl.ElseContext) {}
-
-// EnterForeach is called when production foreach is entered.
-func (ce *CheckEvaluator) EnterForeach(ctx *parser_cmcl.ForeachContext) {}
-
-// ExitForeach is called when production foreach is exited.
-func (ce *CheckEvaluator) ExitForeach(ctx *parser_cmcl.ForeachContext) {}
-
-// EnterNot is called when production not is entered.
-func (ce *CheckEvaluator) EnterNot(ctx *parser_cmcl.NotContext) {}
-
-// ExitNot is called when production not is exited.
-func (ce *CheckEvaluator) ExitNot(ctx *parser_cmcl.NotContext) {}
-
-// EnterFunction is called when production function is entered.
-func (ce *CheckEvaluator) EnterFunction(ctx *parser_cmcl.FunctionContext) {}
-
-// ExitFunction is called when production function is exited.
-func (ce *CheckEvaluator) ExitFunction(ctx *parser_cmcl.FunctionContext) {}
-
-// EnterArgument is called when production argument is entered.
-func (ce *CheckEvaluator) EnterArgument(ctx *parser_cmcl.ArgumentContext) {}
-
-// ExitArgument is called when production argument is exited.
-func (ce *CheckEvaluator) ExitArgument(ctx *parser_cmcl.ArgumentContext) {}
-
-// EnterString is called when production string is entered.
-func (ce *CheckEvaluator) EnterString(ctx *parser_cmcl.StringContext) {}
-
-// ExitString is called when production string is exited.
-func (ce *CheckEvaluator) ExitString(ctx *parser_cmcl.StringContext) {}
-
-// EnterInt is called when production int is entered.
-func (ce *CheckEvaluator) EnterInt(ctx *parser_cmcl.IntContext) {}
-
-// ExitInt is called when production int is exited.
-func (ce *CheckEvaluator) ExitInt(ctx *parser_cmcl.IntContext) {}
-
-// EnterFloat is called when production float is entered.
-func (ce *CheckEvaluator) EnterFloat(ctx *parser_cmcl.FloatContext) {}
-
-// ExitFloat is called when production float is exited.
-func (ce *CheckEvaluator) ExitFloat(ctx *parser_cmcl.FloatContext) {}
-
-// EnterBoolean is called when production boolean is entered.
-func (ce *CheckEvaluator) EnterBoolean(ctx *parser_cmcl.BooleanContext) {}
-
-// ExitBoolean is called when production boolean is exited.
-func (ce *CheckEvaluator) ExitBoolean(ctx *parser_cmcl.BooleanContext) {}
-
-// EnterField is called when production field is entered.
-func (ce *CheckEvaluator) EnterField(ctx *parser_cmcl.FieldContext) {}
-
-// ExitField is called when production field is exited.
-func (ce *CheckEvaluator) ExitField(ctx *parser_cmcl.FieldContext) {}
+	// Return the right expression
+	return right, false, fmt.Errorf("or expression failed: %v", errs)
+}
