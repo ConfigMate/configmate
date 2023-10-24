@@ -11,10 +11,10 @@ import (
 func TestEvaluate(t *testing.T) {
 	type testStructure struct {
 		// Input values
-		primaryField     types.IType          // Primary field
-		fields           map[string]FieldInfo // Fields
-		optMissingFields map[string]bool      // Optional missing fields
-		checks           []string             // Checks
+		primaryField     string                 // Primary field name
+		fields           map[string]types.IType // Fields
+		optMissingFields map[string]bool        // Optional missing fields
+		checks           []string               // Checks
 
 		// Expected values
 		expectedRes     types.IType // Expected result
@@ -30,10 +30,14 @@ func TestEvaluate(t *testing.T) {
 		// is it true. No other fields involved.
 		// The check should pass.
 		func() testStructure {
-			primaryField, _ := types.MakeType("bool", true) // Create primary field
-			fields := make(map[string]FieldInfo)            // Create fields
-			optMissingFields := make(map[string]bool)       // Create optional missing fields
-			checks := []string{"eq(true)"}                  // Create checks
+			primaryField := "config.primary" // Create primary field
+
+			fields := make(map[string]types.IType)     // Create fields
+			pFValue, _ := types.MakeType("bool", true) // Create primary field
+			fields[primaryField] = pFValue             // Add primary field to fields
+
+			optMissingFields := make(map[string]bool) // Create optional missing fields
+			checks := []string{"eq(true)"}            // Create checks
 
 			expectedRes, _ := types.MakeType("bool", true) // Create expected result
 			expectedSkipped := false                       // Create expected skipped value
@@ -53,10 +57,14 @@ func TestEvaluate(t *testing.T) {
 		// This test is the same as test 1, except
 		// the check should fail.
 		func() testStructure {
-			primaryField, _ := types.MakeType("bool", false) // Create primary field
-			fields := make(map[string]FieldInfo)             // Create fields
-			optMissingFields := make(map[string]bool)        // Create optional missing fields
-			checks := []string{"eq(true)"}                   // Create checks
+			primaryField := "primary" // Create primary field
+
+			fields := make(map[string]types.IType)      // Create fields
+			pFValue, _ := types.MakeType("bool", false) // Create primary field
+			fields[primaryField] = pFValue              // Add primary field to fields
+
+			optMissingFields := make(map[string]bool) // Create optional missing fields
+			checks := []string{"eq(true)"}            // Create checks
 
 			expectedRes, _ := types.MakeType("bool", false)            // Create expected result
 			expectedSkipped := false                                   // Create expected skipped value
@@ -78,8 +86,12 @@ func TestEvaluate(t *testing.T) {
 		// check that it is within a range (this check passes), and then check
 		// we check that that result is true (redundant)
 		func() testStructure {
-			primaryField, _ := types.MakeType("int", 5) // Create primary field
-			fields := make(map[string]FieldInfo)        // Create fields
+			primaryField := "primary.field" // Create primary field
+
+			fields := make(map[string]types.IType) // Create fields
+			pFValue, _ := types.MakeType("int", 5) // Create primary field
+			fields[primaryField] = pFValue         // Add primary field to fields
+
 			optMissingFields := make(map[string]bool)   // Create optional missing fields
 			checks := []string{"range(0, 10).eq(true)"} // Create checks
 
@@ -102,10 +114,14 @@ func TestEvaluate(t *testing.T) {
 		// The overall check passes but an intermidiate check returns false.
 		// The overall results should be nothing but a success.
 		func() testStructure {
-			primaryField, _ := types.MakeType("int", 5) // Create primary field
-			fields := make(map[string]FieldInfo)        // Create fields
-			optMissingFields := make(map[string]bool)   // Create optional missing fields
-			checks := []string{"range(0, 3).eq(false)"} // Create checks
+			primaryField := "primary.field" // Create primary field
+
+			fields := make(map[string]types.IType) // Create fields
+			pFValue, _ := types.MakeType("int", 5) // Create primary field
+			fields[primaryField] = pFValue         // Add primary field to fields
+
+			optMissingFields := make(map[string]bool) // Create optional missing fields
+			checks := []string{"!range(0, 3)"}        // Create checks
 
 			expectedRes, _ := types.MakeType("bool", true) // Create expected result
 			expectedSkipped := false                       // Create expected skipped value
@@ -126,10 +142,14 @@ func TestEvaluate(t *testing.T) {
 		// In this case one of them returns an intermidiate type (not a bool), the
 		// overall check fails.
 		func() testStructure {
-			primaryField, _ := types.MakeType("float", 3.14) // Create primary field
-			fields := make(map[string]FieldInfo)             // Create fields
-			optMissingFields := make(map[string]bool)        // Create optional missing fields
-			checks := []string{"toInt().range(0, 2)"}        // Create checks
+			primaryField := "primary.field" // Create primary field
+
+			fields := make(map[string]types.IType)      // Create fields
+			pFValue, _ := types.MakeType("float", 3.14) // Create primary field
+			fields[primaryField] = pFValue              // Add primary field to fields
+
+			optMissingFields := make(map[string]bool) // Create optional missing fields
+			checks := []string{"toInt().range(0, 2)"} // Create checks
 
 			expectedRes, _ := types.MakeType("bool", false)                      // Create expected result
 			expectedSkipped := false                                             // Create expected skipped value
@@ -151,11 +171,14 @@ func TestEvaluate(t *testing.T) {
 		// of type int, and we check that is it less than another field.
 		// The check should pass.
 		func() testStructure {
-			primaryField, _ := types.MakeType("int", 5) // Create primary field
+			primaryField := "primary.field" // Create primary field
 
-			fields := make(map[string]FieldInfo)       // Create fields
+			fields := make(map[string]types.IType) // Create fields
+			pFValue, _ := types.MakeType("int", 5) // Create primary field
+			fields[primaryField] = pFValue         // Add primary field to fields
+
 			otherField, _ := types.MakeType("int", 10) // Create other field
-			fields["config.other"] = FieldInfo{Value: otherField}
+			fields["config.other"] = otherField
 
 			optMissingFields := make(map[string]bool) // Create optional missing fields
 			checks := []string{"lt(config.other)"}    // Create checks
@@ -180,13 +203,16 @@ func TestEvaluate(t *testing.T) {
 		// type int, and we check that it is between two other fields. The check
 		// should pass.
 		func() testStructure {
-			primaryField, _ := types.MakeType("int", 5) // Create primary field
+			primaryField := "field" // Create primary field
 
-			fields := make(map[string]FieldInfo)       // Create fields
+			fields := make(map[string]types.IType) // Create fields
+			pFValue, _ := types.MakeType("int", 5) // Create primary field
+			fields[primaryField] = pFValue
+
 			otherField1, _ := types.MakeType("int", 0) // Create other field 1
 			otherField2, _ := types.MakeType("int", 10)
-			fields["config.other1"] = FieldInfo{Value: otherField1}
-			fields["config.other2"] = FieldInfo{Value: otherField2}
+			fields["config.other1"] = otherField1
+			fields["config.other2"] = otherField2
 
 			optMissingFields := make(map[string]bool)                 // Create optional missing fields
 			checks := []string{"range(config.other1, config.other2)"} // Create checks
@@ -211,11 +237,14 @@ func TestEvaluate(t *testing.T) {
 		// int, and we check that is it less than another field of type float. To do this
 		// we have to convert the float to int. The check should pass.
 		func() testStructure {
-			primaryField, _ := types.MakeType("int", 5) // Create primary field
+			primaryField := "primary.field" // Create primary field
 
-			fields := make(map[string]FieldInfo) // Create fields
+			fields := make(map[string]types.IType) // Create fields
+			pFValue, _ := types.MakeType("int", 5) // Create primary field
+			fields[primaryField] = pFValue         // Add primary field to fields
+
 			otherField, _ := types.MakeType("float", 10.0)
-			fields["config.other"] = FieldInfo{Value: otherField}
+			fields["config.other"] = otherField
 
 			optMissingFields := make(map[string]bool)      // Create optional missing fields
 			checks := []string{"lt(config.other.toInt())"} // Create checks
@@ -240,13 +269,16 @@ func TestEvaluate(t *testing.T) {
 		// a primary field of type int, and we check that it is between two other fields of
 		// type float. To do this we have to convert the floats to ints. The check should fail.
 		func() testStructure {
-			primaryField, _ := types.MakeType("int", 5) // Create primary field
+			primaryField := "primary.field" // Create primary field
 
-			fields := make(map[string]FieldInfo) // Create fields
+			fields := make(map[string]types.IType) // Create fields
+			pFValue, _ := types.MakeType("int", 5) // Create primary field
+			fields[primaryField] = pFValue         // Add primary field to fields
+
 			otherField1, _ := types.MakeType("float", 0.5)
 			otherField2, _ := types.MakeType("float", 3.14)
-			fields["config.other1"] = FieldInfo{Value: otherField1}
-			fields["config.something.other2"] = FieldInfo{Value: otherField2}
+			fields["config.other1"] = otherField1
+			fields["config.something.other2"] = otherField2
 
 			optMissingFields := make(map[string]bool)                                           // Create optional missing fields
 			checks := []string{"range(config.other1.toInt(), config.something.other2.toInt())"} // Create checks

@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/ConfigMate/configmate/analyzer/types"
@@ -15,6 +16,7 @@ const (
 	cmclForeachCheck
 	cmclForeachItemAlias
 	cmclFieldExpr
+	cmclFuncExpr
 	cmclOrExpr
 	cmclAndExpr
 	cmclNotExpr
@@ -86,6 +88,8 @@ func (ce *CheckEvaluator) visit(node *cmclNode) (types.IType, bool, error) {
 		return ce.visitForeachCheck(node)
 	case cmclFieldExpr:
 		return ce.visitFieldExpr(node)
+	case cmclFuncExpr:
+		return ce.visitFuncExpr(node)
 	case cmclOrExpr:
 		return ce.visitOrExpr(node)
 	case cmclAndExpr:
@@ -206,8 +210,8 @@ func (ce *CheckEvaluator) visitForeachCheck(node *cmclNode) (types.IType, bool, 
 			resultErrors = append(resultErrors, fmt.Errorf("check failed for item %d", i))
 		}
 
-		// Pop value from stack
-		ce.evalFieldStack.Pop()
+		// Remove alias from for list item
+		delete(ce.fields, alias)
 	}
 
 	if len(resultErrors) > 0 {
@@ -236,9 +240,14 @@ func (ce *CheckEvaluator) visitFieldExpr(node *cmclNode) (types.IType, bool, err
 				return nil, false, err
 			} else if skipping {
 				return nil, true, nil
-			} else {
-				fErr = err
 			}
+
+			// Save error
+			fErr = err
+
+			// Update field value on stack
+			ce.evalFieldStack.Pop()
+			ce.evalFieldStack.Push(result)
 		}
 
 		// Pop field value from stack
@@ -255,6 +264,12 @@ func (ce *CheckEvaluator) visitFieldExpr(node *cmclNode) (types.IType, bool, err
 	return nil, false, fmt.Errorf("field %s does not exist", fieldName)
 }
 
+func (ce *CheckEvaluator) visitFuncExpr(node *cmclNode) (types.IType, bool, error) {
+	// Place this as the node the function applies to
+	node.value = "this"
+	return ce.visitFieldExpr(node)
+}
+
 func (ce *CheckEvaluator) visitOrExpr(node *cmclNode) (types.IType, bool, error) {
 	// Evaluate left expression
 	left, skipping, err := ce.visit(node.children[0])
@@ -264,6 +279,12 @@ func (ce *CheckEvaluator) visitOrExpr(node *cmclNode) (types.IType, bool, error)
 		return nil, true, nil
 	}
 
+	// If there is no right expression, return the left expression
+	if len(node.children) < 2 {
+		return left, false, err
+	}
+
+	// If there is a right expression, the left expression must be a bool
 	// Check if the left expression is bool
 	if left.TypeName() != "bool" {
 		return nil, false, fmt.Errorf("or expression left expression must be a bool")
@@ -274,13 +295,6 @@ func (ce *CheckEvaluator) visitOrExpr(node *cmclNode) (types.IType, bool, error)
 		// Make bool true to return
 		t, _ := types.MakeType("bool", true)
 		return t, false, nil
-	}
-
-	// Check if there is a right expression
-	if len(node.children) < 2 {
-		// Make bool false to return
-		t, _ := types.MakeType("bool", false)
-		return t, false, err
 	}
 
 	var errs []error
@@ -310,4 +324,172 @@ func (ce *CheckEvaluator) visitOrExpr(node *cmclNode) (types.IType, bool, error)
 
 	// Return the right expression
 	return right, false, fmt.Errorf("or expression failed: %v", errs)
+}
+
+func (ce *CheckEvaluator) visitAndExpr(node *cmclNode) (types.IType, bool, error) {
+	// Evaluate left expression
+	left, skipping, err := ce.visit(node.children[0])
+	if left == nil {
+		return nil, false, err
+	} else if skipping {
+		return nil, true, nil
+	}
+
+	// If there is no right expression, return the left expression
+	if len(node.children) < 2 {
+		return left, false, err
+	}
+
+	// If there is a right expression, the left expression must be a bool
+	// Check if the left expression is bool
+	if left.TypeName() != "bool" {
+		return nil, false, fmt.Errorf("and expression left expression must be a bool")
+	}
+
+	// Check if the left expression is false
+	if !left.Value().(bool) {
+		// Make bool false to return
+		t, _ := types.MakeType("bool", false)
+		return t, false, err
+	}
+
+	// Evaluate right expression
+	right, skipping, err := ce.visit(node.children[1])
+	if right == nil {
+		return nil, false, err
+	} else if skipping {
+		return nil, true, nil
+	}
+
+	// Check if the right expression is bool
+	if right.TypeName() != "bool" {
+		return nil, false, fmt.Errorf("and expression right expression must be a bool")
+	}
+
+	if !right.Value().(bool) {
+		// Make bool false to return
+		t, _ := types.MakeType("bool", false)
+		return t, false, err
+	}
+
+	return right, false, nil
+}
+
+func (ce *CheckEvaluator) visitNotExpr(node *cmclNode) (types.IType, bool, error) {
+	// Evaluate expression
+	expr, skipping, err := ce.visit(node.children[0])
+	if expr == nil {
+		return nil, false, err
+	} else if skipping {
+		return nil, true, nil
+	}
+
+	// Check if the expression is bool
+	if expr.TypeName() != "bool" {
+		return nil, false, fmt.Errorf("not expression value must be a bool")
+	}
+
+	// Check if the expression is true (undesired condition in this case because we are negating it)
+	if expr.Value().(bool) {
+		// Make bool false to return
+		t, _ := types.MakeType("bool", false)
+		return t, false, err
+	}
+
+	// Returns false with no error (because we are negating the expression)
+	// Make bool true to return
+	t, _ := types.MakeType("bool", true)
+	return t, false, nil
+}
+
+func (ce *CheckEvaluator) visitParenExpr(node *cmclNode) (types.IType, bool, error) {
+	// Evaluate expression
+	expr, skipping, err := ce.visit(node.children[0])
+	if expr == nil {
+		return nil, false, err
+	} else if skipping {
+		return nil, true, nil
+	}
+
+	return expr, false, err
+}
+
+func (ce *CheckEvaluator) visitFunction(node *cmclNode) (types.IType, bool, error) {
+	// Get function name
+	functionName := node.value
+
+	// Get arguments
+	args := make([]types.IType, 0)
+	for _, arg := range node.children {
+		// Evaluate argument
+		result, skipping, err := ce.visit(arg)
+		if result == nil {
+			return nil, false, err
+		} else if skipping {
+			return nil, true, nil
+		}
+
+		args = append(args, result)
+	}
+
+	// Get field value
+	field := ce.evalFieldStack.Peek().(types.IType)
+
+	// Check if the field has the function
+	if _, ok := field.Checks()[functionName]; !ok {
+		return nil, false, fmt.Errorf("type %s does not have function %s", field.TypeName(), functionName)
+	}
+
+	// Apply function
+	result, err := field.Checks()[functionName](args)
+	if result == nil {
+		return nil, false, err
+	}
+
+	return result, false, err
+}
+
+func (ce *CheckEvaluator) visitString(node *cmclNode) (types.IType, bool, error) {
+	// Remove quotes
+	value := node.value[1 : len(node.value)-1]
+
+	// Make string to return
+	t, err := types.MakeType("string", value)
+	return t, false, err
+}
+
+func (ce *CheckEvaluator) visitInt(node *cmclNode) (types.IType, bool, error) {
+	// Parse int
+	intValue, err := strconv.Atoi(node.value)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Make int to return
+	t, err := types.MakeType("int", intValue)
+	return t, false, err
+}
+
+func (ce *CheckEvaluator) visitFloat(node *cmclNode) (types.IType, bool, error) {
+	// Parse float
+	floatValue, err := strconv.ParseFloat(node.value, 64)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Make float to return
+	t, err := types.MakeType("float", floatValue)
+	return t, false, err
+}
+
+func (ce *CheckEvaluator) visitBool(node *cmclNode) (types.IType, bool, error) {
+	// Parse bool
+	boolValue, err := strconv.ParseBool(node.value)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Make bool to return
+	t, err := types.MakeType("bool", boolValue)
+	return t, false, err
 }

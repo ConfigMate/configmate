@@ -29,11 +29,21 @@ func (p *CheckParser) parse(check string) (*cmclNode, error) {
 	// Parse check
 	input := antlr.NewInputStream(check)
 	lexer := parser_cmcl.NewCMCLLexer(input)
+
+	// Add error listener
+	errorListener := &CMCLErrorListener{}
+	lexer.RemoveErrorListeners()
+	lexer.AddErrorListener(errorListener)
+
+	// Check for errors
+	if len(errorListener.errors) > 0 {
+		return nil, fmt.Errorf("syntax errors: %v", errorListener.errors)
+	}
+
 	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	parser := parser_cmcl.NewCMCLParser(stream)
 
 	// Add error listener
-	errorListener := &CMCLErrorListener{}
 	parser.RemoveErrorListeners()
 	parser.AddErrorListener(errorListener)
 
@@ -60,9 +70,6 @@ func (p *CheckParser) EnterIfCheck(ctx *parser_cmcl.IfCheckContext) {
 		elseIfStatements: make([]*cmclNode, 0),
 	}
 
-	// Add node the the stack
-	p.stack.Push(newNode)
-
 	// Add node to execution tree
 	if p.executionTree == nil { // Root node
 		p.executionTree = newNode
@@ -70,6 +77,9 @@ func (p *CheckParser) EnterIfCheck(ctx *parser_cmcl.IfCheckContext) {
 		parentNode := p.stack.Peek().(*cmclNode)
 		parentNode.children = append(parentNode.children, newNode)
 	}
+
+	// Add node the the stack
+	p.stack.Push(newNode)
 }
 
 // ExitIfCheck is called when production ifCheck is exited.
@@ -91,9 +101,6 @@ func (p *CheckParser) EnterForeachCheck(ctx *parser_cmcl.ForeachCheckContext) {
 		value:    ctx.Foreach().NAME().GetText(),
 	})
 
-	// Add node the the stack
-	p.stack.Push(newNode)
-
 	// Add node to execution tree
 	if p.executionTree == nil { // Root node
 		p.executionTree = newNode
@@ -101,6 +108,9 @@ func (p *CheckParser) EnterForeachCheck(ctx *parser_cmcl.ForeachCheckContext) {
 		parentNode := p.stack.Peek().(*cmclNode)
 		parentNode.children = append(parentNode.children, newNode)
 	}
+
+	// Add node the the stack
+	p.stack.Push(newNode)
 }
 
 // ExitForeachCheck is called when production foreachCheck is exited.
@@ -117,9 +127,6 @@ func (p *CheckParser) EnterOrExpr(ctx *parser_cmcl.OrExprContext) {
 		children: make([]*cmclNode, 0),
 	}
 
-	// Add node the the stack
-	p.stack.Push(newNode)
-
 	// Add node to execution tree
 	if p.executionTree == nil { // Root node
 		p.executionTree = newNode
@@ -127,6 +134,9 @@ func (p *CheckParser) EnterOrExpr(ctx *parser_cmcl.OrExprContext) {
 		parentNode := p.stack.Peek().(*cmclNode)
 		parentNode.children = append(parentNode.children, newNode)
 	}
+
+	// Add node the the stack
+	p.stack.Push(newNode)
 }
 
 // ExitOrExpr is called when production orExpr is exited.
@@ -143,9 +153,6 @@ func (p *CheckParser) EnterAndExpr(ctx *parser_cmcl.AndExprContext) {
 		children: make([]*cmclNode, 0),
 	}
 
-	// Add node the the stack
-	p.stack.Push(newNode)
-
 	// Add node to execution tree
 	if p.executionTree == nil { // Root node
 		p.executionTree = newNode
@@ -153,6 +160,9 @@ func (p *CheckParser) EnterAndExpr(ctx *parser_cmcl.AndExprContext) {
 		parentNode := p.stack.Peek().(*cmclNode)
 		parentNode.children = append(parentNode.children, newNode)
 	}
+
+	// Add node the the stack
+	p.stack.Push(newNode)
 }
 
 // ExitAndExpr is called when production andExpr is exited.
@@ -169,9 +179,6 @@ func (p *CheckParser) EnterNotExpr(ctx *parser_cmcl.NotExprContext) {
 		children: make([]*cmclNode, 0),
 	}
 
-	// Add node the the stack
-	p.stack.Push(newNode)
-
 	// Add node to execution tree
 	if p.executionTree == nil { // Root node
 		p.executionTree = newNode
@@ -179,6 +186,9 @@ func (p *CheckParser) EnterNotExpr(ctx *parser_cmcl.NotExprContext) {
 		parentNode := p.stack.Peek().(*cmclNode)
 		parentNode.children = append(parentNode.children, newNode)
 	}
+
+	// Add node the the stack
+	p.stack.Push(newNode)
 }
 
 // ExitNotExpr is called when production notExpr is exited.
@@ -196,9 +206,6 @@ func (p *CheckParser) EnterFieldExpr(ctx *parser_cmcl.FieldExprContext) {
 		children: make([]*cmclNode, 0),
 	}
 
-	// Add node the the stack
-	p.stack.Push(newNode)
-
 	// Add node to execution tree
 	if p.executionTree == nil { // Root node
 		p.executionTree = newNode
@@ -206,6 +213,9 @@ func (p *CheckParser) EnterFieldExpr(ctx *parser_cmcl.FieldExprContext) {
 		parentNode := p.stack.Peek().(*cmclNode)
 		parentNode.children = append(parentNode.children, newNode)
 	}
+
+	// Add node the the stack
+	p.stack.Push(newNode)
 }
 
 // ExitFieldCheck is called when production fieldCheck is exited.
@@ -222,9 +232,6 @@ func (p *CheckParser) EnterParenExpr(ctx *parser_cmcl.ParenExprContext) {
 		children: make([]*cmclNode, 0),
 	}
 
-	// Add node the the stack
-	p.stack.Push(newNode)
-
 	// Add node to execution tree
 	if p.executionTree == nil { // Root node
 		p.executionTree = newNode
@@ -232,6 +239,9 @@ func (p *CheckParser) EnterParenExpr(ctx *parser_cmcl.ParenExprContext) {
 		parentNode := p.stack.Peek().(*cmclNode)
 		parentNode.children = append(parentNode.children, newNode)
 	}
+
+	// Add node the the stack
+	p.stack.Push(newNode)
 }
 
 // ExitParenExpr is called when production parenExpr is exited.
@@ -285,15 +295,12 @@ func (p *CheckParser) ExitElse(ctx *parser_cmcl.ElseContext) {
 }
 
 // EnterFunction is called when production function is entered.
-func (p *CheckParser) EnterFunction(ctx *parser_cmcl.FunctionContext) {
+func (p *CheckParser) EnterFuncExpr(ctx *parser_cmcl.FuncExprContext) {
 	// Create new node for function
 	newNode := &cmclNode{
-		nodeType: cmclFunction,
+		nodeType: cmclFuncExpr,
 		children: make([]*cmclNode, 0),
 	}
-
-	// Add node the the stack
-	p.stack.Push(newNode)
 
 	// Add node to execution tree
 	if p.executionTree == nil { // Root node
@@ -302,6 +309,35 @@ func (p *CheckParser) EnterFunction(ctx *parser_cmcl.FunctionContext) {
 		parentNode := p.stack.Peek().(*cmclNode)
 		parentNode.children = append(parentNode.children, newNode)
 	}
+
+	// Add node the the stack
+	p.stack.Push(newNode)
+}
+
+func (p *CheckParser) ExitFuncExpr(ctx *parser_cmcl.FuncExprContext) {
+	// Pop node from the stack
+	p.stack.Pop()
+}
+
+// EnterFunction is called when production function is entered.
+func (p *CheckParser) EnterFunction(ctx *parser_cmcl.FunctionContext) {
+	// Create new node for function
+	newNode := &cmclNode{
+		nodeType: cmclFunction,
+		value:    ctx.NAME().GetText(),
+		children: make([]*cmclNode, 0),
+	}
+
+	// Add node to execution tree
+	if p.executionTree == nil { // Root node
+		p.executionTree = newNode
+	} else { // Child node
+		parentNode := p.stack.Peek().(*cmclNode)
+		parentNode.children = append(parentNode.children, newNode)
+	}
+
+	// Add node the the stack
+	p.stack.Push(newNode)
 }
 
 // ExitFunction is called when production function is exited.

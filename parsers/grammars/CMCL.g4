@@ -18,8 +18,9 @@ andExpression
     ;
 
 atom
-    : not                   # notExpr
-    | fieldExpression # fieldExpr
+    : not                      # notExpr
+    | functionExpression       # funcExpr
+    | fieldExpression          # fieldExpr
     | LPAREN expression RPAREN # parenExpr
     ;
 
@@ -33,11 +34,13 @@ foreach: FOREACH_SYM LPAREN NAME COLON field RPAREN LBRACE check RBRACE;
 
 not: NOT_SYM atom;
 
+functionExpression: function (DOT function)*;
+
+fieldExpression: field (DOT functionExpression)?;
+
 function
     : NAME LPAREN argument (COMMA argument)* RPAREN
     | NAME LPAREN RPAREN;
-
-fieldExpression: field (DOT function)*;
 
 argument: primitive | check;
 
