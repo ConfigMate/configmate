@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"go.uber.org/multierr"
+
 	"github.com/ConfigMate/configmate/analyzer/types"
 	"github.com/golang-collections/collections/stack"
 )
@@ -15,6 +17,7 @@ const (
 	cmclIfCheck cmclNodeType = iota
 	cmclForeachCheck
 	cmclForeachItemAlias
+	cmclForeachListArg
 	cmclFieldExpr
 	cmclFuncExpr
 	cmclOrExpr
@@ -119,7 +122,7 @@ func (ce *CheckEvaluator) visitIfCheck(node *cmclNode) (types.IType, bool, error
 	if condition == nil {
 		return nil, false, err
 	} else if skipping {
-		return nil, true, nil
+		return condition, true, err
 	}
 
 	// Check if the condition is bool
@@ -139,7 +142,7 @@ func (ce *CheckEvaluator) visitIfCheck(node *cmclNode) (types.IType, bool, error
 		if condition == nil {
 			return nil, false, err
 		} else if skipping {
-			return nil, true, nil
+			return condition, true, err
 		}
 
 		// Check if the condition is bool
@@ -172,17 +175,16 @@ func (ce *CheckEvaluator) visitForeachCheck(node *cmclNode) (types.IType, bool, 
 		return nil, false, fmt.Errorf("alias %s in foreach conflicts with existing field", alias)
 	}
 
-	// Evaluate field expression. Result should be a list
-	list, skipping, err := ce.visit(node.children[1])
-	if list == nil {
-		return nil, false, err
-	} else if skipping {
-		return nil, true, nil
+	// Get list to iterate over
+	listFieldName := node.children[1].value
+	list, ok := ce.fields[listFieldName]
+	if !ok {
+		return nil, false, fmt.Errorf("field %s does not exist", listFieldName)
 	}
 
 	// Check if the list is a list
-	if !strings.HasSuffix(list.TypeName(), "list") {
-		return nil, false, fmt.Errorf("foreach statement must be a list")
+	if !strings.HasPrefix(list.TypeName(), "list:") {
+		return nil, false, fmt.Errorf("foreach argument must be a list")
 	}
 
 	// Evaluate foreach statement. Overall result will be true
@@ -194,10 +196,10 @@ func (ce *CheckEvaluator) visitForeachCheck(node *cmclNode) (types.IType, bool, 
 
 		// Evaluate foreach body
 		result, skipping, err := ce.visit(node.children[2])
-		if err != nil {
+		if result == nil {
 			return nil, false, err
 		} else if skipping {
-			return nil, true, nil
+			return result, true, err
 		}
 
 		// Check if the result is a bool
@@ -205,9 +207,9 @@ func (ce *CheckEvaluator) visitForeachCheck(node *cmclNode) (types.IType, bool, 
 			return nil, false, fmt.Errorf("foreach body must evaluate to a bool")
 		}
 
-		// Return if the result is false
+		// Collect error if the result is false
 		if !result.Value().(bool) {
-			resultErrors = append(resultErrors, fmt.Errorf("check failed for item %d", i))
+			resultErrors = append(resultErrors, fmt.Errorf("item %d: %v", i, err))
 		}
 
 		// Remove alias from for list item
@@ -215,7 +217,9 @@ func (ce *CheckEvaluator) visitForeachCheck(node *cmclNode) (types.IType, bool, 
 	}
 
 	if len(resultErrors) > 0 {
-		return nil, false, fmt.Errorf("foreach body failed: %v", resultErrors)
+		// Make bool false to return
+		t, _ := types.MakeType("bool", false)
+		return t, false, fmt.Errorf("foreach body failed: %v", multierr.Combine(resultErrors...))
 	}
 
 	// Make bool true to return
@@ -239,7 +243,7 @@ func (ce *CheckEvaluator) visitFieldExpr(node *cmclNode) (types.IType, bool, err
 			if result == nil {
 				return nil, false, err
 			} else if skipping {
-				return nil, true, nil
+				return result, true, err
 			}
 
 			// Save error
@@ -258,7 +262,9 @@ func (ce *CheckEvaluator) visitFieldExpr(node *cmclNode) (types.IType, bool, err
 
 	} else if ce.optMissingFields[fieldName] {
 		// Skipping check because optional field is missing
-		return nil, true, fmt.Errorf("skipping check because referenced optional field %s is missing", fieldName)
+		// Make bool false to return
+		t, _ := types.MakeType("bool", false)
+		return t, true, fmt.Errorf("skipping check because referenced optional field %s is missing", fieldName)
 	}
 
 	return nil, false, fmt.Errorf("field %s does not exist", fieldName)
@@ -276,7 +282,7 @@ func (ce *CheckEvaluator) visitOrExpr(node *cmclNode) (types.IType, bool, error)
 	if left == nil {
 		return nil, false, err
 	} else if skipping {
-		return nil, true, nil
+		return left, true, err
 	}
 
 	// If there is no right expression, return the left expression
@@ -305,7 +311,7 @@ func (ce *CheckEvaluator) visitOrExpr(node *cmclNode) (types.IType, bool, error)
 	if right == nil {
 		return nil, false, err
 	} else if skipping {
-		return nil, true, nil
+		return right, true, err
 	}
 
 	// Check if the right expression is bool
@@ -323,7 +329,7 @@ func (ce *CheckEvaluator) visitOrExpr(node *cmclNode) (types.IType, bool, error)
 	errs = append(errs, err)
 
 	// Return the right expression
-	return right, false, fmt.Errorf("or expression failed: %v", errs)
+	return right, false, multierr.Combine(errs...)
 }
 
 func (ce *CheckEvaluator) visitAndExpr(node *cmclNode) (types.IType, bool, error) {
@@ -332,7 +338,7 @@ func (ce *CheckEvaluator) visitAndExpr(node *cmclNode) (types.IType, bool, error
 	if left == nil {
 		return nil, false, err
 	} else if skipping {
-		return nil, true, nil
+		return left, true, err
 	}
 
 	// If there is no right expression, return the left expression
@@ -358,7 +364,7 @@ func (ce *CheckEvaluator) visitAndExpr(node *cmclNode) (types.IType, bool, error
 	if right == nil {
 		return nil, false, err
 	} else if skipping {
-		return nil, true, nil
+		return right, true, err
 	}
 
 	// Check if the right expression is bool
@@ -381,7 +387,7 @@ func (ce *CheckEvaluator) visitNotExpr(node *cmclNode) (types.IType, bool, error
 	if expr == nil {
 		return nil, false, err
 	} else if skipping {
-		return nil, true, nil
+		return expr, true, err
 	}
 
 	// Check if the expression is bool
@@ -408,7 +414,7 @@ func (ce *CheckEvaluator) visitParenExpr(node *cmclNode) (types.IType, bool, err
 	if expr == nil {
 		return nil, false, err
 	} else if skipping {
-		return nil, true, nil
+		return expr, true, err
 	}
 
 	return expr, false, err
@@ -426,7 +432,7 @@ func (ce *CheckEvaluator) visitFunction(node *cmclNode) (types.IType, bool, erro
 		if result == nil {
 			return nil, false, err
 		} else if skipping {
-			return nil, true, nil
+			return result, true, err
 		}
 
 		args = append(args, result)

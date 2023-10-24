@@ -96,9 +96,16 @@ func (p *CheckParser) EnterForeachCheck(ctx *parser_cmcl.ForeachCheckContext) {
 		children: make([]*cmclNode, 0),
 	}
 
+	// Add list item alias to the node as a child
 	newNode.children = append(newNode.children, &cmclNode{
 		nodeType: cmclForeachItemAlias,
 		value:    ctx.Foreach().NAME().GetText(),
+	})
+
+	// Add field being iterated over to the node as a child
+	newNode.children = append(newNode.children, &cmclNode{
+		nodeType: cmclForeachListArg,
+		value:    ctx.Foreach().Field().GetText(),
 	})
 
 	// Add node to execution tree
