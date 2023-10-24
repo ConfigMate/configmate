@@ -1,10 +1,15 @@
 package analyzer
 
 type Rulebook struct {
-	Name        string            `json:"name" toml:"name"`               // Name of the rulebook
-	Description string            `json:"description" toml:"description"` // Description of the rulebook
-	Files       map[string]string `json:"files" toml:"files"`             // Map of file aliases to file paths
-	Rules       []Rule            `json:"rules" toml:"rules"`             // List of rules
+	Name        string                 `json:"name" toml:"name"`               // Name of the rulebook
+	Description string                 `json:"description" toml:"description"` // Description of the rulebook
+	Files       map[string]FileDetails `json:"files" toml:"files"`             // Map of file aliases to file paths and file formats
+	Rules       []Rule                 `json:"rules" toml:"rules"`             // List of rules
+}
+
+type FileDetails struct {
+	Path   string `json:"path" toml:"path"`
+	Format string `json:"format" toml:"format"`
 }
 
 type Rule struct {

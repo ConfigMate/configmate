@@ -5,7 +5,9 @@ import (
 	"os"
 
 	"github.com/ConfigMate/configmate/analyzer"
+	"github.com/ConfigMate/configmate/parsers"
 	"github.com/ConfigMate/configmate/server"
+	"github.com/ConfigMate/configmate/utils"
 	"github.com/urfave/cli/v2"
 )
 
@@ -62,7 +64,55 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					// Implement check command
+					// Get the rulebook path from the command line argument
+					rulebookPath := c.String("rulebook")
+
+					// Read the rulebook file
+					ruleBookData, err := utils.ReadFile(rulebookPath)
+					if err != nil {
+						return err
+					}
+
+					// Convert TOML into a Rulebook object
+					ruleBook, err := utils.DecodeRulebook(ruleBookData)
+					if err != nil {
+						return err
+					}
+
+					// Parse rulebooks
+					files := make(map[string]*parsers.Node)
+					for _, file := range ruleBook.Files {
+						// Read the file
+						data, err := utils.ReadFile(file.Path)
+						if err != nil {
+							return err
+						}
+
+						// Parse the file
+						parser, err := parsers.Parse(data, file.Format)
+						if err != nil {
+							return err
+						}
+
+						// Append the parse result to the files map
+						files[file.Path] = parser
+					}
+
+					// Get rules
+					rules := ruleBook.Rules
+
+					// Get analyzer
+					analyzer := &analyzer.AnalyzerImpl{}
+					res, err := analyzer.AnalyzeConfigFiles(files, rules)
+					if err != nil {
+						return err
+					}
+
+					// Print results
+					for _, result := range res {
+						fmt.Println("Result:", result)
+					}
+
 					return nil
 				},
 			},

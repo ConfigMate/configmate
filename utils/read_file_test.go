@@ -1,14 +1,34 @@
-# This is a TOML configuration for the Rulebook
+package utils
+
+import (
+	"reflect"
+	"testing"
+)
+
+// Test_ReadFile tests the ReadFile function.
+func Test_ReadFile(t *testing.T) {
+	// Input
+	var filePath = "../examples/rulebooks/sample0.cmrb"
+
+	// Test cases
+	type testCase struct {
+		input    string
+		expected string
+		err      bool
+	}
+
+	// Mock Node result
+	expectedData := `# This is a TOML configuration for the Rulebook
 name = "Sample Rulebook"
 description = "This is a sample rulebook for experimentation."
 
 # Files to be checked
 [files.file1]
-path = "./examples/configurations/sample_config.json"
+path = "/examples/configurations/sample_config.json"
 format = "json"
 
 [files.file2]
-path = "./examples/configurations/sample_config.toml"
+path = "/examples/configurations/sample_config.toml"
 format = "toml"
 
 # List of rules to be checked
@@ -61,5 +81,26 @@ default = "/path/to/key.pem"
 field = "dns_servers"
 description = "List of DNS servers"
 type = "list:host"
-checks = ["foreach().", "at()"]
+checks = ["foreach().", "at()"]`
 
+	testCases := []testCase{
+		{
+			input:    filePath,
+			expected: expectedData,
+			err:      false,
+		},
+	}
+
+	// Run tests
+	for _, test := range testCases {
+		actual, err := ReadFile(test.input)
+
+		if err != nil && !test.err {
+			t.Errorf("Unexpected error: %s", err)
+		} else if err == nil && test.err {
+			t.Errorf("Expected error, got nil")
+		} else if !reflect.DeepEqual(actual, test.expected) {
+			t.Errorf("Expected %v, got %v", test.expected, string(actual))
+		}
+	}
+}
