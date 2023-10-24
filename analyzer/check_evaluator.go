@@ -435,13 +435,8 @@ func (ce *CheckEvaluator) visitFunction(node *cmclNode) (types.IType, bool, erro
 	// Get field value
 	field := ce.evalFieldStack.Peek().(types.IType)
 
-	// Check if the field has the function
-	if _, ok := field.Checks()[functionName]; !ok {
-		return nil, false, fmt.Errorf("type %s does not have function %s", field.TypeName(), functionName)
-	}
-
 	// Apply function
-	result, err := field.Checks()[functionName](args)
+	result, err := field.GetMethod(functionName)(args)
 	if result == nil {
 		return nil, false, err
 	}

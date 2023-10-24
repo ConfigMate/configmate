@@ -25,8 +25,24 @@ func (t tString) Value() interface{} {
 	return t.value
 }
 
-func (t tString) Checks() map[string]Check {
-	return map[string]Check{
+func (t tString) Methods() []string {
+	return []string{
+		"eq",
+		"regex",
+	}
+}
+
+func (t tString) MethodDescription(method string) string {
+	tStringMethodsDescriptions := map[string]string{
+		"eq":    "string.eq(s string) : Checks that the value is equal to s",
+		"regex": "string.regex(pattern string) : Checks that the value matches the pattern",
+	}
+
+	return tStringMethodsDescriptions[method]
+}
+
+func (t tString) GetMethod(method string) Method {
+	tStringMethods := map[string]Method{
 		"eq": func(args []IType) (IType, error) {
 			// Check that the correct number of arguments were passed
 			if len(args) != 1 {
@@ -72,11 +88,13 @@ func (t tString) Checks() map[string]Check {
 			return &tBool{value: true}, nil
 		},
 	}
-}
 
-func (t tString) ChecksDescription() map[string]string {
-	return map[string]string{
-		"eq":    "string.eq(s string) : Checks that the value is equal to s",
-		"regex": "string.regex(pattern string) : Checks that the value matches the pattern",
+	// Check if method doesn't exist
+	if _, ok := tStringMethods[method]; !ok {
+		return func(args []IType) (IType, error) {
+			return nil, fmt.Errorf("string does not have method %s", method)
+		}
 	}
+
+	return tStringMethods[method]
 }

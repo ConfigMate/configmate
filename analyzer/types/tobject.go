@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 type tObject struct{}
 
 func objectFactory(value interface{}) (IType, error) {
@@ -14,10 +16,16 @@ func (t tObject) Value() interface{} {
 	return nil
 }
 
-func (t tObject) Checks() map[string]Check {
-	return map[string]Check{}
+func (t tObject) Methods() []string {
+	return []string{}
 }
 
-func (t tObject) ChecksDescription() map[string]string {
-	return map[string]string{}
+func (t tObject) MethodDescription(method string) string {
+	return ""
+}
+
+func (t tObject) GetMethod(method string) Method {
+	return func(args []IType) (IType, error) {
+		return nil, fmt.Errorf("object does not have a method %s", method)
+	}
 }

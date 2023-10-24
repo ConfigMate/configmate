@@ -25,8 +25,36 @@ func (t tInt) Value() interface{} {
 	return t.value
 }
 
-func (t tInt) Checks() map[string]Check {
-	return map[string]Check{
+func (t tInt) Methods() []string {
+	return []string{
+		"eq",
+		"gt",
+		"gte",
+		"lt",
+		"lte",
+		"range",
+		"toFloat",
+		"toString",
+	}
+}
+
+func (t tInt) MethodDescription(method string) string {
+	tIntMethodsDescriptions := map[string]string{
+		"eq":       "int.eq(arg int) : Checks that the value is equal to the argument",
+		"gt":       "int.gt(arg int) : Checks that the value is greater than the argument",
+		"gte":      "int.gte(arg int) : Checks that the value is greater than or equal to the argument",
+		"lt":       "int.lt(arg int) : Checks that the value is less than the argument",
+		"lte":      "int.lte(arg int) : Checks that the value is less than or equal to the argument",
+		"range":    "int.range(min int, max int) : Checks that the value is in the range [min, max]",
+		"toFloat":  "int.toFloat() : Converts the value to a float",
+		"toString": "int.toString() : Converts the value to a string",
+	}
+
+	return tIntMethodsDescriptions[method]
+}
+
+func (t tInt) GetMethod(method string) Method {
+	tIntMethods := map[string]Method{
 		"eq": func(args []IType) (IType, error) {
 			// Check that the correct number of arguments were passed
 			if len(args) != 1 {
@@ -159,17 +187,13 @@ func (t tInt) Checks() map[string]Check {
 			return &tString{value: strconv.Itoa(t.value)}, nil
 		},
 	}
-}
 
-func (t tInt) ChecksDescription() map[string]string {
-	return map[string]string{
-		"eq":       "int.eq(arg int) : Checks that the value is equal to the argument",
-		"gt":       "int.gt(arg int) : Checks that the value is greater than the argument",
-		"gte":      "int.gte(arg int) : Checks that the value is greater than or equal to the argument",
-		"lt":       "int.lt(arg int) : Checks that the value is less than the argument",
-		"lte":      "int.lte(arg int) : Checks that the value is less than or equal to the argument",
-		"range":    "int.range(min int, max int) : Checks that the value is in the range [min, max]",
-		"toFloat":  "int.toFloat() : Converts the value to a float",
-		"toString": "int.toString() : Converts the value to a string",
+	// Check if method doesn't exist
+	if _, ok := tIntMethods[method]; !ok {
+		return func(args []IType) (IType, error) {
+			return nil, fmt.Errorf("int does not have method %s", method)
+		}
 	}
+
+	return tIntMethods[method]
 }
