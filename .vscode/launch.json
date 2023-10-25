@@ -17,7 +17,7 @@
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
-            "args": ["check", "--rulebook", "./examples/rulebooks/config0.cmrb"]
+            "args": ["check", "./examples/rulebooks/config0.cmrb"]
         },
     ]
 }

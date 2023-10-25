@@ -136,7 +136,7 @@ func main() {
 					// Print results for failed checks
 					for _, result := range res {
 						if !result.Passed {
-							formattedResult := utils.FormatResult(result, filesLines)
+							formattedResult := utils.FormatResult(result, rulebook.Files, filesLines)
 							fmt.Print(formattedResult)
 						} else {
 							successfulChecks = append(successfulChecks, result)
@@ -150,7 +150,7 @@ func main() {
 					// Print results for successful checks if --all flag is set
 					if c.Bool("all") {
 						for _, result := range successfulChecks {
-							formattedResult := utils.FormatResult(result, filesLines)
+							formattedResult := utils.FormatResult(result, rulebook.Files, filesLines)
 							fmt.Print(formattedResult)
 						}
 					}
