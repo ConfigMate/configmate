@@ -129,7 +129,7 @@ func main() {
 
 					// Print results
 					for _, result := range res {
-						fmt.Printf("Result: %v\n", result)
+						fmt.Printf("Result: %+v\n", result)
 					}
 
 					return nil

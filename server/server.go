@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/ConfigMate/configmate/analyzer"
+	"github.com/ConfigMate/configmate/parsers"
+	"github.com/ConfigMate/configmate/utils"
 )
 
 type Server struct {
@@ -69,24 +71,61 @@ func (server *Server) Serve() error {
 func (server *Server) checkHandler() http.HandlerFunc {
 	// Return handler for check endpoint
 	return func(w http.ResponseWriter, r *http.Request) {
-		var rb analyzer.Rulebook
+		var p struct {
+			RulebookPath string `json:"rulebook_path"` // Path to the rulebook
+		}
 
 		decoder := json.NewDecoder(r.Body)
-		if err := decoder.Decode(&rb); err != nil {
+		if err := decoder.Decode(&p); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		var result analyzer.Result
+		// Read the rulebook file
+		ruleBookData, err := os.ReadFile(p.RulebookPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
-		// result, err := server.analyzer.AnalyzeConfigFiles(nil, rb)
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
+		// Decode TOML into a Rulebook object
+		ruleBook, err := utils.DecodeRulebook(ruleBookData)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// Parse rulebooks
+		files := make(map[string]*parsers.Node)
+		for alias, file := range ruleBook.Files {
+			// Read the file
+			data, err := os.ReadFile(file.Path)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			// Parse the file
+			parsedFile, err := parsers.Parse(data, file.Format)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			// Append the parse result to the files map
+			files[alias] = parsedFile
+		}
+
+		// Get analyzer
+		analyzer := &analyzer.AnalyzerImpl{}
+		res, err := analyzer.AnalyzeConfigFiles(files, ruleBook.Rules)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(result); err != nil {
+		if err := json.NewEncoder(w).Encode(res); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
