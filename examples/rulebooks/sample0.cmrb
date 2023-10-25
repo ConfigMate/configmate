@@ -3,9 +3,13 @@ name = "Sample Rulebook"
 description = "This is a sample rulebook for experimentation."
 
 # Files to be checked
-[files]
-file1 = "/path/to/file1"
-file2 = "/path/to/file2"
+[files.file1]
+path = "./examples/configurations/sample_config.json"
+format = "json"
+
+[files.file2]
+path = "./examples/configurations/sample_config.toml"
+format = "toml"
 
 # List of rules to be checked
 [[rules]]
@@ -34,7 +38,7 @@ checks = ["is(some.host.com)", "reachable()", "join(file1.proxy.bindPort).listen
 default = "some.host.com"
 
 [[rules]]
-filed = "file1.proxy.certification"
+field = "file1.proxy.certification"
 description = "Details of the certification"
 type = "object"
 optional = true
