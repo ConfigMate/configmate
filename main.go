@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/ConfigMate/configmate/analyzer"
 	"github.com/ConfigMate/configmate/parsers"
@@ -100,6 +101,25 @@ func main() {
 
 					// Get rules
 					rules := ruleBook.Rules
+
+					// Map the file content to the corresponding line numbers
+					filesLines := make(map[string]map[int]string)
+					for path := range files {
+						// Read file
+						fileData, err := os.ReadFile(path)
+						if err != nil {
+							return err
+						}
+
+						// Create line map
+						lineMap, err := utils.CreateLineMap(fileData)
+						if err != nil {
+							return nil
+						}
+
+						// Append line map to filesLines
+						filesLines[path] = lineMap
+					}
 
 					// Get analyzer
 					analyzer := &analyzer.AnalyzerImpl{}
