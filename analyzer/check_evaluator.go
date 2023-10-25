@@ -3,327 +3,506 @@ package analyzer
 import (
 	"fmt"
 	"strconv"
+	"strings"
+
+	"go.uber.org/multierr"
 
 	"github.com/ConfigMate/configmate/analyzer/types"
-	parser_cmcl "github.com/ConfigMate/configmate/parsers/gen/parser_cmcl/parsers/grammars"
-	"github.com/antlr4-go/antlr/v4"
 	"github.com/golang-collections/collections/stack"
 )
 
-type CMCLErrorListener struct {
-	*antlr.DefaultErrorListener
-	errors []error
-}
+type cmclNodeType int
 
-func (d *CMCLErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol interface{},
-	line, column int, msg string, e antlr.RecognitionException) {
-	d.errors = append(d.errors, fmt.Errorf("line %d:%d %s", line, column, msg))
-}
+const (
+	cmclIfCheck cmclNodeType = iota
+	cmclForeachCheck
+	cmclForeachItemAlias
+	cmclForeachListArg
+	cmclFieldExpr
+	cmclFuncExpr
+	cmclOrExpr
+	cmclAndExpr
+	cmclNotExpr
+	cmclParenExpr
+	cmclFunction
+	cmclString
+	cmclInt
+	cmclFloat
+	cmclBool
+)
 
-type executionNode struct {
-	FuncName string
-	Value    types.IType
-	CheckErr error
-	Children []*executionNode
+type cmclNode struct {
+	nodeType cmclNodeType
+	value    string
+	children []*cmclNode
+
+	// Used by cmclIfCheck
+	elseIfStatements []*cmclNode
+	elseStatement    *cmclNode
 }
 
 type CheckEvaluator struct {
-	*parser_cmcl.BaseCMCLListener
-
-	fields           map[string]FieldInfo
+	primaryField     string
+	fields           map[string]types.IType
 	optMissingFields map[string]bool
-	stack            stack.Stack
 
-	res      types.IType
-	skipping bool
-	err      error
+	// The evalFieldStack stores the ITypes of
+	// the fields that functions
+	// are being evaluated on
+	evalFieldStack stack.Stack
 }
 
-func NewCheckEvaluator(primaryField types.IType, fields map[string]FieldInfo, optMissingFields map[string]bool) *CheckEvaluator {
+func NewCheckEvaluator(primaryField string, fields map[string]types.IType, optMissingFields map[string]bool) *CheckEvaluator {
 	// Create evaluator
 	evaluator := &CheckEvaluator{
+		primaryField:     primaryField,
 		fields:           fields,
 		optMissingFields: optMissingFields,
 	}
-
-	// Push primary field to stack
-	evaluator.stack.Push(&executionNode{
-		Value:    primaryField,
-		Children: make([]*executionNode, 0),
-	})
 
 	return evaluator
 }
 
 func (ce *CheckEvaluator) Evaluate(check string) (types.IType, bool, error) {
 	// Parse check
-	input := antlr.NewInputStream(check)
-	lexer := parser_cmcl.NewCMCLLexer(input)
-	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
-	p := parser_cmcl.NewCMCLParser(stream)
+	parser := &CheckParser{}
+	node, err := parser.parse(check)
+	if err != nil {
+		return nil, false, err
+	}
 
-	// Add error listener
-	errorListener := &CMCLErrorListener{}
-	p.RemoveErrorListeners()
-	p.AddErrorListener(errorListener)
-
-	tree := p.Check()
-
-	// Check for errors
-	if len(errorListener.errors) > 0 {
-		return nil, false, fmt.Errorf("syntax errors: %v", errorListener.errors)
+	// Get primary field value
+	if pField, ok := ce.fields[ce.primaryField]; !ok {
+		return nil, false, fmt.Errorf("primary field %s does not exist", ce.primaryField)
+	} else {
+		ce.fields["this"] = pField
+		ce.evalFieldStack.Push(pField)
 	}
 
 	// Evaluate check
-	walker := antlr.NewParseTreeWalker()
-	walker.Walk(ce, tree)
-
-	return ce.res, ce.skipping, ce.err
-}
-
-func (ce *CheckEvaluator) ExitCheck(ctx *parser_cmcl.CheckContext) {
-	// Return if error has already been encountered
-	if ce.err != nil {
-		return
-	}
-
-	// Check that the stack only contains the root node.
-	// Otherwise this indicates the exiting check belongs
-	// to some parameter, not the primary field.
-	if ce.stack.Len() != 1 {
-		return
-	}
-
-	// Get result node
-	resNode := ce.stack.Pop().(*executionNode)
-
-	// Check that the result is a boolean
-	if resNode.Value.TypeName() != "bool" {
-		ce.err = fmt.Errorf("check must return a boolean")
-	} else {
-		ce.res = resNode.Value
-		ce.err = resNode.CheckErr
-	}
-}
-
-// EnterFunction is called when production function is entered.
-func (ce *CheckEvaluator) EnterFunction(ctx *parser_cmcl.FunctionContext) {
-	// Return if error has already been encountered
-	if ce.err != nil {
-		return
-	}
-
-	// Get function name
-	funcName := ctx.NAME().GetText()
-
-	// Create a node for this function
-	funcNode := &executionNode{
-		FuncName: funcName,
-		Children: make([]*executionNode, 0),
-	}
-
-	// Add function to the children of the current node
-	currNode := ce.stack.Peek().(*executionNode)
-	currNode.Children = append(currNode.Children, funcNode)
-
-	// Add function to the stack
-	ce.stack.Push(funcNode)
-}
-
-// ExitFunction is called when production function is exited.
-func (ce *CheckEvaluator) ExitFunction(ctx *parser_cmcl.FunctionContext) {
-	// Return if error has already been encountered
-	if ce.err != nil {
-		return
-	}
-
-	// Get and pop current node (function)
-	funcNode := ce.stack.Pop().(*executionNode)
-
-	// Get function name
-	funcName := funcNode.FuncName
-
-	// Get function arguments
-	args := make([]types.IType, len(funcNode.Children))
-	for i, child := range funcNode.Children {
-		args[i] = child.Value
-	}
-
-	// Get current node (node the function is applied to)
-	currNode := ce.stack.Peek().(*executionNode)
-
-	// Find function
-	f, exists := currNode.Value.Checks()[funcName]
-	if !exists {
-		ce.err = fmt.Errorf("function %s.%s not found", currNode.Value.TypeName(), funcName)
-		return
-	}
-
-	// Apply function
-	res, err := f(args)
+	res, skipping, err := ce.visit(node)
 	if res == nil {
-		ce.err = err
-		return
+		return nil, false, err
+	} else if skipping {
+		return res, true, err
 	}
 
-	// Update current node with result
-	currNode.FuncName = ""
-	currNode.Value = res
-	currNode.CheckErr = err
-	currNode.Children = nil
+	// Check if the result is a bool
+	if res.TypeName() != "bool" {
+		return nil, false, fmt.Errorf("check must evaluate to a bool")
+	}
+
+	return res, skipping, err
 }
 
-// EnterField is called when production field is entered.
-func (ce *CheckEvaluator) EnterField(ctx *parser_cmcl.FieldContext) {
-	// Return if error has already been encountered
-	if ce.err != nil {
-		return
+func (ce *CheckEvaluator) visit(node *cmclNode) (types.IType, bool, error) {
+	switch node.nodeType {
+	case cmclIfCheck:
+		return ce.visitIfCheck(node)
+	case cmclForeachCheck:
+		return ce.visitForeachCheck(node)
+	case cmclFieldExpr:
+		return ce.visitFieldExpr(node)
+	case cmclFuncExpr:
+		return ce.visitFuncExpr(node)
+	case cmclOrExpr:
+		return ce.visitOrExpr(node)
+	case cmclAndExpr:
+		return ce.visitAndExpr(node)
+	case cmclNotExpr:
+		return ce.visitNotExpr(node)
+	case cmclParenExpr:
+		return ce.visitParenExpr(node)
+	case cmclFunction:
+		return ce.visitFunction(node)
+	case cmclString:
+		return ce.visitString(node)
+	case cmclInt:
+		return ce.visitInt(node)
+	case cmclFloat:
+		return ce.visitFloat(node)
+	case cmclBool:
+		return ce.visitBool(node)
+	default:
+		return nil, false, fmt.Errorf("unknown node type %v", node.nodeType)
+	}
+}
+
+func (ce *CheckEvaluator) visitIfCheck(node *cmclNode) (types.IType, bool, error) {
+	// Evaluate if statement
+	condition, skipping, err := ce.visit(node.children[0])
+	if condition == nil {
+		return nil, false, err
+	} else if skipping {
+		return condition, true, err
 	}
 
-	// Get field name
-	fieldName := ctx.Fieldname().GetText()
+	// Check if the condition is bool
+	if _, ok := condition.Value().(bool); !ok {
+		return nil, false, fmt.Errorf("if statement condition must be a bool")
+	}
 
-	// Find field in fields map
-	if field, exists := ce.fields[fieldName]; exists {
-		// Create a node for this field
-		fieldNode := &executionNode{
-			Value:    field.Value,
-			Children: make([]*executionNode, 0),
+	// Check if the condition is true
+	if condition.Value().(bool) {
+		// Evaluate if statement
+		return ce.visit(node.children[1])
+	}
+
+	// Evaluate else if statements
+	for _, elseIfStatement := range node.elseIfStatements {
+		condition, skipping, err := ce.visit(elseIfStatement.children[0])
+		if condition == nil {
+			return nil, false, err
+		} else if skipping {
+			return condition, true, err
 		}
 
-		// Add to the childe of the current node
-		currNode := ce.stack.Peek().(*executionNode)
-		currNode.Children = append(currNode.Children, fieldNode)
+		// Check if the condition is bool
+		if _, ok := condition.Value().(bool); !ok {
+			return nil, false, fmt.Errorf("else if statement condition must be a bool")
+		}
 
-		// Add field to the stack
-		ce.stack.Push(fieldNode)
+		// Check if the condition is true
+		if condition.Value().(bool) {
+			// Evaluate else if statement
+			return ce.visit(elseIfStatement.children[1])
+		}
+	}
+
+	// Evaluate else statement
+	if node.elseStatement != nil {
+		return ce.visit(node.elseStatement.children[0])
+	}
+
+	// Make bool true to return
+	t, _ := types.MakeType("bool", true)
+	return t, false, nil
+}
+
+func (ce *CheckEvaluator) visitForeachCheck(node *cmclNode) (types.IType, bool, error) {
+	// Get alias for list items during evaluation
+	alias := node.children[0].value
+
+	if _, ok := ce.fields[alias]; ok {
+		return nil, false, fmt.Errorf("list item alias %s in foreach conflicts with existing field", alias)
+	}
+
+	// Get list to iterate over
+	listFieldName := node.children[1].value
+	list, ok := ce.fields[listFieldName]
+	if !ok {
+		return nil, false, fmt.Errorf("field %s does not exist", listFieldName)
+	}
+
+	// Check if the list is a list
+	if !strings.HasPrefix(list.TypeName(), "list:") {
+		return nil, false, fmt.Errorf("foreach argument must be a list")
+	}
+
+	// Evaluate foreach statement. Overall result will be true
+	// if all foreach body are true
+	resultErrors := make([]error, 0)
+	for i, value := range list.Value().([]types.IType) {
+		// Add alias to for list item
+		ce.fields[alias] = value
+
+		// Evaluate foreach body
+		result, skipping, err := ce.visit(node.children[2])
+		if result == nil {
+			return nil, false, err
+		} else if skipping {
+			return result, true, err
+		}
+
+		// Check if the result is a bool
+		if _, ok := result.Value().(bool); !ok {
+			return nil, false, fmt.Errorf("foreach body must evaluate to a bool")
+		}
+
+		// Collect error if the result is false
+		if !result.Value().(bool) {
+			resultErrors = append(resultErrors, fmt.Errorf("item %d: %v", i, err))
+		}
+
+		// Remove alias from for list item
+		delete(ce.fields, alias)
+	}
+
+	if len(resultErrors) > 0 {
+		// Make bool false to return
+		t, _ := types.MakeType("bool", false)
+		return t, false, fmt.Errorf("foreach body failed: %v", multierr.Combine(resultErrors...))
+	}
+
+	// Make bool true to return
+	t, _ := types.MakeType("bool", true)
+	return t, false, nil
+}
+
+func (ce *CheckEvaluator) visitFieldExpr(node *cmclNode) (types.IType, bool, error) {
+	// Get field name
+	fieldName := node.value
+	// Check if the field exists
+	if field, ok := ce.fields[fieldName]; ok {
+		// Push field value to stack
+		ce.evalFieldStack.Push(field)
+
+		// Apply functions
+		var fErr error // Function error
+		for _, f := range node.children {
+			// Evaluate function
+			result, skipping, err := ce.visit(f)
+			if result == nil {
+				return nil, false, err
+			} else if skipping {
+				return result, true, err
+			}
+
+			// Save error
+			fErr = err
+
+			// Update field value on stack
+			ce.evalFieldStack.Pop()
+			ce.evalFieldStack.Push(result)
+		}
+
+		// Pop field value from stack
+		result := ce.evalFieldStack.Pop().(types.IType)
+
+		// Return result
+		return result, false, fErr
+
 	} else if ce.optMissingFields[fieldName] {
-		ce.skipping = true
-		ce.err = fmt.Errorf("skipping check because referenced optional field %s is missing", fieldName)
-	} else {
-		ce.err = fmt.Errorf("field %s not found", fieldName)
+		// Skipping check because optional field is missing
+		// Make bool false to return
+		t, _ := types.MakeType("bool", false)
+		return t, true, fmt.Errorf("skipping check because referenced optional field %s is missing", fieldName)
 	}
+
+	return nil, false, fmt.Errorf("field %s does not exist", fieldName)
 }
 
-// ExitField is called when production field is exited.
-func (ce *CheckEvaluator) ExitField(ctx *parser_cmcl.FieldContext) {
-	// Return if error has already been encountered
-	if ce.err != nil {
-		return
-	}
-
-	// Pop field from the stack
-	ce.stack.Pop()
+func (ce *CheckEvaluator) visitFuncExpr(node *cmclNode) (types.IType, bool, error) {
+	// Place this as the node the function applies to
+	node.value = "this"
+	return ce.visitFieldExpr(node)
 }
 
-// EnterString is called when production string is entered.
-func (ce *CheckEvaluator) EnterString(ctx *parser_cmcl.StringContext) {
-	// Return if error has already been encountered
-	if ce.err != nil {
-		return
+func (ce *CheckEvaluator) visitOrExpr(node *cmclNode) (types.IType, bool, error) {
+	// Evaluate left expression
+	left, skipping, err := ce.visit(node.children[0])
+	if left == nil {
+		return nil, false, err
+	} else if skipping {
+		return left, true, err
 	}
 
-	// Get string value
-	strValue := removeStringQuotes(ctx.GetText())
-
-	// Make string type
-	strType, err := types.MakeType("string", strValue)
-	if err != nil {
-		ce.err = err
-		return
+	// If there is no right expression, return the left expression
+	if len(node.children) < 2 {
+		return left, false, err
 	}
 
-	// Add string type to the children of the current node
-	currNode := ce.stack.Peek().(*executionNode)
-	currNode.Children = append(currNode.Children, &executionNode{
-		Value: strType,
-	})
+	// If there is a right expression, the left expression must be a bool
+	// Check if the left expression is bool
+	if left.TypeName() != "bool" {
+		return nil, false, fmt.Errorf("or expression left expression must be a bool")
+	}
+
+	// Check if the left expression is true
+	if left.Value().(bool) {
+		// Make bool true to return
+		t, _ := types.MakeType("bool", true)
+		return t, false, nil
+	}
+
+	var errs []error
+	errs = append(errs, err)
+
+	// Evaluate right expression
+	right, skipping, err := ce.visit(node.children[1])
+	if right == nil {
+		return nil, false, err
+	} else if skipping {
+		return right, true, err
+	}
+
+	// Check if the right expression is bool
+	if right.TypeName() != "bool" {
+		return nil, false, fmt.Errorf("or expression right expression must be a bool")
+	}
+
+	if right.Value().(bool) {
+		// Make bool true to return
+		t, _ := types.MakeType("bool", true)
+		return t, false, nil
+	}
+
+	// Add errors
+	errs = append(errs, err)
+
+	// Return the right expression
+	return right, false, multierr.Combine(errs...)
 }
 
-// EnterInt is called when production int is entered.
-func (ce *CheckEvaluator) EnterInt(ctx *parser_cmcl.IntContext) {
-	// Return if error has already been encountered
-	if ce.err != nil {
-		return
+func (ce *CheckEvaluator) visitAndExpr(node *cmclNode) (types.IType, bool, error) {
+	// Evaluate left expression
+	left, skipping, err := ce.visit(node.children[0])
+	if left == nil {
+		return nil, false, err
+	} else if skipping {
+		return left, true, err
 	}
 
-	// Get int value
-	intValue, err := strconv.Atoi(ctx.GetText())
-	if err != nil {
-		ce.err = err
-		return
+	// If there is no right expression, return the left expression
+	if len(node.children) < 2 {
+		return left, false, err
 	}
 
-	// Make int type
-	intType, err := types.MakeType("int", intValue)
-	if err != nil {
-		ce.err = err
-		return
+	// If there is a right expression, the left expression must be a bool
+	// Check if the left expression is bool
+	if left.TypeName() != "bool" {
+		return nil, false, fmt.Errorf("and expression left expression must be a bool")
 	}
 
-	// Add int type to the children of the current node
-	currNode := ce.stack.Peek().(*executionNode)
-	currNode.Children = append(currNode.Children, &executionNode{
-		Value: intType,
-	})
+	// Check if the left expression is false
+	if !left.Value().(bool) {
+		// Make bool false to return
+		t, _ := types.MakeType("bool", false)
+		return t, false, err
+	}
+
+	// Evaluate right expression
+	right, skipping, err := ce.visit(node.children[1])
+	if right == nil {
+		return nil, false, err
+	} else if skipping {
+		return right, true, err
+	}
+
+	// Check if the right expression is bool
+	if right.TypeName() != "bool" {
+		return nil, false, fmt.Errorf("and expression right expression must be a bool")
+	}
+
+	if !right.Value().(bool) {
+		// Make bool false to return
+		t, _ := types.MakeType("bool", false)
+		return t, false, err
+	}
+
+	return right, false, nil
 }
 
-// EnterFloat is called when production float is entered.
-func (ce *CheckEvaluator) EnterFloat(ctx *parser_cmcl.FloatContext) {
-	// Return if error has already been encountered
-	if ce.err != nil {
-		return
+func (ce *CheckEvaluator) visitNotExpr(node *cmclNode) (types.IType, bool, error) {
+	// Evaluate expression
+	expr, skipping, err := ce.visit(node.children[0])
+	if expr == nil {
+		return nil, false, err
+	} else if skipping {
+		return expr, true, err
 	}
 
-	// Get float value
-	floatValue, err := strconv.ParseFloat(ctx.GetText(), 64)
-	if err != nil {
-		ce.err = err
-		return
+	// Check if the expression is bool
+	if expr.TypeName() != "bool" {
+		return nil, false, fmt.Errorf("not expression value must be a bool")
 	}
 
-	// Make float type
-	floatType, err := types.MakeType("float", floatValue)
-	if err != nil {
-		ce.err = err
-		return
+	// Check if the expression is true (undesired condition in this case because we are negating it)
+	if expr.Value().(bool) {
+		// Make bool false to return
+		t, _ := types.MakeType("bool", false)
+		return t, false, err
 	}
 
-	// Add float type to the children of the current node
-	currNode := ce.stack.Peek().(*executionNode)
-	currNode.Children = append(currNode.Children, &executionNode{
-		Value: floatType,
-	})
+	// Returns false with no error (because we are negating the expression)
+	// Make bool true to return
+	t, _ := types.MakeType("bool", true)
+	return t, false, nil
 }
 
-// EnterBoolean is called when production boolean is entered.
-func (ce *CheckEvaluator) EnterBoolean(ctx *parser_cmcl.BooleanContext) {
-	// Return if error has already been encountered
-	if ce.err != nil {
-		return
+func (ce *CheckEvaluator) visitParenExpr(node *cmclNode) (types.IType, bool, error) {
+	// Evaluate expression
+	expr, skipping, err := ce.visit(node.children[0])
+	if expr == nil {
+		return nil, false, err
+	} else if skipping {
+		return expr, true, err
 	}
 
-	// Get boolean value
-	boolValue, err := strconv.ParseBool(ctx.GetText())
-	if err != nil {
-		ce.err = err
-		return
-	}
-
-	// Make boolean type
-	boolType, err := types.MakeType("bool", boolValue)
-	if err != nil {
-		ce.err = err
-		return
-	}
-
-	// Add boolean type to the children of the current node
-	currNode := ce.stack.Peek().(*executionNode)
-	currNode.Children = append(currNode.Children, &executionNode{
-		Value: boolType,
-	})
+	return expr, false, err
 }
 
-func removeStringQuotes(s string) string {
-	return s[1 : len(s)-1]
+func (ce *CheckEvaluator) visitFunction(node *cmclNode) (types.IType, bool, error) {
+	// Get function name
+	functionName := node.value
+
+	// Get arguments
+	args := make([]types.IType, 0)
+	for _, arg := range node.children {
+		// Evaluate argument
+		result, skipping, err := ce.visit(arg)
+		if result == nil {
+			return nil, false, err
+		} else if skipping {
+			return result, true, err
+		}
+
+		args = append(args, result)
+	}
+
+	// Get field value
+	field := ce.evalFieldStack.Peek().(types.IType)
+
+	// Apply function
+	result, err := field.GetMethod(functionName)(args)
+	if result == nil {
+		return nil, false, err
+	}
+
+	return result, false, err
+}
+
+func (ce *CheckEvaluator) visitString(node *cmclNode) (types.IType, bool, error) {
+	// Remove quotes
+	value := node.value[1 : len(node.value)-1]
+
+	// Make string to return
+	t, err := types.MakeType("string", value)
+	return t, false, err
+}
+
+func (ce *CheckEvaluator) visitInt(node *cmclNode) (types.IType, bool, error) {
+	// Parse int
+	intValue, err := strconv.Atoi(node.value)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Make int to return
+	t, err := types.MakeType("int", intValue)
+	return t, false, err
+}
+
+func (ce *CheckEvaluator) visitFloat(node *cmclNode) (types.IType, bool, error) {
+	// Parse float
+	floatValue, err := strconv.ParseFloat(node.value, 64)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Make float to return
+	t, err := types.MakeType("float", floatValue)
+	return t, false, err
+}
+
+func (ce *CheckEvaluator) visitBool(node *cmclNode) (types.IType, bool, error) {
+	// Parse bool
+	boolValue, err := strconv.ParseBool(node.value)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Make bool to return
+	t, err := types.MakeType("bool", boolValue)
+	return t, false, err
 }

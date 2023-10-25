@@ -3,19 +3,47 @@
 
 grammar CMCL;
 
-// A check is a list of functions
-// separated with a dot
-check: function (DOT function)*;
+check
+    : expression          # exprCheck
+    | if                  # ifCheck
+    | foreach             # foreachCheck
+    ;
 
-// A function is a name followed by a list of arguments
+expression
+    : andExpression (OR_SYM andExpression)*  # orExpr
+    ;
+
+andExpression
+    : atom (AND_SYM atom)*  # andExpr
+    ;
+
+atom
+    : not                      # notExpr
+    | functionExpression       # funcExpr
+    | fieldExpression          # fieldExpr
+    | LPAREN expression RPAREN # parenExpr
+    ;
+
+if: IF_SYM LPAREN check RPAREN LBRACE check RBRACE (elseif)* (else)?;
+
+elseif: ELSEIF_SYM LPAREN check RPAREN LBRACE check RBRACE;
+
+else: ELSE_SYM LBRACE check RBRACE;
+
+foreach: FOREACH_SYM LPAREN NAME COLON field RPAREN LBRACE check RBRACE;
+
+not: NOT_SYM atom;
+
+functionExpression: function (DOT function)*;
+
+fieldExpression: field (DOT functionExpression)?;
+
 function
     : NAME LPAREN argument (COMMA argument)* RPAREN
     | NAME LPAREN RPAREN;
 
-// An argument is either a primitive value, a function, or a field
-argument: primitive | field;
+argument: primitive | check;
 
-// A primitive value is a string, an int, a float, or a boolean
 primitive
     : STRING # string
     | INT # int
@@ -23,14 +51,18 @@ primitive
     | BOOL # boolean
     ;
 
-// A field is a field name followed by an optional check
-field: fieldname (DOT check)?;
-
-// A field name is a list of comma separated unquoted strings or index expressions
-// Such as "foo", "bar.xyz", "baz[0]", "[1].xyz".
-fieldname: (NAME | LBRACKET INT RBRACKET) (DOT (NAME | LBRACKET INT RBRACKET))*;
+// A field is a list of comma separated unquoted strings or index expressions
+// Such as "foo", "bar.xyz".
+field: NAME (DOT NAME)*;
 
 // Tokens
+IF_SYM: 'if';
+ELSEIF_SYM: 'elseif';
+ELSE_SYM: 'else';
+FOREACH_SYM: 'foreach';
+AND_SYM: '&&';
+OR_SYM: '||';
+NOT_SYM: '!';
 BOOL: 'true' | 'false';
 NAME: [a-zA-Z_][a-zA-Z0-9_]*;
 INT: [0-9]+;
@@ -40,8 +72,11 @@ LPAREN: '(';
 RPAREN: ')';
 LBRACKET: '[';
 RBRACKET: ']';
+LBRACE: '{';
+RBRACE: '}';
 DOT: '.';
 COMMA: ',';
+COLON: ':';
 ESC: '\\' [btnfr"'\\];
 WS: [ \t\r\n]+ -> skip;
 

@@ -25,8 +25,24 @@ func (t tBool) Value() interface{} {
 	return t.value
 }
 
-func (t tBool) Checks() map[string]Check {
-	return map[string]Check{
+func (t tBool) Methods() []string {
+	return []string{
+		"eq",
+		"toString",
+	}
+}
+
+func (t tBool) MethodDescription(method string) string {
+	tBoolMethodDescriptions := map[string]string{
+		"eq":       "bool.eq(arg bool) : Checks that the value is equal to the argument",
+		"toString": "bool.toString() : Converts the value to a string",
+	}
+
+	return tBoolMethodDescriptions[method]
+}
+
+func (t tBool) GetMethod(method string) Method {
+	tBoolMethods := map[string]Method{
 		"eq": func(args []IType) (IType, error) {
 			// Check that the correct number of arguments were passed
 			if len(args) != 1 {
@@ -56,11 +72,13 @@ func (t tBool) Checks() map[string]Check {
 			return &tString{value: strconv.FormatBool(t.value)}, nil
 		},
 	}
-}
 
-func (t tBool) ChecksDescription() map[string]string {
-	return map[string]string{
-		"eq":       "bool.eq(arg bool) : Checks that the value is equal to the argument",
-		"toString": "bool.toString() : Converts the value to a string",
+	// Get requested method
+	if _, ok := tBoolMethods[method]; !ok {
+		return func(args []IType) (IType, error) {
+			return nil, fmt.Errorf("bool does not have method %s", method)
+		}
 	}
+
+	return tBoolMethods[method]
 }
