@@ -80,7 +80,19 @@ func (ce *CheckEvaluator) Evaluate(check string) (types.IType, bool, error) {
 	}
 
 	// Evaluate check
-	return ce.visit(node)
+	res, skipping, err := ce.visit(node)
+	if res == nil {
+		return nil, false, err
+	} else if skipping {
+		return res, true, err
+	}
+
+	// Check if the result is a bool
+	if res.TypeName() != "bool" {
+		return nil, false, fmt.Errorf("check must evaluate to a bool")
+	}
+
+	return res, skipping, err
 }
 
 func (ce *CheckEvaluator) visit(node *cmclNode) (types.IType, bool, error) {
@@ -172,7 +184,7 @@ func (ce *CheckEvaluator) visitForeachCheck(node *cmclNode) (types.IType, bool, 
 	alias := node.children[0].value
 
 	if _, ok := ce.fields[alias]; ok {
-		return nil, false, fmt.Errorf("alias %s in foreach conflicts with existing field", alias)
+		return nil, false, fmt.Errorf("list item alias %s in foreach conflicts with existing field", alias)
 	}
 
 	// Get list to iterate over

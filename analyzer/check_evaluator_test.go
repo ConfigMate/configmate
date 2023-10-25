@@ -798,3 +798,307 @@ func TestEvaluateControlExpressions(t *testing.T) {
 		}
 	}
 }
+
+// TestEvaluateErroneosExpressions tests the functionality of the check
+// evaluator when erroneous expressions are involved. It tests checks like:
+//   - eq(5, 10) -  This function only receives one parameter
+//   - toInt()   -	This does not result in a boolean
+//   - eq(non_existent_field)  -  References a field that does not exist
+func TestEvaluateErroneousExpressions(t *testing.T) {
+	// Test cases
+	tests := []checkEvaluatorTestStructure{
+		// Test 1: Function with too many parameters
+		func() checkEvaluatorTestStructure {
+			primaryField := "primary.field"
+
+			pFValue, _ := types.MakeType("int", 10)
+			fields := map[string]types.IType{primaryField: pFValue}
+
+			checks := []string{"eq(5, 10)"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:    primaryField,
+				fields:          fields,
+				checks:          checks,
+				expectedRes:     nil,
+				expectedSkipped: false,
+				expectedErr:     fmt.Errorf("int.eq expects 1 argument"),
+			}
+		}(),
+		// Test 2: Function that does not result in a boolean
+		func() checkEvaluatorTestStructure {
+			primaryField := "primary.field"
+
+			pFValue, _ := types.MakeType("float", 10.0)
+			fields := map[string]types.IType{primaryField: pFValue}
+
+			checks := []string{"toInt()"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:    primaryField,
+				fields:          fields,
+				checks:          checks,
+				expectedRes:     nil,
+				expectedSkipped: false,
+				expectedErr:     fmt.Errorf("check must evaluate to a bool"),
+			}
+		}(),
+		// Test 3: Function that references a field that does not exist
+		func() checkEvaluatorTestStructure {
+			primaryField := "primary.field"
+
+			pFValue, _ := types.MakeType("float", 10.0)
+			fields := map[string]types.IType{primaryField: pFValue}
+
+			checks := []string{"eq(non_existent_field)"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:    primaryField,
+				fields:          fields,
+				checks:          checks,
+				expectedRes:     nil,
+				expectedSkipped: false,
+				expectedErr:     fmt.Errorf("field non_existent_field does not exist"),
+			}
+		}(),
+		// Test 4: And expression where right side is not a boolean
+		func() checkEvaluatorTestStructure {
+			primaryField := "primary.field"
+
+			pFValue, _ := types.MakeType("float", 10.0)
+			fields := map[string]types.IType{primaryField: pFValue}
+
+			checks := []string{"eq(10.0) && toInt()"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:    primaryField,
+				fields:          fields,
+				checks:          checks,
+				expectedRes:     nil,
+				expectedSkipped: false,
+				expectedErr:     fmt.Errorf("and expression right expression must be a bool"),
+			}
+		}(),
+		// Test 5: Or expression where left side is not a boolean
+		func() checkEvaluatorTestStructure {
+			primaryField := "primary.field"
+
+			pFValue, _ := types.MakeType("float", 10.0)
+			fields := map[string]types.IType{primaryField: pFValue}
+
+			checks := []string{"toInt() || eq(10.0)"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:    primaryField,
+				fields:          fields,
+				checks:          checks,
+				expectedRes:     nil,
+				expectedSkipped: false,
+				expectedErr:     fmt.Errorf("or expression left expression must be a bool"),
+			}
+		}(),
+		// Test 6: Foreach where the list item alias conflicts with another field
+		func() checkEvaluatorTestStructure {
+			primaryField := "primary.field"
+
+			pFValue, _ := types.MakeType("list:int", []*parsers.Node{{Value: 10}})
+			fields := map[string]types.IType{primaryField: pFValue}
+
+			// Make another field
+			otherField, _ := types.MakeType("int", 5)
+			fields["otherField"] = otherField
+
+			checks := []string{"foreach(otherField : this){ eq(10) }"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:    primaryField,
+				fields:          fields,
+				checks:          checks,
+				expectedRes:     nil,
+				expectedSkipped: false,
+				expectedErr:     fmt.Errorf("list item alias otherField in foreach conflicts with existing field"),
+			}
+		}(),
+		// Test 7: Calling a function on a field that does not support it
+		func() checkEvaluatorTestStructure {
+			primaryField := "primary.field"
+
+			pFValue, _ := types.MakeType("bool", true)
+			fields := map[string]types.IType{primaryField: pFValue}
+
+			checks := []string{"primary.field.gt(10)"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:    primaryField,
+				fields:          fields,
+				checks:          checks,
+				expectedRes:     nil,
+				expectedSkipped: false,
+				expectedErr:     fmt.Errorf("bool does not have method gt"),
+			}
+		}(),
+		// Test 8: Calling function with wrong type
+		func() checkEvaluatorTestStructure {
+			primaryField := "primary.field"
+
+			pFValue, _ := types.MakeType("bool", true)
+			fields := map[string]types.IType{primaryField: pFValue}
+
+			checks := []string{"this.eq(10)"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:    primaryField,
+				fields:          fields,
+				checks:          checks,
+				expectedRes:     nil,
+				expectedSkipped: false,
+				expectedErr:     fmt.Errorf("bool.eq expects a bool argument"),
+			}
+		}(),
+	}
+
+	for _, test := range tests {
+		// Create evaluator
+		evaluator := NewCheckEvaluator(test.primaryField, test.fields, test.optMissingFields)
+
+		// Evaluate check
+		for _, check := range test.checks {
+			res, skipped, err := evaluator.Evaluate(check)
+			errMessage := ""
+			if err != nil {
+				errMessage = err.Error()
+			}
+			expectedErrMessage := ""
+			if test.expectedErr != nil {
+				expectedErrMessage = test.expectedErr.Error()
+			}
+			if !reflect.DeepEqual(res, test.expectedRes) || !reflect.DeepEqual(skipped, test.expectedSkipped) || errMessage != expectedErrMessage {
+				t.Errorf("Evaluate(%v, %v, %v, %v) = %v, %v, %v, want %v, %v, %v", test.primaryField, test.fields, test.optMissingFields, check, res, skipped, errMessage, test.expectedRes, test.expectedSkipped, expectedErrMessage)
+			}
+		}
+	}
+}
+
+// TestEvaluateSyntaxErrors tests the parser's ability
+// to detect syntax errors.
+func TestEvaluateSyntaxErrors(t *testing.T) {
+	tests := []checkEvaluatorTestStructure{
+		// Test 1: Missing parenthesis
+		func() checkEvaluatorTestStructure {
+			checks := []string{"if(eq(true){ eq(false) }"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:     "",
+				fields:           map[string]types.IType{},
+				optMissingFields: map[string]bool{},
+				checks:           checks,
+				expectedErr:      fmt.Errorf("syntax errors: line 1:11 missing ')' at '{'"),
+			}
+		}(),
+		// Test 2: Extraneous token
+		func() checkEvaluatorTestStructure {
+			checks := []string{"if(eq(true)) unexpected_token { eq(false) }"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:     "",
+				fields:           map[string]types.IType{},
+				optMissingFields: map[string]bool{},
+				checks:           checks,
+				expectedErr:      fmt.Errorf("syntax errors: line 1:13 extraneous input 'unexpected_token' expecting '{'"),
+			}
+		}(),
+		// Test 3: Extraneous input
+		func() checkEvaluatorTestStructure {
+			checks := []string{"if(eq(true)) { eq(false) } else else { eq(true) }"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:     "",
+				fields:           map[string]types.IType{},
+				optMissingFields: map[string]bool{},
+				checks:           checks,
+				expectedErr:      fmt.Errorf("syntax errors: line 1:32 extraneous input 'else' expecting '{'"),
+			}
+		}(),
+		// Test 4: Invalid field expression
+		func() checkEvaluatorTestStructure {
+			checks := []string{"if(primary..field){ eq(false) }"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:     "",
+				fields:           map[string]types.IType{},
+				optMissingFields: map[string]bool{},
+				checks:           checks,
+				expectedErr:      fmt.Errorf("syntax errors: line 1:11 extraneous input '.' expecting NAME; line 1:17 no viable alternative at input 'field)'"),
+			}
+		}(),
+		// Test 5: Missing curly brace in IF statement
+		func() checkEvaluatorTestStructure {
+			checks := []string{"if(eq(true)) eq(false) "}
+
+			return checkEvaluatorTestStructure{
+				primaryField:     "",
+				fields:           map[string]types.IType{},
+				optMissingFields: map[string]bool{},
+				checks:           checks,
+				expectedErr:      fmt.Errorf("syntax errors: line 1:13 missing '{' at 'eq'; line 1:23 missing '}' at '<EOF>'"),
+			}
+		}(),
+		// Test 6: Using angled brackets in field (this is not allowed in CMCL)
+		func() checkEvaluatorTestStructure {
+			checks := []string{"if(field[0]){ eq(false) }"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:     "",
+				fields:           map[string]types.IType{},
+				optMissingFields: map[string]bool{},
+				checks:           checks,
+				expectedErr:      fmt.Errorf("syntax errors: line 1:8 mismatched input '[' expecting ')'"),
+			}
+		}(),
+		// Test 7: AND expression missing right side
+		func() checkEvaluatorTestStructure {
+			checks := []string{"eq(5) &&"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:     "",
+				fields:           map[string]types.IType{},
+				optMissingFields: map[string]bool{},
+				checks:           checks,
+				expectedErr:      fmt.Errorf("syntax errors: line 1:8 mismatched input '<EOF>' expecting {'!', NAME, '('}"),
+			}
+		}(),
+		// Test 8: OR expression missing right side
+		func() checkEvaluatorTestStructure {
+			checks := []string{"eq(5) ||"}
+
+			return checkEvaluatorTestStructure{
+				primaryField:     "",
+				fields:           map[string]types.IType{},
+				optMissingFields: map[string]bool{},
+				checks:           checks,
+				expectedErr:      fmt.Errorf("syntax errors: line 1:8 mismatched input '<EOF>' expecting {'!', NAME, '('}"),
+			}
+		}(),
+	}
+
+	for _, test := range tests {
+		// Create evaluator
+		evaluator := NewCheckEvaluator(test.primaryField, test.fields, test.optMissingFields)
+
+		// Evaluate check
+		for _, check := range test.checks {
+			res, skipped, err := evaluator.Evaluate(check)
+			errMessage := ""
+			if err != nil {
+				errMessage = err.Error()
+			}
+			expectedErrMessage := ""
+			if test.expectedErr != nil {
+				expectedErrMessage = test.expectedErr.Error()
+			}
+			if !reflect.DeepEqual(res, test.expectedRes) || !reflect.DeepEqual(skipped, test.expectedSkipped) || errMessage != expectedErrMessage {
+				t.Errorf("Evaluate(%v, %v, %v, %v) = %v, %v, %v, want %v, %v, %v", test.primaryField, test.fields, test.optMissingFields, check, res, skipped, errMessage, test.expectedRes, test.expectedSkipped, expectedErrMessage)
+			}
+		}
+	}
+}

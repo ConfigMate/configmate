@@ -52,8 +52,8 @@ primitive
     ;
 
 // A field is a list of comma separated unquoted strings or index expressions
-// Such as "foo", "bar.xyz", "baz[0]", "[1].xyz".
-field: (NAME | LBRACKET INT RBRACKET) (DOT (NAME | LBRACKET INT RBRACKET))*;
+// Such as "foo", "bar.xyz".
+field: NAME (DOT NAME)*;
 
 // Tokens
 IF_SYM: 'if';

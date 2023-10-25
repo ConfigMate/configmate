@@ -6,6 +6,7 @@ import (
 	parser_cmcl "github.com/ConfigMate/configmate/parsers/gen/parser_cmcl/parsers/grammars"
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/golang-collections/collections/stack"
+	"go.uber.org/multierr"
 )
 
 type CMCLErrorListener struct {
@@ -37,7 +38,7 @@ func (p *CheckParser) parse(check string) (*cmclNode, error) {
 
 	// Check for errors
 	if len(errorListener.errors) > 0 {
-		return nil, fmt.Errorf("syntax errors: %v", errorListener.errors)
+		return nil, fmt.Errorf("syntax errors: %v", multierr.Combine(errorListener.errors...))
 	}
 
 	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
@@ -51,7 +52,7 @@ func (p *CheckParser) parse(check string) (*cmclNode, error) {
 
 	// Check for errors
 	if len(errorListener.errors) > 0 {
-		return nil, fmt.Errorf("syntax errors: %v", errorListener.errors)
+		return nil, fmt.Errorf("syntax errors: %v", multierr.Combine(errorListener.errors...))
 	}
 
 	// Walk the tree
