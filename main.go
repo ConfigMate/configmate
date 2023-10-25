@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"sort"
 
 	"github.com/ConfigMate/configmate/analyzer"
 	"github.com/ConfigMate/configmate/parsers"
