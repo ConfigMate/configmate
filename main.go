@@ -89,13 +89,13 @@ func main() {
 						}
 
 						// Parse the file
-						parser, err := parsers.Parse(data, file.Format)
+						parsedFile, err := parsers.Parse(data, file.Format)
 						if err != nil {
 							return err
 						}
 
 						// Append the parse result to the files map
-						files[alias] = parser
+						files[alias] = parsedFile
 					}
 
 					// Get rules
@@ -129,7 +129,7 @@ func main() {
 
 					// Print results
 					for _, result := range res {
-						fmt.Println("Result:", result)
+						fmt.Printf("Result: %v\n", result)
 					}
 
 					return nil

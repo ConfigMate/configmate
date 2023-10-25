@@ -52,7 +52,7 @@ type CheckEvaluator struct {
 	evalFieldStack stack.Stack
 }
 
-func NewCheckEvaluator(primaryField string, fields map[string]types.IType, optMissingFields map[string]bool) *CheckEvaluator {
+func newCheckEvaluator(primaryField string, fields map[string]types.IType, optMissingFields map[string]bool) *CheckEvaluator {
 	// Create evaluator
 	evaluator := &CheckEvaluator{
 		primaryField:     primaryField,
@@ -63,7 +63,7 @@ func NewCheckEvaluator(primaryField string, fields map[string]types.IType, optMi
 	return evaluator
 }
 
-func (ce *CheckEvaluator) Evaluate(check string) (types.IType, bool, error) {
+func (ce *CheckEvaluator) evaluate(check string) (types.IType, bool, error) {
 	// Parse check
 	parser := &CheckParser{}
 	node, err := parser.parse(check)
@@ -72,11 +72,16 @@ func (ce *CheckEvaluator) Evaluate(check string) (types.IType, bool, error) {
 	}
 
 	// Get primary field value
-	if pField, ok := ce.fields[ce.primaryField]; !ok {
-		return nil, false, fmt.Errorf("primary field %s does not exist", ce.primaryField)
-	} else {
+	if pField, ok := ce.fields[ce.primaryField]; ok {
 		ce.fields["this"] = pField
 		ce.evalFieldStack.Push(pField)
+	} else if ce.optMissingFields[ce.primaryField] {
+		// Skipping check because optional field is missing
+		// Make bool false to return
+		t, _ := types.MakeType("bool", false)
+		return t, true, fmt.Errorf("skipping check because primary field %s is optional and missing", ce.primaryField)
+	} else {
+		return nil, false, fmt.Errorf("primary field %s does not exist", ce.primaryField)
 	}
 
 	// Evaluate check

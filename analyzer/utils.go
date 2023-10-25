@@ -10,7 +10,7 @@ import (
 // splitFileAliasAndPath splits a field represented as a string into a file alias and a path.
 // The separator used is a colon (:).
 func splitFileAliasAndPath(field string) (fileAlias string, path string, err error) {
-	split := strings.Split(field, ":")
+	split := strings.SplitN(field, ".", 2)
 	if len(split) != 2 {
 		return "", "", errors.New("invalid field format: " + field)
 	}
