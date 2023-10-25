@@ -10,7 +10,7 @@ import (
 type tFactoryMethod func(value interface{}) (IType, error)
 
 func MakeType(typename string, value interface{}) (IType, error) {
-	if strings.HasSuffix(typename, "list:") {
+	if strings.HasPrefix(typename, "list:") {
 		return listFactory(typename[5:], value.([]*parsers.Node))
 	}
 

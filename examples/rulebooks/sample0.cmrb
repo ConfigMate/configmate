@@ -61,5 +61,5 @@ default = "/path/to/key.pem"
 field = "dns_servers"
 description = "List of DNS servers"
 type = "list:host"
-checks = ["foreach().", "at()"]
+checks = ["at(0).reachable()"]
 

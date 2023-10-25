@@ -37,8 +37,24 @@ func (t tList) Value() interface{} {
 	return t.values
 }
 
-func (t tList) Checks() map[string]Check {
-	return map[string]Check{
+func (t tList) Methods() []string {
+	return []string{
+		"at",
+		"len",
+	}
+}
+
+func (t tList) MethodDescription(method string) string {
+	tListMethodsDescriptions := map[string]string{
+		"at":  "list.at(index int) - returns the element at the given index",
+		"len": "list.len() - returns the length of the list",
+	}
+
+	return tListMethodsDescriptions[method]
+}
+
+func (t tList) GetMethod(method string) Method {
+	tListMethods := map[string]Method{
 		"at": func(args []IType) (IType, error) {
 			// Check that the correct number of arguments were passed
 			if len(args) != 1 {
@@ -67,11 +83,13 @@ func (t tList) Checks() map[string]Check {
 			return &tInt{value: len(t.values)}, nil
 		},
 	}
-}
 
-func (t tList) ChecksDescription() map[string]string {
-	return map[string]string{
-		"at":  "list.at(index int) - returns the element at the given index",
-		"len": "list.len() - returns the length of the list",
+	// Check if method doesn't exist
+	if _, ok := tListMethods[method]; !ok {
+		return func(args []IType) (IType, error) {
+			return nil, fmt.Errorf("list does not have method %s", method)
+		}
 	}
+
+	return tListMethods[method]
 }

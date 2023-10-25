@@ -24,8 +24,36 @@ func (t tFloat) Value() interface{} {
 	return t.value
 }
 
-func (t tFloat) Checks() map[string]Check {
-	return map[string]Check{
+func (t tFloat) Methods() []string {
+	return []string{
+		"eq",
+		"gt",
+		"gte",
+		"lt",
+		"lte",
+		"range",
+		"toInt",
+		"toString",
+	}
+}
+
+func (t tFloat) MethodDescription(method string) string {
+	tFloatMethodDescriptions := map[string]string{
+		"eq":       "float.eq(arg float) : Checks that the value is equal to the argument",
+		"gt":       "float.gt(arg float) : Checks that the value is greater than the argument",
+		"gte":      "float.gte(arg float) : Checks that the value is greater than or equal to the argument",
+		"lt":       "float.lt(arg float) : Checks that the value is less than the argument",
+		"lte":      "float.lte(arg float) : Checks that the value is less than or equal to the argument",
+		"range":    "float.range(min float, max float) : Checks that the value is within the range",
+		"toInt":    "float.toInt() : Converts the value to an int",
+		"toString": "float.toString() : Converts the value to a string",
+	}
+
+	return tFloatMethodDescriptions[method]
+}
+
+func (t tFloat) GetMethod(method string) Method {
+	tFloatMethods := map[string]Method{
 		"eq": func(args []IType) (IType, error) {
 			// Check that the correct number of arguments were passed
 			if len(args) != 1 {
@@ -158,17 +186,13 @@ func (t tFloat) Checks() map[string]Check {
 			return &tString{value: fmt.Sprintf("%v", t.value)}, nil
 		},
 	}
-}
 
-func (t tFloat) ChecksDescription() map[string]string {
-	return map[string]string{
-		"eq":       "float.eq(arg float) : Checks that the value is equal to the argument",
-		"gt":       "float.gt(arg float) : Checks that the value is greater than the argument",
-		"gte":      "float.gte(arg float) : Checks that the value is greater than or equal to the argument",
-		"lt":       "float.lt(arg float) : Checks that the value is less than the argument",
-		"lte":      "float.lte(arg float) : Checks that the value is less than or equal to the argument",
-		"range":    "float.range(min float, max float) : Checks that the value is within the range",
-		"toInt":    "float.toInt() : Converts the value to an int",
-		"toString": "float.toString() : Converts the value to a string",
+	// Check if method does not exist
+	if _, ok := tFloatMethods[method]; !ok {
+		return func(args []IType) (IType, error) {
+			return nil, fmt.Errorf("float does not have method %s", method)
+		}
 	}
+
+	return tFloatMethods[method]
 }
