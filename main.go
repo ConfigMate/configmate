@@ -68,12 +68,12 @@ func main() {
 					rulebookPath := c.String("rulebook")
 
 					// Read the rulebook file
-					ruleBookData, err := utils.ReadFile(rulebookPath)
+					ruleBookData, err := os.ReadFile(rulebookPath)
 					if err != nil {
 						return err
 					}
 
-					// Convert TOML into a Rulebook object
+					// Decode TOML into a Rulebook object
 					ruleBook, err := utils.DecodeRulebook(ruleBookData)
 					if err != nil {
 						return err
@@ -83,7 +83,7 @@ func main() {
 					files := make(map[string]*parsers.Node)
 					for _, file := range ruleBook.Files {
 						// Read the file
-						data, err := utils.ReadFile(file.Path)
+						data, err := os.ReadFile(file.Path)
 						if err != nil {
 							return err
 						}
