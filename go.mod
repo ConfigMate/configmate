@@ -10,7 +10,6 @@ require (
 )
 
 require (
-	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
@@ -18,6 +17,7 @@ require (
 )
 
 require (
+	github.com/BurntSushi/toml v1.3.2
 	github.com/urfave/cli/v2 v2.25.7
 	golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc // indirect
 )

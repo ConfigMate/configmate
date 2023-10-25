@@ -13,11 +13,11 @@ type FileDetails struct {
 }
 
 type Rule struct {
-	Field       string   `json:"field" toml:"field"`             // Field to check
-	Description string   `json:"description" toml:"description"` // Description of the rule
-	Type        string   `json:"type" toml:"type"`               // Type of the field
-	Optional    bool     `json:"optional" toml:"optional"`       // Whether the field is optional
-	Default     string   `json:"default" toml:"default"`         // Default value of the field
-	Checks      []string `json:"checks" toml:"checks"`           // List of checks to perform
-	Notes       string   `json:"notes" toml:"notes"`             // Notes about the rule
+	Field       string      `json:"field" toml:"field"`             // Field to check
+	Description string      `json:"description" toml:"description"` // Description of the rule
+	Type        string      `json:"type" toml:"type"`               // Type of the field
+	Optional    bool        `json:"optional" toml:"optional"`       // Whether the field is optional
+	Default     interface{} `json:"default" toml:"default"`         // Default value of the field
+	Checks      []string    `json:"checks" toml:"checks"`           // List of checks to perform
+	Notes       string      `json:"notes" toml:"notes"`             // Notes about the rule
 }

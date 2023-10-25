@@ -74,6 +74,10 @@ func (n *Node) Get(field string) (*Node, error) {
 	currentNode := n
 
 	for _, segment := range segments {
+		if currentNode == nil {
+			return nil, fmt.Errorf("cannot traverse nil node in path %s", field)
+		}
+
 		switch currentNode.Type {
 		case Object:
 			// Cast value as map[string]*Node (unsafe)

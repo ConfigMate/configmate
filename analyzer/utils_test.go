@@ -13,28 +13,22 @@ func TestSplitFileAliasAndPath(t *testing.T) {
 		expectedErr   error
 	}{
 		{
-			input:         "alias:path.to.field",
+			input:         "alias.path.to.field",
 			expectedAlias: "alias",
 			expectedPath:  "path.to.field",
 			expectedErr:   nil,
 		},
 		{
-			input:         "anotherAlias:path.to.another.field",
+			input:         "anotherAlias.path.to.another.field",
 			expectedAlias: "anotherAlias",
 			expectedPath:  "path.to.another.field",
 			expectedErr:   nil,
 		},
 		{
-			input:         "noColonHere",
+			input:         "noDotsHere",
 			expectedAlias: "",
 			expectedPath:  "",
-			expectedErr:   errors.New("invalid field format: noColonHere"),
-		},
-		{
-			input:         "multiple:colons:here",
-			expectedAlias: "",
-			expectedPath:  "",
-			expectedErr:   errors.New("invalid field format: multiple:colons:here"),
+			expectedErr:   errors.New("invalid field format: noDotsHere"),
 		},
 	}
 
