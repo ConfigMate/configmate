@@ -45,7 +45,7 @@ package analyzer
 // 	}
 
 // 	// Setup
-// 	analyzer := &AnalyzerImpl{
+// 	analyzer := &analyzerImpl{
 // 		checks: map[string]Check{
 // 			"sampleCheck": mockCheck,
 // 		},
@@ -106,7 +106,7 @@ package analyzer
 // 	}
 
 // 	// Setup
-// 	analyzer := &AnalyzerImpl{
+// 	analyzer := &analyzerImpl{
 // 		checks: map[string]Check{
 // 			"sampleCheck": mockCheck,
 // 		},
@@ -167,7 +167,7 @@ package analyzer
 // 	}
 
 // 	// Setup
-// 	analyzer := &AnalyzerImpl{
+// 	analyzer := &analyzerImpl{
 // 		checks: map[string]Check{
 // 			"sampleCheck": mockCheck,
 // 		},

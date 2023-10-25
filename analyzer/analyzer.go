@@ -17,6 +17,7 @@ type Result struct {
 	Passed        bool                         `json:"passed"`         // true if the check passed, false if it failed
 	ResultComment string                       `json:"result_comment"` // an error msg or comment about the result
 	Rule          *Rule                        `json:"rule"`           // the rule that was checked
+	CheckNum      int                          `json:"check_num"`      // the number of the check that was evaluated
 	TokenList     []TokenLocationWithFileAlias `json:"token_list"`     // a list of tokens that were involved in the rule
 }
 
@@ -33,9 +34,13 @@ type TokenLocationWithFileAlias struct {
 	Location parsers.TokenLocation `json:"location"`
 }
 
-type AnalyzerImpl struct{}
+type analyzerImpl struct{}
 
-func (a *AnalyzerImpl) AnalyzeConfigFiles(files map[string]*parsers.Node, rules []Rule) (res []Result, err error) {
+func NewAnalyzer() Analyzer {
+	return &analyzerImpl{}
+}
+
+func (a *analyzerImpl) AnalyzeConfigFiles(files map[string]*parsers.Node, rules []Rule) (res []Result, err error) {
 	// Find all fields and parse them
 	// optMissingFields is a map of optional fields that are missing
 	fields, fieldsLocations, optMissingFields, err := a.findAndParseAllFields(files, rules, res)
@@ -44,9 +49,9 @@ func (a *AnalyzerImpl) AnalyzeConfigFiles(files map[string]*parsers.Node, rules 
 	}
 
 	// Check rules
-	for _, rule := range rules {
+	for ruleIndex, rule := range rules {
 		// Evaluate checks
-		for _, check := range rule.Checks {
+		for checkNum, check := range rule.Checks {
 			// Create check e
 			e := newCheckEvaluator(rule.Field, fields, optMissingFields)
 
@@ -58,7 +63,8 @@ func (a *AnalyzerImpl) AnalyzeConfigFiles(files map[string]*parsers.Node, rules 
 				res = append(res, Result{
 					Passed:        true,
 					ResultComment: err.Error(),
-					Rule:          &rule,
+					Rule:          &rules[ruleIndex],
+					CheckNum:      checkNum,
 					TokenList:     []TokenLocationWithFileAlias{},
 				})
 			} else {
@@ -70,7 +76,8 @@ func (a *AnalyzerImpl) AnalyzeConfigFiles(files map[string]*parsers.Node, rules 
 				res = append(res, Result{
 					Passed:        result.Value().(bool),
 					ResultComment: resComment,
-					Rule:          &rule,
+					Rule:          &rules[ruleIndex],
+					CheckNum:      checkNum,
 					TokenList: []TokenLocationWithFileAlias{
 						fieldsLocations[rule.Field],
 					},
@@ -83,7 +90,7 @@ func (a *AnalyzerImpl) AnalyzeConfigFiles(files map[string]*parsers.Node, rules 
 	return res, nil
 }
 
-func (a *AnalyzerImpl) findAndParseAllFields(files map[string]*parsers.Node, rules []Rule, res []Result) (fields map[string]types.IType, fieldsLocations map[string]TokenLocationWithFileAlias, optMissingFields map[string]bool, err error) {
+func (a *analyzerImpl) findAndParseAllFields(files map[string]*parsers.Node, rules []Rule, res []Result) (fields map[string]types.IType, fieldsLocations map[string]TokenLocationWithFileAlias, optMissingFields map[string]bool, err error) {
 	// Sort rules by field lenght (shortest first)
 	// This guarantees parent fields are checked before child fields
 	sort.Slice(rules, func(i, j int) bool {
