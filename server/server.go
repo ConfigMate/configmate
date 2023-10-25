@@ -9,9 +9,9 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/ConfigMate/configmate/analyzer"
 	"github.com/ConfigMate/configmate/parsers"
-	"github.com/ConfigMate/configmate/utils"
 )
 
 type Server struct {
@@ -84,31 +84,35 @@ func (server *Server) checkHandler() http.HandlerFunc {
 		// Read the rulebook file
 		ruleBookData, err := os.ReadFile(p.RulebookPath)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			errMsg := fmt.Sprintf("error reading rulebook file: %s", err.Error())
+			http.Error(w, errMsg, http.StatusBadRequest)
 			return
 		}
 
-		// Decode TOML into a Rulebook object
-		ruleBook, err := utils.DecodeRulebook(ruleBookData)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		// Decode the TOML data into the Rulebook struct
+		var rulebook analyzer.Rulebook
+		if _, err := toml.Decode(string(ruleBookData), &rulebook); err != nil {
+			errMsg := fmt.Sprintf("error decoding file into a rulebook object: %v", err)
+			http.Error(w, errMsg, http.StatusBadRequest)
 			return
 		}
 
 		// Parse rulebooks
 		files := make(map[string]*parsers.Node)
-		for alias, file := range ruleBook.Files {
+		for alias, file := range rulebook.Files {
 			// Read the file
 			data, err := os.ReadFile(file.Path)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				errMsg := fmt.Sprintf("error reading file %s: %s", file.Path, err.Error())
+				http.Error(w, errMsg, http.StatusBadRequest)
 				return
 			}
 
 			// Parse the file
 			parsedFile, err := parsers.Parse(data, file.Format)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				errMsg := fmt.Sprintf("error parsing file %s: %s", file.Path, err.Error())
+				http.Error(w, errMsg, http.StatusBadRequest)
 				return
 			}
 
@@ -116,11 +120,11 @@ func (server *Server) checkHandler() http.HandlerFunc {
 			files[alias] = parsedFile
 		}
 
-		// Get analyzer
-		analyzer := &analyzer.AnalyzerImpl{}
-		res, err := analyzer.AnalyzeConfigFiles(files, ruleBook.Rules)
+		// Analyzer files
+		res, err := server.analyzer.AnalyzeConfigFiles(files, rulebook.Rules)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			errMsg := fmt.Sprintf("error analyzing files: %s", err.Error())
+			http.Error(w, errMsg, http.StatusBadRequest)
 			return
 		}
 

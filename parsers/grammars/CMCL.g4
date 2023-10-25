@@ -67,7 +67,7 @@ BOOL: 'true' | 'false';
 NAME: [a-zA-Z_][a-zA-Z0-9_]*;
 INT: [0-9]+;
 FLOAT: [0-9]+[.][0-9]+;
-STRING: '"' (ESC | ~["\\])* '"';
+STRING: '"' (ESC | ~["\\])* '"' | '\'' (ESC | ~["\\])* '\'';
 LPAREN: '(';
 RPAREN: ')';
 LBRACKET: '[';

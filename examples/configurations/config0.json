@@ -1,7 +1,7 @@
 {
     "server": {
         "host": "localhost",
-        "port": 8080,
+        "port": 128,
         "ssl_enabled": false,
         "ssl_cert_path": "/path/to/cert.pem",
         "ssl_key_path": "/path/to/key.pem"

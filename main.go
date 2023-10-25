@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/BurntSushi/toml"
 	"github.com/ConfigMate/configmate/analyzer"
 	"github.com/ConfigMate/configmate/parsers"
 	"github.com/ConfigMate/configmate/server"
@@ -54,18 +55,22 @@ func main() {
 			{
 				Name:      "check",
 				Usage:     "Check configuration files for errors in content.",
-				UsageText: "configm check --rulebook <rulebook>",
+				UsageText: "configm check <path-to-rulebook>",
 				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "rulebook",
-						Aliases:  []string{"r"},
-						Usage:    "Rulebook to use for checking.",
-						Required: true,
+					&cli.BoolFlag{
+						Name:    "all",
+						Aliases: []string{"a"},
+						Usage:   "Outputs the result for successful checks also.",
 					},
 				},
 				Action: func(c *cli.Context) error {
-					// Get the rulebook path from the command line argument
-					rulebookPath := c.String("rulebook")
+					// Check number of arguments
+					if c.NArg() != 1 {
+						return fmt.Errorf("invalid number of arguments")
+					}
+
+					// Get the rulebook path from the arguments
+					rulebookPath := c.Args().Get(0)
 
 					// Read the rulebook file
 					ruleBookData, err := os.ReadFile(rulebookPath)
@@ -73,15 +78,15 @@ func main() {
 						return err
 					}
 
-					// Decode TOML into a Rulebook object
-					ruleBook, err := utils.DecodeRulebook(ruleBookData)
-					if err != nil {
-						return err
+					// Decode the TOML data into the Rulebook struct
+					var rulebook analyzer.Rulebook
+					if _, err := toml.Decode(string(ruleBookData), &rulebook); err != nil {
+						return fmt.Errorf("error decoding file into a rulebook object: %v", err)
 					}
 
 					// Parse rulebooks
 					files := make(map[string]*parsers.Node)
-					for alias, file := range ruleBook.Files {
+					for alias, file := range rulebook.Files {
 						// Read the file
 						data, err := os.ReadFile(file.Path)
 						if err != nil {
@@ -99,11 +104,11 @@ func main() {
 					}
 
 					// Get rules
-					rules := ruleBook.Rules
+					rules := rulebook.Rules
 
 					// Map the file content to the corresponding line numbers
 					filesLines := make(map[string]map[int]string)
-					for alias, details := range ruleBook.Files {
+					for alias, details := range rulebook.Files {
 						// Read file
 						fileData, err := os.ReadFile(details.Path)
 						if err != nil {
@@ -121,15 +126,33 @@ func main() {
 					}
 
 					// Get analyzer
-					analyzer := &analyzer.AnalyzerImpl{}
-					res, err := analyzer.AnalyzeConfigFiles(files, rules)
+					a := analyzer.NewAnalyzer()
+					res, err := a.AnalyzeConfigFiles(files, rules)
 					if err != nil {
 						return err
 					}
 
-					// Print results
+					successfulChecks := make([]analyzer.Result, 0)
+					// Print results for failed checks
 					for _, result := range res {
-						fmt.Printf("Result: %+v\n", result)
+						if !result.Passed {
+							formattedResult := utils.FormatResult(result, filesLines)
+							fmt.Print(formattedResult)
+						} else {
+							successfulChecks = append(successfulChecks, result)
+						}
+					}
+
+					if len(successfulChecks) == len(res) {
+						fmt.Println("All checks passed!")
+					}
+
+					// Print results for successful checks if --all flag is set
+					if c.Bool("all") {
+						for _, result := range successfulChecks {
+							formattedResult := utils.FormatResult(result, filesLines)
+							fmt.Print(formattedResult)
+						}
 					}
 
 					return nil
@@ -148,11 +171,8 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					// Get analyzer
-					analyzer := &analyzer.AnalyzerImpl{}
-
 					// Create server
-					srv := server.CreateServer(c.Int("port"), analyzer)
+					srv := server.CreateServer(c.Int("port"), analyzer.NewAnalyzer())
 
 					// Start server
 					if err := srv.Serve(); err != nil {
