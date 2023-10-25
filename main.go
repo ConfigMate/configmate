@@ -81,7 +81,7 @@ func main() {
 
 					// Parse rulebooks
 					files := make(map[string]*parsers.Node)
-					for _, file := range ruleBook.Files {
+					for alias, file := range ruleBook.Files {
 						// Read the file
 						data, err := os.ReadFile(file.Path)
 						if err != nil {
@@ -95,11 +95,30 @@ func main() {
 						}
 
 						// Append the parse result to the files map
-						files[file.Path] = parser
+						files[alias] = parser
 					}
 
 					// Get rules
 					rules := ruleBook.Rules
+
+					// Map the file content to the corresponding line numbers
+					filesLines := make(map[string]map[int]string)
+					for alias, details := range ruleBook.Files {
+						// Read file
+						fileData, err := os.ReadFile(details.Path)
+						if err != nil {
+							return err
+						}
+
+						// Create line map
+						lineMap, err := utils.CreateLineMap(fileData)
+						if err != nil {
+							return nil
+						}
+
+						// Append line map to filesLines
+						filesLines[alias] = lineMap
+					}
 
 					// Get analyzer
 					analyzer := &analyzer.AnalyzerImpl{}
