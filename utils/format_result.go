@@ -12,7 +12,7 @@ func FormatResult(res analyzer.Result, files map[string]analyzer.FileDetails, fi
 	var passed, comment, check, fieldType, optional string
 
 	// Format of the result
-	format := "%s:\n\tField:\t%s %s %s \n\tCheck:\t%s %s \n\tDefault: %v \n\tNotes:  %s\n"
+	format := "%s:\n\tField: %s %s %s \n\tCheck: %s %s \n"
 
 	// format values
 	if res.Passed {
@@ -29,11 +29,19 @@ func FormatResult(res analyzer.Result, files map[string]analyzer.FileDetails, fi
 	if res.Rule.Optional {
 		optional = ColorText("optional", Yellow)
 	} else {
-		optional = ColorText("required", Red)
+		optional = ColorText("required", Gray)
 	}
 
 	// Format the values
-	formatted := fmt.Sprintf(format, passed, res.Rule.Field, fieldType, optional, check, comment, res.Rule.Default, res.Rule.Notes)
+	formatted := fmt.Sprintf(format, passed, res.Rule.Field, fieldType, optional, check, comment)
+
+	if res.Rule.Default != nil {
+		formatted = fmt.Sprintf("%s\tDefault: %v\n", formatted, res.Rule.Default)
+	}
+
+	if res.Rule.Notes != "" {
+		formatted = fmt.Sprintf("%s\tNotes: %s\n", formatted, res.Rule.Notes)
+	}
 
 	// If check failed, print the problematic line
 	if !res.Passed {
@@ -42,7 +50,7 @@ func FormatResult(res analyzer.Result, files map[string]analyzer.FileDetails, fi
 			fileAlias := token.File
 
 			// Add the file alias to the formatted string
-			formatted = fmt.Sprintf("%sFile: %s\n", formatted, ColorText(files[fileAlias].Path, Red))
+			formatted = fmt.Sprintf("%s\tFile: %s\n\n", formatted, ColorText(files[fileAlias].Path, Red))
 
 			// Get the line number
 			startLineNum := token.Location.Start.Line
@@ -67,9 +75,9 @@ func FormatResult(res analyzer.Result, files map[string]analyzer.FileDetails, fi
 				postTokenContent := line[endColNum:]
 
 				// Format the line
-				output = fmt.Sprintf("\tLine %d: %s%s%s\n", startLineNum, preTokenContent, tokenContent, postTokenContent)
+				output = fmt.Sprintf("\t  Line %d: %s%s%s\n", startLineNum, preTokenContent, tokenContent, postTokenContent)
 				// Add arrows below the token
-				output = fmt.Sprintf("%s\t        ", output)
+				output = fmt.Sprintf("%s\t          ", output)
 				for i := 0; i < startColNum-1; i++ {
 					output = fmt.Sprintf("%s ", output)
 				}
@@ -88,7 +96,7 @@ func FormatResult(res analyzer.Result, files map[string]analyzer.FileDetails, fi
 				startLineTokenContent := ColorText(startLine[startColNum-1:], Red)
 
 				// Format the start line
-				output = fmt.Sprintf("\tLine %d: %s%s\n", startLineNum, preTokenContent, startLineTokenContent)
+				output = fmt.Sprintf("\t  Line %d: %s%s\n", startLineNum, preTokenContent, startLineTokenContent)
 
 				// Get the middle lines
 				for i := startLineNum + 1; i < endLineNum; i++ {
@@ -96,7 +104,7 @@ func FormatResult(res analyzer.Result, files map[string]analyzer.FileDetails, fi
 					line := fileLinesMap[fileAlias][i]
 
 					// Format the line
-					output = fmt.Sprintf("%s\tLine %d: %s\n", output, i, ColorText(line, Red))
+					output = fmt.Sprintf("%s\t  Line %d: %s\n", output, i, ColorText(line, Red))
 				}
 
 				// Get the end line
@@ -109,7 +117,7 @@ func FormatResult(res analyzer.Result, files map[string]analyzer.FileDetails, fi
 				postTokenContent := endLine[endColNum:]
 
 				// Format the end line
-				output = fmt.Sprintf("%s\tLine %d: %s%s\n", output, endLineNum, endLineTokenContent, postTokenContent)
+				output = fmt.Sprintf("%s\t  Line %d: %s%s\n", output, endLineNum, endLineTokenContent, postTokenContent)
 			}
 
 			// Add padding top
@@ -120,7 +128,7 @@ func FormatResult(res analyzer.Result, files map[string]analyzer.FileDetails, fi
 				// Check if line exists
 				if line, ok := fileLinesMap[fileAlias][lineNum]; ok {
 					// Format the line
-					output = fmt.Sprintf("\tLine %d: %s\n%s", lineNum, line, output)
+					output = fmt.Sprintf("\t  Line %d: %s\n%s", lineNum, line, output)
 				}
 			}
 
@@ -132,7 +140,7 @@ func FormatResult(res analyzer.Result, files map[string]analyzer.FileDetails, fi
 				// Check if line exists
 				if line, ok := fileLinesMap[fileAlias][lineNum]; ok {
 					// Format the line
-					output = fmt.Sprintf("%s\tLine %d: %s\n", output, lineNum, line)
+					output = fmt.Sprintf("%s\t  Line %d: %s\n", output, lineNum, line)
 				}
 			}
 

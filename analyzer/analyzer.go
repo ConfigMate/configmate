@@ -130,12 +130,7 @@ func (a *analyzerImpl) findAndParseAllFields(files map[string]*parsers.Node, rul
 		} else { // Field found
 			t, err := types.MakeType(rule.Type, field.Value)
 			if err != nil {
-				res = append(res, Result{
-					Passed:        false,
-					ResultComment: fmt.Sprintf("Field %s has incorrect type: %s", rule.Field, err.Error()),
-					Rule:          &rule,
-					TokenList:     []TokenLocationWithFileAlias{makeValueTokenLocation(fileAlias, field)},
-				})
+				return nil, nil, nil, fmt.Errorf("failed to parse field %s as type %s: %s", rule.Field, rule.Type, err.Error())
 			} else {
 				fields[rule.Field] = t
 				fieldsLocations[rule.Field] = makeValueTokenLocation(fileAlias, field)
