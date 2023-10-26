@@ -2,109 +2,100 @@ package parsers
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 )
 
-// TestSimple_Parse tests the Parse function of a *JsonParser using a simple json config.
-func TestSimple_Parse(t *testing.T) {
+type jsonParserTestCase struct {
+	input    []byte
+	expected *Node
+	err      bool
+}
+
+// TestParseSimpleJson tests the Parse function of a *JsonParser using a simple json config.
+func TestParseSimpleJson(t *testing.T) {
 	// Input
-	var jsonConfig = []byte(`{
-		"name": "sample",
-		"version": 1.3,
-		"active": true,
-		"settings": {
-			"theme": "dark",
-			"notifications": null,
-			"retryCount": 3
-		},
-		"features": ["auth", "logs"]
-}`)
+	testConfig, err := os.ReadFile("./test_configs/parseSimple.json")
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
 
 	// Test cases
-	type testCase struct {
-		input    []byte
-		expected *Node
-		err      bool
-	}
-
-	// Mock Node result
-	expectedNode := &Node{
-		Type: Object,
-		Value: map[string]*Node{
-			"name": {
-				Type:          String,
-				Value:         "sample",
-				NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 3}, End: CharLocation{Line: 2, Column: 11}},
-				ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 11}, End: CharLocation{Line: 2, Column: 11}},
-			},
-			"version": {
-				Type:          Float,
-				Value:         1.3,
-				NameLocation:  TokenLocation{Start: CharLocation{Line: 3, Column: 3}, End: CharLocation{Line: 3, Column: 14}},
-				ValueLocation: TokenLocation{Start: CharLocation{Line: 3, Column: 14}, End: CharLocation{Line: 3, Column: 14}},
-			},
-			"active": {
-				Type:          Bool,
-				Value:         true,
-				NameLocation:  TokenLocation{Start: CharLocation{Line: 4, Column: 3}, End: CharLocation{Line: 4, Column: 13}},
-				ValueLocation: TokenLocation{Start: CharLocation{Line: 4, Column: 13}, End: CharLocation{Line: 4, Column: 13}},
-			},
-			"settings": {
+	testCases := []jsonParserTestCase{
+		{
+			input: testConfig,
+			expected: &Node{
 				Type: Object,
 				Value: map[string]*Node{
-					"theme": {
+					"name": {
 						Type:          String,
-						Value:         "dark",
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 6, Column: 4}, End: CharLocation{Line: 6, Column: 13}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 6, Column: 13}, End: CharLocation{Line: 6, Column: 13}},
+						Value:         "sample",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 2}, End: CharLocation{Line: 2, Column: 7}},   // Indented with tabs instead of spaces
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 10}, End: CharLocation{Line: 2, Column: 17}}, // Indented with tabs instead of spaces
 					},
-					"notifications": {
-						Type:          Null,
-						Value:         nil,
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 7, Column: 4}, End: CharLocation{Line: 7, Column: 21}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 7, Column: 21}, End: CharLocation{Line: 7, Column: 21}},
+					"version": {
+						Type:          Float,
+						Value:         1.3,
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 3, Column: 5}, End: CharLocation{Line: 3, Column: 13}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 3, Column: 16}, End: CharLocation{Line: 3, Column: 18}},
 					},
-					"retryCount": {
-						Type:          Int,
-						Value:         3,
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 8, Column: 4}, End: CharLocation{Line: 8, Column: 18}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 8, Column: 18}, End: CharLocation{Line: 8, Column: 18}},
+					"active": {
+						Type:          Bool,
+						Value:         true,
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 4, Column: 5}, End: CharLocation{Line: 4, Column: 12}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 4, Column: 15}, End: CharLocation{Line: 4, Column: 18}},
+					},
+					"settings": {
+						Type: Object,
+						Value: map[string]*Node{
+							"theme": {
+								Type:          String,
+								Value:         "dark",
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 6, Column: 9}, End: CharLocation{Line: 6, Column: 15}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 6, Column: 18}, End: CharLocation{Line: 6, Column: 23}},
+							},
+							"notifications": {
+								Type:          Null,
+								Value:         nil,
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 7, Column: 9}, End: CharLocation{Line: 7, Column: 23}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 7, Column: 26}, End: CharLocation{Line: 7, Column: 29}},
+							},
+							"retryCount": {
+								Type:          Int,
+								Value:         3,
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 8, Column: 9}, End: CharLocation{Line: 8, Column: 20}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 8, Column: 23}, End: CharLocation{Line: 8, Column: 23}},
+							},
+						},
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 5, Column: 5}, End: CharLocation{Line: 5, Column: 14}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 5, Column: 17}, End: CharLocation{Line: 9, Column: 5}},
+					},
+					"features": {
+						Type:      Array,
+						ArrayType: String,
+						Value: []*Node{
+							{
+								Type:          String,
+								Value:         "auth",
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 10, Column: 18}, End: CharLocation{Line: 10, Column: 23}},
+							},
+							{
+								Type:          String,
+								Value:         "logs",
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 10, Column: 26}, End: CharLocation{Line: 10, Column: 31}},
+							},
+						},
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 10, Column: 5}, End: CharLocation{Line: 10, Column: 14}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 10, Column: 17}, End: CharLocation{Line: 10, Column: 32}},
 					},
 				},
-				NameLocation:  TokenLocation{Start: CharLocation{Line: 5, Column: 3}, End: CharLocation{Line: 9, Column: 3}},
-				ValueLocation: TokenLocation{Start: CharLocation{Line: 5, Column: 15}, End: CharLocation{Line: 9, Column: 3}},
+				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 11, Column: 1}},
 			},
-			"features": {
-				Type:      Array,
-				ArrayType: String,
-				Value: []*Node{
-					{
-						Type:          String,
-						Value:         "auth",
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 10, Column: 16}, End: CharLocation{Line: 10, Column: 16}},
-					},
-					{
-						Type:          String,
-						Value:         "logs",
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 10, Column: 24}, End: CharLocation{Line: 10, Column: 24}},
-					},
-				},
-				NameLocation:  TokenLocation{Start: CharLocation{Line: 10, Column: 3}, End: CharLocation{Line: 10, Column: 30}},
-				ValueLocation: TokenLocation{Start: CharLocation{Line: 10, Column: 15}, End: CharLocation{Line: 10, Column: 30}},
-			},
-		},
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 11, Column: 1}},
-	}
-
-	testCases := []testCase{
-		{
-			input:    jsonConfig,
-			expected: expectedNode,
-			err:      false,
+			err: false,
 		},
 	}
 
@@ -229,7 +220,7 @@ func TestSingleArray_Json_Parse(t *testing.T) {
 				Type:          String,
 				Value:         "sample",
 				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-				ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 2}, End: CharLocation{Line: 1, Column: 2}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 2}, End: CharLocation{Line: 1, Column: 9}},
 			},
 		},
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
@@ -276,7 +267,7 @@ func TestSingleString_Json_Parse(t *testing.T) {
 		Type:          String,
 		Value:         "sample",
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 1}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 8}},
 	}
 
 	testCases := []testCase{
@@ -319,7 +310,7 @@ func TestSingleIntNumber_Json_Parse(t *testing.T) {
 		Type:          Int,
 		Value:         12345,
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 1}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 5}},
 	}
 
 	testCases := []testCase{
@@ -362,7 +353,7 @@ func TestSingleFloatNumber_Json_Parse(t *testing.T) {
 		Type:          Float,
 		Value:         123.45,
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 1}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 6}},
 	}
 
 	testCases := []testCase{
@@ -405,7 +396,7 @@ func TestSingleTrueBool_Json_Parse(t *testing.T) {
 		Type:          Bool,
 		Value:         true,
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 1}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 4}},
 	}
 
 	testCases := []testCase{
@@ -448,7 +439,7 @@ func TestSingleFalseBool_Json_Parse(t *testing.T) {
 		Type:          Bool,
 		Value:         false,
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 1}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 5}},
 	}
 
 	testCases := []testCase{
@@ -491,7 +482,7 @@ func TestSingleNull_Json_Parse(t *testing.T) {
 		Type:          Null,
 		Value:         nil,
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 1}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 4}},
 	}
 
 	testCases := []testCase{

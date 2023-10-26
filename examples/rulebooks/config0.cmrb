@@ -31,3 +31,12 @@ default = false
 notes = """
 This is whether or not SSL is enabled.
 """
+
+[[rules]]
+field = "config0.dns_servers"
+type = "list:string"
+checks = ["len().gte(3)"]
+optional = true
+notes = """
+This is a list of DNS servers.
+"""
