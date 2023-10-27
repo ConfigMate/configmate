@@ -30,5 +30,3 @@ checks = [
     "len().gte(2)",
     "foreach(s : this) { s.reachable() }"
 ]
-
-
