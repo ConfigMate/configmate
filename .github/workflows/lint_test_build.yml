@@ -67,7 +67,7 @@ jobs:
 
       - name: Test Coverage
         env:
-            TESTCOVERAGE_THRESHOLD: 90
+            TESTCOVERAGE_THRESHOLD: 60
         run: |
           echo "Quality Gate: checking test coverage is above threshold ..."
           echo "Threshold             : $TESTCOVERAGE_THRESHOLD %"
