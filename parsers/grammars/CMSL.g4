@@ -42,6 +42,7 @@ metadataItem: IDENTIFIER COLON primitive;
 // A primitive is a string, an integer, a float, or a boolean.
 primitive
     : STRING # string
+    | UNQUOTED_STRING # unquotedString
     | INT # int
     | FLOAT # float
     | BOOL # boolean
@@ -67,6 +68,8 @@ FILEPATH : ('/' | '\\')? (('.' | '..') '/')* (CHARACTER | '.' | '\\')+
 IDENTIFIER : LETTER (LETTER | DIGIT | '_')* ;    // Typical definition of an identifier
 
 STRING : '"' (ESC_SEQ | ~["\\])* '"' ;           // String literals
+
+UNQUOTED_STRING : LETTER (LETTER | DIGIT | '_' | '-' | '.' | ':')* ;  // Unquoted string literals
 
 INT : DIGIT+ ;               // Integer numbers
 FLOAT : DIGIT+ '.' DIGIT+ ;  // Floating point numbers
