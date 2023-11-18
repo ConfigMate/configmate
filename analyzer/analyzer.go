@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -10,13 +11,14 @@ import (
 )
 
 type Analyzer interface {
+	AnalyzeSpecification(specBytes []byte) (res []Result, err error)
 	AnalyzeConfigFiles(Files map[string]*parsers.Node, Rules []Rule) (res []Result, err error)
 }
 
 type Result struct {
 	Passed        bool                         `json:"passed"`         // true if the check passed, false if it failed
 	ResultComment string                       `json:"result_comment"` // an error msg or comment about the result
-	Rule          *Rule                        `json:"rule"`           // the rule that was checked
+	Node          SpecNode                     `json:"node"`           // the rule that was checked
 	CheckNum      int                          `json:"check_num"`      // the number of the check that was evaluated
 	TokenList     []TokenLocationWithFileAlias `json:"token_list"`     // a list of tokens that were involved in the rule
 }
@@ -34,16 +36,49 @@ type TokenLocationWithFileAlias struct {
 	Location parsers.TokenLocation `json:"location"`
 }
 
-type analyzerImpl struct{}
+type analyzerImpl struct {
+	specParser     specParserImpl
+	checkEvaluator checkEvaluator
+	parserProvider parsers.ParserProvider
+}
 
 func NewAnalyzer() Analyzer {
+	parsers := map[string]parsers.Parser{
+		"json": &parsers.JsonParser{}(),
+	}
+
 	return &analyzerImpl{}
 }
 
-func (a *analyzerImpl) AnalyzeConfigFiles(files map[string]*parsers.Node, rules []Rule) (res []Result, err error) {
+func (a *analyzerImpl) AnalyzeSpecification(specBytes []byte) (res []Result, err error) {
+	// Parse specification
+	specParser := specParserImpl{}
+	spec, err := specParser.parse(string(specBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	// Open and parse main file
+	if parser, ok := a.parsers[spec.fileFormat]; ok {
+		// Open main file
+		os.ReadFile(spec.file)
+		mainFile, err := parser.Parse(spec.file)
+
+		// Parse config files
+		files, err := parseConfigFiles(specification)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Analyze config files
+	return a.AnalyzeConfigFiles(files, specification.Rules)
+}
+
+func (a *analyzerImpl) AnalyzeConfigFiles(files map[string]*parsers.Node, fieldSpecs map[string]fieldSpec, importedFieldSpecs map[string]fieldSpec) (res []Result, err error) {
 	// Find all fields and parse them
 	// optMissingFields is a map of optional fields that are missing
-	fields, fieldsLocations, optMissingFields, err := a.findAndParseAllFields(files, rules, res)
+	fields, fieldsLocations, optMissingFields, err := a.findAndParseAllFields(files, fieldSpecs, res)
 	if err != nil {
 		return nil, err
 	}
@@ -84,13 +119,12 @@ func (a *analyzerImpl) AnalyzeConfigFiles(files map[string]*parsers.Node, rules 
 				})
 			}
 		}
-
 	}
 
 	return res, nil
 }
 
-func (a *analyzerImpl) findAndParseAllFields(files map[string]*parsers.Node, rules []Rule, res []Result) (fields map[string]types.IType, fieldsLocations map[string]TokenLocationWithFileAlias, optMissingFields map[string]bool, err error) {
+func (a *analyzerImpl) findAndParseAllFields(files map[string]*parsers.Node, fields []fieldSpec, res []Result) (fields map[string]types.IType, fieldsLocations map[string]TokenLocationWithFileAlias, optMissingFields map[string]bool, err error) {
 	// Sort rules by field lenght (shortest first)
 	// This guarantees parent fields are checked before child fields
 	sort.Slice(rules, func(i, j int) bool {

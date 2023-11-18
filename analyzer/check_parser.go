@@ -55,6 +55,10 @@ func (p *CheckParser) parse(check string) (*cmclNode, error) {
 		return nil, fmt.Errorf("syntax errors: %v", multierr.Combine(errorListener.errors...))
 	}
 
+	// Zero out the stack and execution tree
+	p.stack = stack.Stack{}
+	p.executionTree = nil
+
 	// Walk the tree
 	walker := antlr.NewParseTreeWalker()
 	walker.Walk(p, tree)

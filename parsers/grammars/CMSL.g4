@@ -27,7 +27,7 @@ specificationBody: 'spec' LBRACE specificationItem* RBRACE;
 // metadata inside angled brackets, optionally followed by a list of semicolon separated
 // checks (CMCL expressions), and optionally followed with the specification of underlying
 // fields insided curly braces.
-specificationItem: fieldName metadataExpression ((check SEMICOLON)+)? (LBRACE specificationItem* RBRACE)?;
+specificationItem: fieldName metadataExpression ( LPAREN (check SEMICOLON)+ RPAREN )? (LBRACE specificationItem* RBRACE)?;
 
 // A field name is a string literal.
 fieldName: IDENTIFIER (DOT IDENTIFIER)*;
@@ -75,13 +75,13 @@ COMMA : ',' ;             // Comma
 COLON : ':' ;             // Colon
 DOT : '.' ;               // Dot
 
-IDENTIFIER : LETTER (CHARACTER)* ;    // Typical definition of an identifier
-
 SHORT_STRING: '"'  ('\\' (RN | .) | ~[\\\r\n"])* '"';
 LONG_STRING: '"""' LONG_STRING_ITEM*? '"""';
 INT : DIGIT+ ;               // Integer numbers
 FLOAT : DIGIT+ '.' DIGIT+ ;  // Floating point numbers
 BOOL : 'true' | 'false' ;    // Boolean values
+
+IDENTIFIER : LETTER (CHARACTER)* ;    // Typical definition of an identifier
 
 WS : [ \t\r\n]+ -> skip ;    // Skip whitespace
 

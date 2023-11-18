@@ -8,19 +8,29 @@ type Parser interface {
 	Parse(content []byte) (*Node, error)
 }
 
-func Parse(content []byte, format string) (*Node, error) {
-	// Supported parsers
-	parsers := map[string]Parser{
-		"json":  &JsonParser{},
-		"hocon": &HoconParser{},
-		"toml":  &TomlParser{},
+type ParserProvider interface {
+	GetParser(format string) (Parser, error)
+}
+
+type parserProviderImpl struct {
+	parsers map[string]Parser
+}
+
+func NewParserProvider() ParserProvider {
+	return &parserProviderImpl{
+		parsers: map[string]Parser{
+			"json":  &JsonParser{},
+			"hocon": &HoconParser{},
+			"toml":  &TomlParser{},
+		},
+	}
+}
+
+func (p *parserProviderImpl) GetParser(format string) (Parser, error) {
+	parser, ok := p.parsers[format]
+	if !ok {
+		return nil, fmt.Errorf("parser for format %s not found", format)
 	}
 
-	// Check if the format is supported
-	if _, ok := parsers[format]; !ok {
-		return nil, fmt.Errorf("unsupported format: %s", format)
-	}
-
-	// Return the parse content
-	return parsers[format].Parse(content)
+	return parser, nil
 }

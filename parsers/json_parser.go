@@ -10,8 +10,6 @@ import (
 	"github.com/golang-collections/collections/stack"
 )
 
-type JsonParser struct{}
-
 type JsonErrorListener struct {
 	antlr.DefaultErrorListener
 	errors []error
@@ -20,6 +18,13 @@ type JsonErrorListener struct {
 // Error handling
 func (s *JsonErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol interface{}, line, column int, msg string, e antlr.RecognitionException) {
 	s.errors = append(s.errors, fmt.Errorf("line %d:%d %s", line, column, msg))
+}
+
+type JsonParser struct {
+	*parser_json.BaseJSONListener
+
+	configFile *Node
+	stack      stack.Stack
 }
 
 // Custom Json Parser
@@ -38,7 +43,6 @@ func (p *JsonParser) Parse(data []byte) (*Node, error) {
 
 	// Attach the error listener to the parser
 	parser.AddErrorListener(errorListener)
-
 	tree := parser.Json()
 
 	// Check for errors after parsing
@@ -46,21 +50,19 @@ func (p *JsonParser) Parse(data []byte) (*Node, error) {
 		return nil, fmt.Errorf("syntax errors: %v", errorListener.errors)
 	}
 
+	// Initialize config file
+	p.configFile = nil
+
+	// Initialize stack
+	p.stack = stack.Stack{}
+
 	walker := antlr.NewParseTreeWalker()
-	jsonListener := &JsonParserListener{}
-	walker.Walk(jsonListener, tree)
+	walker.Walk(p, tree)
 
-	return jsonListener.configFile, nil
+	return p.configFile, nil
 }
 
-type JsonParserListener struct {
-	*parser_json.BaseJSONListener
-
-	configFile *Node
-	stack      stack.Stack
-}
-
-func (l *JsonParserListener) EnterObj(ctx *parser_json.ObjContext) {
+func (l *JsonParser) EnterObj(ctx *parser_json.ObjContext) {
 	if l.configFile == nil { // This object is the top level entity
 		// Create new node for object
 		node := &Node{Type: Object, Value: map[string]*Node{}}
@@ -110,11 +112,11 @@ func (l *JsonParserListener) EnterObj(ctx *parser_json.ObjContext) {
 	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
-func (l *JsonParserListener) ExitObj(ctx *parser_json.ObjContext) {
+func (l *JsonParser) ExitObj(ctx *parser_json.ObjContext) {
 	l.stack.Pop()
 }
 
-func (l *JsonParserListener) EnterPair(ctx *parser_json.PairContext) {
+func (l *JsonParser) EnterPair(ctx *parser_json.PairContext) {
 	// Create new node for pair. The type will be set in Enter<Value>
 	node := &Node{Type: Null, Value: nil}
 
@@ -136,11 +138,11 @@ func (l *JsonParserListener) EnterPair(ctx *parser_json.PairContext) {
 	node.NameLocation.End.Column = ctx.GetStart().GetColumn() + len(ctx.GetStart().GetText())
 }
 
-func (l *JsonParserListener) ExitPair(ctx *parser_json.PairContext) {
+func (l *JsonParser) ExitPair(ctx *parser_json.PairContext) {
 	l.stack.Pop()
 }
 
-func (l *JsonParserListener) EnterArr(ctx *parser_json.ArrContext) {
+func (l *JsonParser) EnterArr(ctx *parser_json.ArrContext) {
 	if l.configFile == nil { // This array is the top level entity
 		// Create new node for array
 		node := &Node{Type: Array, Value: []*Node{}}
@@ -190,11 +192,11 @@ func (l *JsonParserListener) EnterArr(ctx *parser_json.ArrContext) {
 	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
-func (l *JsonParserListener) ExitArr(ctx *parser_json.ArrContext) {
+func (l *JsonParser) ExitArr(ctx *parser_json.ArrContext) {
 	l.stack.Pop()
 }
 
-func (l *JsonParserListener) EnterNumber(ctx *parser_json.NumberContext) {
+func (l *JsonParser) EnterNumber(ctx *parser_json.NumberContext) {
 	// Get value and type
 	var numberType FieldType
 	var value interface{}
@@ -263,7 +265,7 @@ func (l *JsonParserListener) EnterNumber(ctx *parser_json.NumberContext) {
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
-func (l *JsonParserListener) EnterString(ctx *parser_json.StringContext) {
+func (l *JsonParser) EnterString(ctx *parser_json.StringContext) {
 	// Get value
 	value := removeQuotes(ctx.STRING().GetText())
 
@@ -317,7 +319,7 @@ func (l *JsonParserListener) EnterString(ctx *parser_json.StringContext) {
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
-func (l *JsonParserListener) EnterBooleanTrue(ctx *parser_json.BooleanTrueContext) {
+func (l *JsonParser) EnterBooleanTrue(ctx *parser_json.BooleanTrueContext) {
 
 	// Create holder to store the node where the location information
 	// of the boolean value should be stored
@@ -369,7 +371,7 @@ func (l *JsonParserListener) EnterBooleanTrue(ctx *parser_json.BooleanTrueContex
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
-func (l *JsonParserListener) EnterBooleanFalse(ctx *parser_json.BooleanFalseContext) {
+func (l *JsonParser) EnterBooleanFalse(ctx *parser_json.BooleanFalseContext) {
 
 	// Create holder to store the node where the location information
 	// of the boolean value should be stored
@@ -421,7 +423,7 @@ func (l *JsonParserListener) EnterBooleanFalse(ctx *parser_json.BooleanFalseCont
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
-func (l *JsonParserListener) EnterNull(ctx *parser_json.NullContext) {
+func (l *JsonParser) EnterNull(ctx *parser_json.NullContext) {
 
 	// Create holder to store the node where the location information
 	// of the null value should be stored
@@ -473,15 +475,15 @@ func (l *JsonParserListener) EnterNull(ctx *parser_json.NullContext) {
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
-func (l *JsonParserListener) getTOS() *Node {
+func (l *JsonParser) getTOS() *Node {
 	return l.stack.Peek().(*Node)
 }
 
-func (l *JsonParserListener) getTOSObject() map[string]*Node {
+func (l *JsonParser) getTOSObject() map[string]*Node {
 	return l.getTOS().Value.(map[string]*Node)
 }
 
-func (l *JsonParserListener) getTOSArray() []*Node {
+func (l *JsonParser) getTOSArray() []*Node {
 	return l.getTOS().Value.([]*Node)
 }
 

@@ -65,12 +65,12 @@ COMMA : ',' ;             // Comma
 COLON : ':' ;             // Colon
 DOT : '.' ;               // Dot
 
-IDENTIFIER : LETTER (CHARACTER)* ;    // Typical definition of an identifier
-
 SHORT_STRING: '"'  ('\\' (RN | .) | ~[\\\r\n"])* '"';
 INT : DIGIT+ ;               // Integer numbers
 FLOAT : DIGIT+ '.' DIGIT+ ;  // Floating point numbers
 BOOL : 'true' | 'false' ;    // Boolean values
+
+IDENTIFIER : LETTER (CHARACTER)* ;    // Typical definition of an identifier
 
 // CMCL Tokens
 IF_SYM: 'if';
