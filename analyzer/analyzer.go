@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ConfigMate/configmate/analyzer/check"
+	"github.com/ConfigMate/configmate/analyzer/spec"
 	"github.com/ConfigMate/configmate/analyzer/types"
 	"github.com/ConfigMate/configmate/parsers"
 )
@@ -37,22 +39,21 @@ type TokenLocationWithFileAlias struct {
 }
 
 type analyzerImpl struct {
-	specParser     specParserImpl
-	checkEvaluator checkEvaluator
+	specParser     spec.SpecParser
+	checkEvaluator check.CheckEvaluator
 	parserProvider parsers.ParserProvider
 }
 
-func NewAnalyzer() Analyzer {
-	parsers := map[string]parsers.Parser{
-		"json": &parsers.JsonParser{}(),
+func NewAnalyzer(specParser spec.SpecParser, checkEvaluator check.CheckEvaluator, parserProvider parsers.ParserProvider) Analyzer {
+	return &analyzerImpl{
+		specParser:     specParser,
+		checkEvaluator: checkEvaluator,
+		parserProvider: parserProvider,
 	}
-
-	return &analyzerImpl{}
 }
 
 func (a *analyzerImpl) AnalyzeSpecification(specBytes []byte) (res []Result, err error) {
 	// Parse specification
-	specParser := specParserImpl{}
 	spec, err := specParser.parse(string(specBytes))
 	if err != nil {
 		return nil, err

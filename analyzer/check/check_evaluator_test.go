@@ -309,11 +309,11 @@ func TestEvaluateBasicFunctionality(t *testing.T) {
 
 	for _, test := range tests {
 		// Create evaluator
-		evaluator := newCheckEvaluator(test.primaryField, test.fields, test.optMissingFields)
+		evaluator := NewCheckEvaluator()
 
 		// Evaluate checks
 		for _, check := range test.checks {
-			res, skipped, err := evaluator.evaluate(check)
+			res, skipped, err := evaluator.Evaluate(check, test.primaryField, test.fields, test.optMissingFields)
 			errMessage := ""
 			if err != nil {
 				errMessage = err.Error()
@@ -396,11 +396,11 @@ func TestEvaluateOptionalMissingFields(t *testing.T) {
 
 	for _, test := range tests {
 		// Create evaluator
-		evaluator := newCheckEvaluator(test.primaryField, test.fields, test.optMissingFields)
+		evaluator := NewCheckEvaluator()
 
 		// Evaluate checks
 		for _, check := range test.checks {
-			res, skipped, err := evaluator.evaluate(check)
+			res, skipped, err := evaluator.Evaluate(check, test.primaryField, test.fields, test.optMissingFields)
 			errMessage := ""
 			if err != nil {
 				errMessage = err.Error()
@@ -650,11 +650,11 @@ func TestEvaluateLogicalExpressions(t *testing.T) {
 
 	for _, test := range tests {
 		// Create evaluator
-		evaluator := newCheckEvaluator(test.primaryField, test.fields, test.optMissingFields)
+		evaluator := NewCheckEvaluator()
 
 		// Evaluate check
 		for _, check := range test.checks {
-			res, skipped, err := evaluator.evaluate(check)
+			res, skipped, err := evaluator.Evaluate(check, test.primaryField, test.fields, test.optMissingFields)
 			errMessage := ""
 			if err != nil {
 				errMessage = err.Error()
@@ -779,11 +779,11 @@ func TestEvaluateControlExpressions(t *testing.T) {
 
 	for _, test := range tests {
 		// Create evaluator
-		evaluator := newCheckEvaluator(test.primaryField, test.fields, test.optMissingFields)
+		evaluator := NewCheckEvaluator()
 
 		// Evaluate check
 		for _, check := range test.checks {
-			res, skipped, err := evaluator.evaluate(check)
+			res, skipped, err := evaluator.Evaluate(check, test.primaryField, test.fields, test.optMissingFields)
 			errMessage := ""
 			if err != nil {
 				errMessage = err.Error()
@@ -959,11 +959,11 @@ func TestEvaluateErroneousExpressions(t *testing.T) {
 
 	for _, test := range tests {
 		// Create evaluator
-		evaluator := newCheckEvaluator(test.primaryField, test.fields, test.optMissingFields)
+		evaluator := NewCheckEvaluator()
 
 		// Evaluate check
 		for _, check := range test.checks {
-			res, skipped, err := evaluator.evaluate(check)
+			res, skipped, err := evaluator.Evaluate(check, test.primaryField, test.fields, test.optMissingFields)
 			errMessage := ""
 			if err != nil {
 				errMessage = err.Error()
@@ -1083,11 +1083,11 @@ func TestEvaluateSyntaxErrors(t *testing.T) {
 
 	for _, test := range tests {
 		// Create evaluator
-		evaluator := newCheckEvaluator(test.primaryField, test.fields, test.optMissingFields)
+		evaluator := NewCheckEvaluator()
 
 		// Evaluate check
 		for _, check := range test.checks {
-			res, skipped, err := evaluator.evaluate(check)
+			res, skipped, err := evaluator.Evaluate(check, test.primaryField, test.fields, test.optMissingFields)
 			errMessage := ""
 			if err != nil {
 				errMessage = err.Error()
