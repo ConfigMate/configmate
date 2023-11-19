@@ -70,8 +70,6 @@ INT : DIGIT+ ;               // Integer numbers
 FLOAT : DIGIT+ '.' DIGIT+ ;  // Floating point numbers
 BOOL : 'true' | 'false' ;    // Boolean values
 
-IDENTIFIER : LETTER (CHARACTER)* ;    // Typical definition of an identifier
-
 // CMCL Tokens
 IF_SYM: 'if';
 ELSEIF_SYM: 'elseif';
@@ -80,6 +78,8 @@ FOREACH_SYM: 'foreach';
 AND_SYM: '&&';
 OR_SYM: '||';
 NOT_SYM: '!';
+
+IDENTIFIER : LETTER (CHARACTER)* ;    // Typical definition of an identifier
 
 // Auxiliary lexer rules
 fragment LETTER : [a-zA-Z] ;

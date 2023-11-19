@@ -44,14 +44,6 @@ func (p *specParserImpl) Parse(spec string) (*Specification, error) {
 	input := antlr.NewInputStream(spec)
 	lexer := parser_cmsl.NewCMSLLexer(input)
 
-	for {
-		token := lexer.NextToken()
-		if token.GetTokenType() == antlr.TokenEOF {
-			break
-		}
-		fmt.Printf("%s ---> %s\n", token.GetText(), lexer.GetSymbolicNames()[token.GetTokenType()])
-	}
-
 	// Add error listener
 	errorListener := &cmslErrorListener{}
 	lexer.RemoveErrorListeners()
@@ -71,8 +63,6 @@ func (p *specParserImpl) Parse(spec string) (*Specification, error) {
 
 	tree := parser.Cmsl()
 
-	fmt.Println(tree.ToStringTree(parser.GetRuleNames(), nil))
-
 	// Check for errors
 	if len(errorListener.errors) > 0 {
 		return nil, fmt.Errorf("syntax errors: %v", multierr.Combine(errorListener.errors...))
@@ -88,7 +78,6 @@ func (p *specParserImpl) Parse(spec string) (*Specification, error) {
 
 	// Prepare stack
 	p.itemFieldStack = stack.Stack{}
-	p.itemFieldStack.Push("") // Push root
 
 	// Walk the tree
 	walker := antlr.NewParseTreeWalker()
@@ -144,16 +133,19 @@ func (p *specParserImpl) EnterImportItem(ctx *parser_cmsl.ImportItemContext) {
 
 // EnterSpecificationItem is called when production specificationItem is entered.
 func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationItemContext) {
-	// Get field in stack
-	parentField := p.itemFieldStack.Peek().(string)
-	field := parentField + "." + ctx.FieldName().GetText()
+	// Compute fieldName
+	fieldName := ctx.FieldName().GetText()
+	if p.itemFieldStack.Len() != 0 {
+		parentField := p.itemFieldStack.Peek().(string)
+		fieldName = parentField + "." + fieldName
+	}
 
 	// Add item to stack
-	p.itemFieldStack.Push(field)
+	p.itemFieldStack.Push(fieldName)
 
 	// Add item to spec
 	fieldSpecification := FieldSpec{
-		Field: field,
+		Field: fieldName,
 		FieldLocation: parsers.TokenLocation{
 			Start: parsers.CharLocation{
 				Line:   ctx.FieldName().GetStart().GetLine(),
@@ -164,6 +156,7 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 				Column: ctx.FieldName().GetStop().GetColumn() + len(ctx.FieldName().GetStop().GetText()),
 			},
 		},
+		Checks: make([]CheckWithLocation, 0),
 	}
 
 	foundType := false
@@ -177,13 +170,13 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 		case *parser_cmsl.TypeMetadataContext:
 			// Check if type has already been found
 			if foundType {
-				p.errs = multierr.Append(p.errs, fmt.Errorf("duplicate type metadata for field %s", field))
+				p.errs = multierr.Append(p.errs, fmt.Errorf("duplicate type metadata for field %s", fieldName))
 				continue
 			}
 			foundType = true
 
 			// Add type to field
-			fieldSpecification.FieldType = item.TypeExpr().GetText()
+			fieldSpecification.FieldType = condenseListExpressions(item.TypeExpr().GetText())
 			fieldSpecification.FieldTypeLocation = parsers.TokenLocation{
 				Start: parsers.CharLocation{
 					Line:   item.TypeExpr().GetStart().GetLine(),
@@ -197,7 +190,7 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 		case *parser_cmsl.OptionalMetadataContext:
 			// Check if optional has already been found
 			if foundOptional {
-				p.errs = multierr.Append(p.errs, fmt.Errorf("duplicate optional metadata for field %s", field))
+				p.errs = multierr.Append(p.errs, fmt.Errorf("duplicate optional metadata for field %s", fieldName))
 				continue
 			}
 			foundOptional = true
@@ -222,13 +215,13 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 		case *parser_cmsl.DefaultMetadataContext:
 			// Check if default has already been found
 			if foundDefault {
-				p.errs = multierr.Append(p.errs, fmt.Errorf("duplicate default metadata for field %s", field))
+				p.errs = multierr.Append(p.errs, fmt.Errorf("duplicate default metadata for field %s", fieldName))
 				continue
 			}
 			foundDefault = true
 
 			// Add default to field
-			fieldSpecification.Default = item.Primitive().GetText()
+			fieldSpecification.Default = removeStrQuotesAndCleanSpaces(item.Primitive().GetText())
 			fieldSpecification.DefaultLocation = parsers.TokenLocation{
 				Start: parsers.CharLocation{
 					Line:   item.Primitive().GetStart().GetLine(),
@@ -242,7 +235,7 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 		case *parser_cmsl.NotesMetadataContext:
 			// Check if notes has already been found
 			if foundNotes {
-				p.errs = multierr.Append(p.errs, fmt.Errorf("duplicate notes metadata for field %s", field))
+				p.errs = multierr.Append(p.errs, fmt.Errorf("duplicate notes metadata for field %s", fieldName))
 				continue
 			}
 
@@ -265,22 +258,22 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 	}
 
 	if !foundType {
-		p.errs = multierr.Append(p.errs, fmt.Errorf("missing type metadata for field %s", field))
+		p.errs = multierr.Append(p.errs, fmt.Errorf("missing type metadata for field %s", fieldName))
 	}
 
 	// For each check statement
-	for _, checkStatement := range ctx.AllCheckStatement() {
+	for _, check := range ctx.AllCheck() {
 		// Add check to field
 		fieldSpecification.Checks = append(fieldSpecification.Checks, CheckWithLocation{
-			Check: checkStatement.GetText(),
+			Check: check.GetText(),
 			Location: parsers.TokenLocation{
 				Start: parsers.CharLocation{
-					Line:   checkStatement.GetStart().GetLine(),
-					Column: checkStatement.GetStart().GetColumn(),
+					Line:   check.GetStart().GetLine(),
+					Column: check.GetStart().GetColumn(),
 				},
 				End: parsers.CharLocation{
-					Line:   checkStatement.GetStop().GetLine(),
-					Column: checkStatement.GetStop().GetColumn() + len(checkStatement.GetStop().GetText()),
+					Line:   check.GetStop().GetLine(),
+					Column: check.GetStop().GetColumn() + len(check.GetStop().GetText()),
 				},
 			},
 		})
@@ -297,13 +290,31 @@ func (p *specParserImpl) ExitSpecificationItem(ctx *parser_cmsl.SpecificationIte
 
 func removeStrQuotesAndCleanSpaces(str string) string {
 	if strings.HasPrefix(str, "\"\"\"") {
+		// Remove triple quotes
+		str = str[3 : len(str)-3]
+	} else if strings.HasPrefix(str, "\"") {
 		// Remove quotes
-		unquoted := str[3 : len(str)-3]
-
-		// Remove consecutive spaces
-		space := regexp.MustCompile(`\s+`)
-		return space.ReplaceAllString(unquoted, " ")
+		str = str[1 : len(str)-1]
 	}
 
-	return str[1 : len(str)-1]
+	// Remove consecutive spaces
+	space := regexp.MustCompile(`\s+`)
+	str = space.ReplaceAllString(str, " ")
+
+	// Remove spaces at the beginning and end
+	str = strings.TrimSpace(str)
+
+	return str
+}
+
+func condenseListExpressions(typeStr string) string {
+	result := ""
+
+	for strings.HasPrefix(typeStr, "list<") && strings.HasSuffix(typeStr, ">") {
+		result = result + "list:"
+		typeStr = typeStr[5 : len(typeStr)-1]
+	}
+
+	result = result + typeStr
+	return result
 }

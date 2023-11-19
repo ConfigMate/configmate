@@ -1,7 +1,6 @@
 // This grammar describes the syntax of the language
 // of specifications in ConfigMate. CMSL stands for ConfigMate Specification Language.
 grammar CMSL;
-
 import CMCL;
 
 // The top-level rule of the grammar.
@@ -60,7 +59,7 @@ primitive
 // A string expression is either a short string or a long string.
 stringExpr
     : SHORT_STRING 
-    | LONG_STRING
+    | DOUBLE_QUOTES LONG_STRING DOUBLE_QUOTES
     ;
 
 // Tokens
@@ -74,9 +73,10 @@ SEMICOLON : ';' ;         // Semicolon
 COMMA : ',' ;             // Comma
 COLON : ':' ;             // Colon
 DOT : '.' ;               // Dot
+DOUBLE_QUOTES : '""' ;      // Double quote
 
 SHORT_STRING: '"'  ('\\' (RN | .) | ~[\\\r\n"])* '"';
-LONG_STRING: '"""' LONG_STRING_ITEM*? '"""';
+LONG_STRING: '"' LONG_STRING_ITEM*? '"';
 INT : DIGIT+ ;               // Integer numbers
 FLOAT : DIGIT+ '.' DIGIT+ ;  // Floating point numbers
 BOOL : 'true' | 'false' ;    // Boolean values
@@ -89,7 +89,6 @@ WS : [ \t\r\n]+ -> skip ;    // Skip whitespace
 fragment LETTER : [a-zA-Z] ;
 fragment DIGIT : [0-9] ;
 fragment CHARACTER : [a-zA-Z0-9_-] ;
-fragment ESC_SEQ : '\\' ('b' | 't' | 'n' | 'f' | 'r' | 'u' | '"' | '\'' | '\\') ;  // Escape sequences
 fragment LONG_STRING_ITEM
     : ~'\\'
     | '\\' (RN | .)

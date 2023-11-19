@@ -18,13 +18,13 @@ func TestParseSimple(t *testing.T) {
 	expectedSpec := &Specification{
 		File: "./examples/configurations/config0.json",
 		FileLocation: parsers.TokenLocation{
-			Start: parsers.CharLocation{Line: 1, Column: 7},
-			End:   parsers.CharLocation{Line: 1, Column: 44},
+			Start: parsers.CharLocation{Line: 1, Column: 6},
+			End:   parsers.CharLocation{Line: 1, Column: 46},
 		},
 		FileFormat: "json",
 		FileFormatLocation: parsers.TokenLocation{
-			Start: parsers.CharLocation{Line: 1, Column: 46},
-			End:   parsers.CharLocation{Line: 1, Column: 49},
+			Start: parsers.CharLocation{Line: 1, Column: 47},
+			End:   parsers.CharLocation{Line: 1, Column: 51},
 		},
 		Imports:         map[string]string{},
 		ImportsLocation: map[string]parsers.TokenLocation{},
@@ -32,12 +32,12 @@ func TestParseSimple(t *testing.T) {
 			{
 				Field: "server",
 				FieldLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 4, Column: 5},
+					Start: parsers.CharLocation{Line: 4, Column: 4},
 					End:   parsers.CharLocation{Line: 4, Column: 10},
 				},
 				FieldType: "object",
 				FieldTypeLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 4, Column: 19},
+					Start: parsers.CharLocation{Line: 4, Column: 18},
 					End:   parsers.CharLocation{Line: 4, Column: 24},
 				},
 				Optional:         false,
@@ -51,31 +51,31 @@ func TestParseSimple(t *testing.T) {
 			{
 				Field: "server.host",
 				FieldLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 5, Column: 9},
+					Start: parsers.CharLocation{Line: 5, Column: 8},
 					End:   parsers.CharLocation{Line: 5, Column: 12},
 				},
 				FieldType: "string",
 				FieldTypeLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 6, Column: 19},
+					Start: parsers.CharLocation{Line: 6, Column: 18},
 					End:   parsers.CharLocation{Line: 6, Column: 24},
 				},
 				Optional:         false,
 				OptionalLocation: parsers.TokenLocation{},
 				Default:          "localhost",
 				DefaultLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 7, Column: 22},
+					Start: parsers.CharLocation{Line: 7, Column: 21},
 					End:   parsers.CharLocation{Line: 7, Column: 32},
 				},
 				Notes: "This is the host that the server will listen on.",
 				NotesLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 8, Column: 20},
+					Start: parsers.CharLocation{Line: 8, Column: 19},
 					End:   parsers.CharLocation{Line: 8, Column: 69},
 				},
 				Checks: []CheckWithLocation{
 					{
 						Check: "eq(\"localhost\")",
 						Location: parsers.TokenLocation{
-							Start: parsers.CharLocation{Line: 9, Column: 13},
+							Start: parsers.CharLocation{Line: 9, Column: 12},
 							End:   parsers.CharLocation{Line: 9, Column: 27},
 						},
 					},
@@ -84,32 +84,32 @@ func TestParseSimple(t *testing.T) {
 			{
 				Field: "server.port",
 				FieldLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 11, Column: 9},
+					Start: parsers.CharLocation{Line: 11, Column: 8},
 					End:   parsers.CharLocation{Line: 11, Column: 12},
 				},
 				FieldType: "int",
 				FieldTypeLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 12, Column: 19},
+					Start: parsers.CharLocation{Line: 12, Column: 18},
 					End:   parsers.CharLocation{Line: 12, Column: 21},
 				},
 				Optional:         false,
 				OptionalLocation: parsers.TokenLocation{},
 				Default:          "80",
 				DefaultLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 13, Column: 22},
+					Start: parsers.CharLocation{Line: 13, Column: 21},
 					End:   parsers.CharLocation{Line: 13, Column: 23},
 				},
-				Notes: "This is the port that the server will listen on.",
+				Notes: "This is the port that the server will listen on. We are also testing multiline strings here.",
 				NotesLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 14, Column: 20},
-					End:   parsers.CharLocation{Line: 14, Column: 69},
+					Start: parsers.CharLocation{Line: 14, Column: 19},
+					End:   parsers.CharLocation{Line: 17, Column: 15},
 				},
 				Checks: []CheckWithLocation{
 					{
-						Check: "range(25, 100)",
+						Check: "range(25,100)",
 						Location: parsers.TokenLocation{
-							Start: parsers.CharLocation{Line: 15, Column: 13},
-							End:   parsers.CharLocation{Line: 15, Column: 26},
+							Start: parsers.CharLocation{Line: 18, Column: 12},
+							End:   parsers.CharLocation{Line: 18, Column: 26},
 						},
 					},
 				},
@@ -117,32 +117,32 @@ func TestParseSimple(t *testing.T) {
 			{
 				Field: "server.ssl_enabled",
 				FieldLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 17, Column: 9},
-					End:   parsers.CharLocation{Line: 17, Column: 19},
+					Start: parsers.CharLocation{Line: 20, Column: 8},
+					End:   parsers.CharLocation{Line: 20, Column: 19},
 				},
 				FieldType: "bool",
 				FieldTypeLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 18, Column: 19},
-					End:   parsers.CharLocation{Line: 18, Column: 22},
+					Start: parsers.CharLocation{Line: 21, Column: 18},
+					End:   parsers.CharLocation{Line: 21, Column: 22},
 				},
 				Optional:         false,
 				OptionalLocation: parsers.TokenLocation{},
 				Default:          "false",
 				DefaultLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 19, Column: 22},
-					End:   parsers.CharLocation{Line: 19, Column: 26},
+					Start: parsers.CharLocation{Line: 22, Column: 21},
+					End:   parsers.CharLocation{Line: 22, Column: 26},
 				},
-				Notes: "This is whether SSL is enabled or not.",
+				Notes: "This is whether or not SSL is enabled.",
 				NotesLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 20, Column: 20},
-					End:   parsers.CharLocation{Line: 20, Column: 59},
+					Start: parsers.CharLocation{Line: 23, Column: 19},
+					End:   parsers.CharLocation{Line: 23, Column: 59},
 				},
 				Checks: []CheckWithLocation{
 					{
-						Check: "eq(\"false\")",
+						Check: "eq(false)",
 						Location: parsers.TokenLocation{
-							Start: parsers.CharLocation{Line: 21, Column: 13},
-							End:   parsers.CharLocation{Line: 21, Column: 21},
+							Start: parsers.CharLocation{Line: 24, Column: 12},
+							End:   parsers.CharLocation{Line: 24, Column: 21},
 						},
 					},
 				},
@@ -150,32 +150,32 @@ func TestParseSimple(t *testing.T) {
 			{
 				Field: "server.dns_servers",
 				FieldLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 23, Column: 9},
-					End:   parsers.CharLocation{Line: 23, Column: 19},
+					Start: parsers.CharLocation{Line: 26, Column: 8},
+					End:   parsers.CharLocation{Line: 26, Column: 19},
 				},
 				FieldType: "list:string",
 				FieldTypeLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 24, Column: 19},
-					End:   parsers.CharLocation{Line: 24, Column: 29},
+					Start: parsers.CharLocation{Line: 27, Column: 18},
+					End:   parsers.CharLocation{Line: 27, Column: 30},
 				},
 				Optional: true,
 				OptionalLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 25, Column: 23},
-					End:   parsers.CharLocation{Line: 25, Column: 26},
+					Start: parsers.CharLocation{Line: 28, Column: 22},
+					End:   parsers.CharLocation{Line: 28, Column: 26},
 				},
 				Default:         "",
 				DefaultLocation: parsers.TokenLocation{},
 				Notes:           "This is a list of DNS servers.",
 				NotesLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 26, Column: 20},
-					End:   parsers.CharLocation{Line: 26, Column: 51},
+					Start: parsers.CharLocation{Line: 29, Column: 19},
+					End:   parsers.CharLocation{Line: 29, Column: 51},
 				},
 				Checks: []CheckWithLocation{
 					{
 						Check: "len().gte(3)",
 						Location: parsers.TokenLocation{
-							Start: parsers.CharLocation{Line: 27, Column: 13},
-							End:   parsers.CharLocation{Line: 27, Column: 24},
+							Start: parsers.CharLocation{Line: 30, Column: 12},
+							End:   parsers.CharLocation{Line: 30, Column: 24},
 						},
 					},
 				},
@@ -189,6 +189,6 @@ func TestParseSimple(t *testing.T) {
 		t.Errorf("Unexpected error: %s", err)
 	}
 	if !reflect.DeepEqual(result, expectedSpec) {
-		t.Errorf("Expected: %v\nGot: %v", expectedSpec, result)
+		t.Errorf("Expected: %#v\nGot: %#v", expectedSpec, result)
 	}
 }

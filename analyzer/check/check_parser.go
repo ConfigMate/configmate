@@ -1,4 +1,4 @@
-package analyzer
+package check
 
 import (
 	"fmt"
@@ -104,13 +104,13 @@ func (p *CheckParser) EnterForeachCheck(ctx *parser_cmcl.ForeachCheckContext) {
 	// Add list item alias to the node as a child
 	newNode.children = append(newNode.children, &cmclNode{
 		nodeType: cmclForeachItemAlias,
-		value:    ctx.Foreach().NAME().GetText(),
+		value:    ctx.Foreach().IDENTIFIER().GetText(),
 	})
 
 	// Add field being iterated over to the node as a child
 	newNode.children = append(newNode.children, &cmclNode{
 		nodeType: cmclForeachListArg,
-		value:    ctx.Foreach().Field().GetText(),
+		value:    ctx.Foreach().FieldName().GetText(),
 	})
 
 	// Add node to execution tree
@@ -214,7 +214,7 @@ func (p *CheckParser) EnterFieldExpr(ctx *parser_cmcl.FieldExprContext) {
 	// Create new node for field expression
 	newNode := &cmclNode{
 		nodeType: cmclFieldExpr,
-		value:    ctx.FieldExpression().Field().GetText(),
+		value:    ctx.FieldExpression().FieldName().GetText(),
 		children: make([]*cmclNode, 0),
 	}
 
@@ -336,7 +336,7 @@ func (p *CheckParser) EnterFunction(ctx *parser_cmcl.FunctionContext) {
 	// Create new node for function
 	newNode := &cmclNode{
 		nodeType: cmclFunction,
-		value:    ctx.NAME().GetText(),
+		value:    ctx.IDENTIFIER().GetText(),
 		children: make([]*cmclNode, 0),
 	}
 
