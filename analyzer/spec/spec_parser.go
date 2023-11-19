@@ -129,6 +129,18 @@ func (p *specParserImpl) EnterImportItem(ctx *parser_cmsl.ImportItemContext) {
 			Column: ctx.SHORT_STRING().GetSymbol().GetColumn() + len(ctx.SHORT_STRING().GetText()),
 		},
 	}
+
+	// Add import alias location
+	p.spec.ImportsAliasLocation[ctx.IDENTIFIER().GetText()] = parsers.TokenLocation{
+		Start: parsers.CharLocation{
+			Line:   ctx.IDENTIFIER().GetSymbol().GetLine(),
+			Column: ctx.IDENTIFIER().GetSymbol().GetColumn(),
+		},
+		End: parsers.CharLocation{
+			Line:   ctx.IDENTIFIER().GetSymbol().GetLine(),
+			Column: ctx.IDENTIFIER().GetSymbol().GetColumn() + len(ctx.IDENTIFIER().GetText()),
+		},
+	}
 }
 
 // EnterSpecificationItem is called when production specificationItem is entered.
@@ -176,8 +188,8 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 			foundType = true
 
 			// Add type to field
-			fieldSpecification.FieldType = condenseListExpressions(item.TypeExpr().GetText())
-			fieldSpecification.FieldTypeLocation = parsers.TokenLocation{
+			fieldSpecification.Type = condenseListExpressions(item.TypeExpr().GetText())
+			fieldSpecification.TypeLocation = parsers.TokenLocation{
 				Start: parsers.CharLocation{
 					Line:   item.TypeExpr().GetStart().GetLine(),
 					Column: item.TypeExpr().GetStart().GetColumn(),

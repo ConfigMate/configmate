@@ -132,7 +132,7 @@ func main() {
 						return err
 					}
 
-					successfulChecks := make([]analyzer.Result, 0)
+					successfulChecks := make([]analyzer.CheckResult, 0)
 					// Print results for failed checks
 					for _, result := range res {
 						if !result.Passed {

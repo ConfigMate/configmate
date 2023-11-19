@@ -20,8 +20,8 @@ func splitFileAliasAndPath(field string) (fileAlias string, path string, err err
 
 // makeValueTokenLocation returns a TokenLocation object from a given file alias and a parsers.Node
 // using the ValueLocation of the node.
-func makeValueTokenLocation(fileAlias string, node *parsers.Node) TokenLocationWithFileAlias {
-	return TokenLocationWithFileAlias{
+func makeValueTokenLocation(fileAlias string, node *parsers.Node) TokenLocationWithFile {
+	return TokenLocationWithFile{
 		File:     fileAlias,
 		Location: node.ValueLocation,
 	}

@@ -20,12 +20,12 @@
     },
     "editor.minimap.enabled": false,
     "window.zoomLevel": 1,
-    "emeraldwalk.runonsave": {
-        "commands": [
-            {
-                "match": "\\.go$",
-                "cmd": "golines ${file} -w --no-reformat-tags"
-            }
-        ]
-    }
+    // "emeraldwalk.runonsave": {
+    //     "commands": [
+    //         {
+    //             "match": "\\.go$",
+    //             "cmd": "golines ${file} -m 100 -w --dry-run"
+    //         }
+    //     ]
+    // }
 }

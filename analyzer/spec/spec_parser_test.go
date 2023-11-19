@@ -35,8 +35,8 @@ func TestParseSimple(t *testing.T) {
 					Start: parsers.CharLocation{Line: 4, Column: 4},
 					End:   parsers.CharLocation{Line: 4, Column: 10},
 				},
-				FieldType: "object",
-				FieldTypeLocation: parsers.TokenLocation{
+				Type: "object",
+				TypeLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 4, Column: 18},
 					End:   parsers.CharLocation{Line: 4, Column: 24},
 				},
@@ -54,8 +54,8 @@ func TestParseSimple(t *testing.T) {
 					Start: parsers.CharLocation{Line: 5, Column: 8},
 					End:   parsers.CharLocation{Line: 5, Column: 12},
 				},
-				FieldType: "string",
-				FieldTypeLocation: parsers.TokenLocation{
+				Type: "string",
+				TypeLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 6, Column: 18},
 					End:   parsers.CharLocation{Line: 6, Column: 24},
 				},
@@ -87,8 +87,8 @@ func TestParseSimple(t *testing.T) {
 					Start: parsers.CharLocation{Line: 11, Column: 8},
 					End:   parsers.CharLocation{Line: 11, Column: 12},
 				},
-				FieldType: "int",
-				FieldTypeLocation: parsers.TokenLocation{
+				Type: "int",
+				TypeLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 12, Column: 18},
 					End:   parsers.CharLocation{Line: 12, Column: 21},
 				},
@@ -120,8 +120,8 @@ func TestParseSimple(t *testing.T) {
 					Start: parsers.CharLocation{Line: 20, Column: 8},
 					End:   parsers.CharLocation{Line: 20, Column: 19},
 				},
-				FieldType: "bool",
-				FieldTypeLocation: parsers.TokenLocation{
+				Type: "bool",
+				TypeLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 21, Column: 18},
 					End:   parsers.CharLocation{Line: 21, Column: 22},
 				},
@@ -153,8 +153,8 @@ func TestParseSimple(t *testing.T) {
 					Start: parsers.CharLocation{Line: 26, Column: 8},
 					End:   parsers.CharLocation{Line: 26, Column: 19},
 				},
-				FieldType: "list:string",
-				FieldTypeLocation: parsers.TokenLocation{
+				Type: "list:string",
+				TypeLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 27, Column: 18},
 					End:   parsers.CharLocation{Line: 27, Column: 30},
 				},

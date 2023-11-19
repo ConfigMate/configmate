@@ -8,7 +8,7 @@ import (
 
 const linesPaddingForErrors = 2
 
-func FormatResult(res analyzer.Result, files map[string]analyzer.FileDetails, fileLinesMap map[string]map[int]string) string {
+func FormatResult(res analyzer.CheckResult, files map[string]analyzer.FileDetails, fileLinesMap map[string]map[int]string) string {
 	var passed, comment, check, fieldType, optional string
 
 	// Format of the result
