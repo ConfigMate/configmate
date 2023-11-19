@@ -16,6 +16,7 @@ import (
 
 type Analyzer interface {
 	AnalyzeSpecification(specFilePath string) (*spec.Specification, []CheckResult, *SpecError)
+	AllFilesContent(specFilePath string) map[string][]byte
 }
 
 type SpecError struct {
@@ -40,7 +41,7 @@ type TokenLocationWithFile struct {
 }
 
 // mainFileAlias is the alias used to reference the main config file.
-const mainFileAlias = "_main"
+const mainFileAlias = "main"
 
 type analyzerImpl struct {
 	specParser     spec.SpecParser
@@ -111,7 +112,7 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string) (*spec.Specific
 		// Check that alias doesn't conflict with main spec
 		if alias == mainFileAlias {
 			specError := &SpecError{
-				AnalyzerMsg: "Alias conflicts: '_main' is reserved and used internally",
+				AnalyzerMsg: "Alias conflicts: '" + mainFileAlias + "' is reserved and used internally",
 				ErrorMsg:    "",
 				TokenList: []TokenLocationWithFile{
 					{
@@ -213,42 +214,62 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string) (*spec.Specific
 	return mainSpec, res, nil
 }
 
-func (a *analyzerImpl) parserSpecFile(specFilePath string) (*spec.Specification, error) {
+func (a *analyzerImpl) AllFilesContent(specFilePath string) map[string][]byte {
+	// Create files map
+	files := make(map[string][]byte)
+
 	// Get specification file
 	specBytes, err := a.fileFetcher.FetchFile(specFilePath)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch specification file")
+		return nil
 	}
+
+	// Add spec file to files map
+	files[specFilePath] = specBytes
 
 	// Parse specification
 	spec, err := a.specParser.Parse(string(specBytes))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse specification file")
+		return files
 	}
 
-	return spec, nil
-}
-
-func (a *analyzerImpl) parseConfigFileFromSpec(spec *spec.Specification) (*parsers.Node, error) {
-	// Fetch config file
+	// Get config file
 	configBytes, err := a.fileFetcher.FetchFile(spec.File)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch main config file")
+		return files
 	}
 
-	// Get parser for main config file
-	configParser, err := a.parserProvider.GetParser(spec.FileFormat)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get parser for main config file")
+	// Add config file to files map
+	files[spec.File] = configBytes
+
+	// Fetch imported spec files
+	for _, importedSpecFilePath := range spec.Imports {
+		// Get imported spec file
+		importedSpecBytes, err := a.fileFetcher.FetchFile(importedSpecFilePath)
+		if err != nil {
+			continue
+		}
+
+		// Add imported spec file to files map
+		files[importedSpecFilePath] = importedSpecBytes
+
+		// Parse imported spec file
+		importedSpec, err := a.specParser.Parse(string(importedSpecBytes))
+		if err != nil {
+			continue
+		}
+
+		// Get imported config file
+		importedConfigBytes, err := a.fileFetcher.FetchFile(importedSpec.File)
+		if err != nil {
+			continue
+		}
+
+		// Add imported config file to files map
+		files[importedSpec.File] = importedConfigBytes
 	}
 
-	// Parse main config file
-	config, err := configParser.Parse(configBytes)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse main config file")
-	}
-
-	return config, nil
+	return files
 }
 
 func (a *analyzerImpl) findAndParseAllFields(
@@ -273,12 +294,12 @@ func (a *analyzerImpl) findAndParseAllFields(
 			// field that is missing, which makes the
 			// current field optional as well
 			for optMissingField := range optMissingFields {
-				if strings.HasPrefix(fspec.Field, optMissingField) {
-					optMissingFields[fspec.Field] = true
+				if strings.HasPrefix(fileAlias+"."+fspec.Field, optMissingField) {
+					optMissingFields[fileAlias+"."+fspec.Field] = true
 					break
 				}
 			}
-			if optMissingFields[fspec.Field] {
+			if optMissingFields[fileAlias+"."+fspec.Field] {
 				continue
 			}
 
@@ -296,7 +317,7 @@ func (a *analyzerImpl) findAndParseAllFields(
 					},
 				}
 			} else if fnode == nil && fspec.Optional { // Field not found and optional
-				optMissingFields[fspec.Field] = true
+				optMissingFields[fileAlias+"."+fspec.Field] = true
 			} else { // Field found
 				t, err := types.MakeType(fspec.Type, fnode.Value)
 				if err != nil {
@@ -318,7 +339,10 @@ func (a *analyzerImpl) findAndParseAllFields(
 					}
 				} else {
 					fieldValues[fileAlias+"."+fspec.Field] = t
-					fieldLocations[fileAlias+"."+fspec.Field] = makeValueTokenLocation(fileAlias, fnode)
+					fieldLocations[fileAlias+"."+fspec.Field] = TokenLocationWithFile{
+						File:     configFilePaths[fileAlias],
+						Location: fnode.ValueLocation,
+					}
 				}
 			}
 		}
@@ -386,4 +410,42 @@ func (a *analyzerImpl) runChecks(
 	}
 
 	return res, nil
+}
+
+func (a *analyzerImpl) parserSpecFile(specFilePath string) (*spec.Specification, error) {
+	// Get specification file
+	specBytes, err := a.fileFetcher.FetchFile(specFilePath)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch specification file")
+	}
+
+	// Parse specification
+	spec, err := a.specParser.Parse(string(specBytes))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse specification file")
+	}
+
+	return spec, nil
+}
+
+func (a *analyzerImpl) parseConfigFileFromSpec(spec *spec.Specification) (*parsers.Node, error) {
+	// Fetch config file
+	configBytes, err := a.fileFetcher.FetchFile(spec.File)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch main config file")
+	}
+
+	// Get parser for main config file
+	configParser, err := a.parserProvider.GetParser(spec.FileFormat)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get parser for main config file")
+	}
+
+	// Parse main config file
+	config, err := configParser.Parse(configBytes)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse main config file")
+	}
+
+	return config, nil
 }

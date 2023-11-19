@@ -8,7 +8,7 @@ import (
 
 const linesPaddingForErrors = 2
 
-func FormatResult(res analyzer.CheckResult, files map[string]analyzer.FileDetails, fileLinesMap map[string]map[int]string) string {
+func FormatResult(res analyzer.CheckResult, fileLinesMap map[string]map[int]string) string {
 	var passed, comment, check, fieldType, optional string
 
 	// Format of the result
@@ -24,33 +24,30 @@ func FormatResult(res analyzer.CheckResult, files map[string]analyzer.FileDetail
 	}
 
 	// get other values
-	check = ColorText(res.Rule.Checks[res.CheckNum], Cyan)
-	fieldType = ColorText(res.Rule.Type, Blue)
-	if res.Rule.Optional {
+	check = ColorText(res.Field.Checks[res.CheckNum].Check, Cyan)
+	fieldType = ColorText(res.Field.Type, Blue)
+	if res.Field.Optional {
 		optional = ColorText("optional", Yellow)
 	} else {
 		optional = ColorText("required", Gray)
 	}
 
 	// Format the values
-	formatted := fmt.Sprintf(format, passed, res.Rule.Field, fieldType, optional, check, comment)
+	formatted := fmt.Sprintf(format, passed, res.Field.Field, fieldType, optional, check, comment)
 
-	if res.Rule.Default != nil {
-		formatted = fmt.Sprintf("%s\tDefault: %v\n", formatted, res.Rule.Default)
+	if res.Field.Default != "" {
+		formatted = fmt.Sprintf("%s\tDefault: %v\n", formatted, res.Field.Default)
 	}
 
-	if res.Rule.Notes != "" {
-		formatted = fmt.Sprintf("%s\tNotes: %s\n", formatted, res.Rule.Notes)
+	if res.Field.Notes != "" {
+		formatted = fmt.Sprintf("%s\tNotes: %s\n", formatted, res.Field.Notes)
 	}
 
 	// If check failed, print the problematic line
 	if !res.Passed {
 		for _, token := range res.TokenList {
-			// Get the file alias
-			fileAlias := token.File
-
 			// Add the file alias to the formatted string
-			formatted = fmt.Sprintf("%s\tFile: %s\n\n", formatted, ColorText(files[fileAlias].Path, Red))
+			formatted = fmt.Sprintf("%s\tFile: %s\n\n", formatted, ColorText(token.File, Red))
 
 			// Get the line number
 			startLineNum := token.Location.Start.Line
@@ -62,7 +59,7 @@ func FormatResult(res analyzer.CheckResult, files map[string]analyzer.FileDetail
 			// Case where the token is in one line
 			if startLineNum == endLineNum {
 				// Get the line
-				line := fileLinesMap[fileAlias][startLineNum]
+				line := fileLinesMap[token.File][startLineNum]
 
 				// Get the content of the line up to the token
 				preTokenContent := line[:startColNum-1]
@@ -87,7 +84,7 @@ func FormatResult(res analyzer.CheckResult, files map[string]analyzer.FileDetail
 				output = fmt.Sprintf("%s\n", output)
 			} else { // Case where the token is in multiple lines
 				// Get the start line
-				startLine := fileLinesMap[fileAlias][startLineNum]
+				startLine := fileLinesMap[token.File][startLineNum]
 
 				// Get the content of the start line up to the token
 				preTokenContent := startLine[:startColNum-1]
@@ -101,14 +98,14 @@ func FormatResult(res analyzer.CheckResult, files map[string]analyzer.FileDetail
 				// Get the middle lines
 				for i := startLineNum + 1; i < endLineNum; i++ {
 					// Get the line
-					line := fileLinesMap[fileAlias][i]
+					line := fileLinesMap[token.File][i]
 
 					// Format the line
 					output = fmt.Sprintf("%s\t  Line %d: %s\n", output, i, ColorText(line, Red))
 				}
 
 				// Get the end line
-				endLine := fileLinesMap[fileAlias][endLineNum]
+				endLine := fileLinesMap[token.File][endLineNum]
 
 				// Get the content of the end line up to the end of the token
 				endLineTokenContent := ColorText(endLine[:endColNum], Red)
@@ -126,7 +123,7 @@ func FormatResult(res analyzer.CheckResult, files map[string]analyzer.FileDetail
 				lineNum := startLineNum - i
 
 				// Check if line exists
-				if line, ok := fileLinesMap[fileAlias][lineNum]; ok {
+				if line, ok := fileLinesMap[token.File][lineNum]; ok {
 					// Format the line
 					output = fmt.Sprintf("\t  Line %d: %s\n%s", lineNum, line, output)
 				}
@@ -138,7 +135,7 @@ func FormatResult(res analyzer.CheckResult, files map[string]analyzer.FileDetail
 				lineNum := endLineNum + i
 
 				// Check if line exists
-				if line, ok := fileLinesMap[fileAlias][lineNum]; ok {
+				if line, ok := fileLinesMap[token.File][lineNum]; ok {
 					// Format the line
 					output = fmt.Sprintf("%s\t  Line %d: %s\n", output, lineNum, line)
 				}

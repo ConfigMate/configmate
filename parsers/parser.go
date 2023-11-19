@@ -19,9 +19,7 @@ type parserProviderImpl struct {
 func NewParserProvider() ParserProvider {
 	return &parserProviderImpl{
 		parsers: map[string]Parser{
-			"json":  &JsonParser{},
-			"hocon": &HoconParser{},
-			"toml":  &TomlParser{},
+			"json": &JsonParser{},
 		},
 	}
 }

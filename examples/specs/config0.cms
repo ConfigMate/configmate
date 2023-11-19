@@ -1,4 +1,4 @@
-file: ./examples/configurations/config0.json:json
+file: "./examples/configurations/config0.json" json
 
 spec {
     server <type: object> {
@@ -21,7 +21,7 @@ spec {
         > ( eq(false); )
 
         dns_servers <
-            type: list:string,
+            type: list<string>,
             optional: true,
             notes: "This is a list of DNS servers."
         > ( len().gte(3); )
