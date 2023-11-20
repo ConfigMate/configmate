@@ -36,12 +36,14 @@ func (p *JsonParser) Parse(data []byte) (*Node, error) {
 	lexer := parser_json.NewJSONLexer(input)
 
 	// Attach the error listener to the lexer
+	lexer.RemoveErrorListeners()
 	lexer.AddErrorListener(errorListener)
 
 	tokenStream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	parser := parser_json.NewJSONParser(tokenStream)
 
 	// Attach the error listener to the parser
+	parser.RemoveErrorListeners()
 	parser.AddErrorListener(errorListener)
 	tree := parser.Json()
 
