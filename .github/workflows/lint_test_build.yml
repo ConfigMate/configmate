@@ -30,6 +30,11 @@ jobs:
           go install github.com/golang/mock/mockgen@v1.6.0
           make mocks
 
+      - name: Run go mod
+        run: |
+          go mod tidy
+          go mod vendor
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3.7.0
 
@@ -58,6 +63,11 @@ jobs:
         run: |
           go install github.com/golang/mock/mockgen@v1.6.0
           make mocks
+
+      - name: Run go mod
+        run: |
+          go mod tidy
+          go mod vendor
 
       - name: Test
         run: |
@@ -101,6 +111,11 @@ jobs:
         run: |
           go install github.com/golang/mock/mockgen@v1.6.0
           make mocks
+
+      - name: Run go mod
+        run: |
+          go mod tidy
+          go mod vendor
 
       - name: Build
         run: go build ./...
