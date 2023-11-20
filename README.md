@@ -24,21 +24,9 @@ Thanks go to these wonderful people
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/javier-arango" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/58098790?s=60" width="60px;"/><br />
-        <sub><b>Javier Arango</b></sub>
-      </a><br />
-    </td>
-    <td align="center">
       <a href="https://github.com/Jcabza008" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/34218922?s=60" width="60px;"/><br />
         <sub><b>Julio J. Cabrera</b></sub>
-      </a><br />
-    </td>
-    <td align="center">
-      <a href="https://github.com/jeangregorfonrose" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/21975726?s=60" width="60px;"/><br />
-        <sub><b>Jean Gregor Fonrose</b></sub>
       </a><br />
     </td>
     <td align="center">
