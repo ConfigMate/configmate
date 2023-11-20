@@ -324,6 +324,17 @@ func (a *analyzerImpl) findAndParseAllFields(
 						},
 					},
 				}
+			} else if fnode == nil && !fspec.Optional { // Field not found and not optial
+				return nil, nil, nil, &SpecError{
+					AnalyzerMsg: fmt.Sprintf("Field %s not found in file %s", fspec.Field, configFilePaths[fileAlias]),
+					ErrorMsg:    "",
+					TokenList: []TokenLocationWithFile{
+						{
+							File:     specFilePaths[fileAlias],
+							Location: fspec.FieldLocation,
+						},
+					},
+				}
 			} else if fnode == nil && fspec.Optional { // Field not found and optional
 				optMissingFields[fileAlias+"."+fspec.Field] = true
 			} else { // Field found

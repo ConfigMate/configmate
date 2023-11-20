@@ -95,7 +95,9 @@ func main() {
 
 					_, res, specError := a.AnalyzeSpecification(specFilePath)
 					if specError != nil {
-						return fmt.Errorf(specError.AnalyzerMsg, specError.ErrorMsg)
+						formattedResult := utils.FormatSpecError(*specError, filesLines)
+						fmt.Print(formattedResult)
+						return nil
 					}
 
 					passedChecks := make([]analyzer.CheckResult, 0)
@@ -103,7 +105,7 @@ func main() {
 					// Print results for failed checks
 					for _, result := range res {
 						if result.Status == analyzer.CheckFailed {
-							formattedResult := utils.FormatResult(result, filesLines)
+							formattedResult := utils.FormatCheckResult(result, filesLines)
 							fmt.Print(formattedResult)
 						} else if result.Status == analyzer.CheckSkipped {
 							skippedChecks = append(skippedChecks, result)
@@ -119,7 +121,7 @@ func main() {
 					// Print results for successful checks if --all flag is set
 					if c.Bool("all") {
 						for _, result := range passedChecks {
-							formattedResult := utils.FormatResult(result, filesLines)
+							formattedResult := utils.FormatCheckResult(result, filesLines)
 							fmt.Print(formattedResult)
 						}
 					}
@@ -127,7 +129,7 @@ func main() {
 					// Print results for skipped checks if --all or --skipped flag is set
 					if c.Bool("all") || c.Bool("skipped") {
 						for _, result := range skippedChecks {
-							formattedResult := utils.FormatResult(result, filesLines)
+							formattedResult := utils.FormatCheckResult(result, filesLines)
 							fmt.Print(formattedResult)
 						}
 					}
