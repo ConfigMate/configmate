@@ -75,8 +75,14 @@ func FormatSpecError(specError analyzer.SpecError, fileLinesMap map[string]map[i
 	formatted := fmt.Sprintf(format, header, specError.AnalyzerMsg)
 
 	// Add more info if error message available
-	if specError.ErrorMsg != "" {
-		formatted = fmt.Sprintf("%s\tMore info: %s\n", formatted, specError.ErrorMsg)
+	if len(specError.ErrorMsgs) > 0 {
+		formatted = fmt.Sprintf("%s\tErrors:", formatted)
+		for _, errorMsg := range specError.ErrorMsgs {
+			formattedErrorMessage := "- " + errorMsg
+			formattedErrorMessage = strings.ReplaceAll(formattedErrorMessage, "\n", "\\n")
+			formatted = fmt.Sprintf("%s\n\t\t%s", formatted, formattedErrorMessage)
+		}
+		formatted = fmt.Sprintf("%s\n", formatted) // Add extra new line for readability
 	}
 
 	// Add token view for each token
@@ -93,14 +99,14 @@ func FormatSpecError(specError analyzer.SpecError, fileLinesMap map[string]map[i
 }
 
 func createTokenErrorView(token analyzer.TokenLocationWithFile, fileLinesMap map[string]map[int]string) string {
-	// Add the file path to the output
-	fileLine := fmt.Sprintf("\tFile: %s\n\n", ColorText(token.File, Red))
-
 	// Get the line number
 	startLineNum := token.Location.Start.Line
 	startColNum := token.Location.Start.Column
 	endLineNum := token.Location.End.Line
 	endColNum := token.Location.End.Column
+
+	// Add the file path to the output
+	fileLine := fmt.Sprintf("\tFile: %s\n\n", ColorText(fmt.Sprintf("%s:%d", token.File, startLineNum), Red))
 
 	var output string
 	// Case where the token is in one line

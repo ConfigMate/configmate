@@ -23,7 +23,7 @@ spec {
     }
     
     dns_servers <
-        type: string,
+        type: list<string>,
         optional: false,
         notes: "This is a list of DNS servers."
     > ( len().gte(3); )

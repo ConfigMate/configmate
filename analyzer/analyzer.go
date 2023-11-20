@@ -21,7 +21,7 @@ type Analyzer interface {
 
 type SpecError struct {
 	AnalyzerMsg string                  `json:"analyzer_msg"`
-	ErrorMsg    string                  `json:"error_msg"`
+	ErrorMsgs   []string                `json:"error_msgs"`
 	TokenList   []TokenLocationWithFile `json:"token_list"` // list of tokens involved in the error
 }
 
@@ -78,17 +78,16 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string) (*spec.Specific
 	if err != nil {
 		return nil, nil, &SpecError{
 			AnalyzerMsg: "Failed to obtain specification file",
-			ErrorMsg:    err.Error(),
-			TokenList:   []TokenLocationWithFile{{File: specFilePath}},
+			ErrorMsgs:   []string{err.Error()},
 		}
 	} else if len(parserErrors) > 0 {
 		specError := &SpecError{
 			AnalyzerMsg: "Failed to parse specification file",
-			ErrorMsg:    "",
+			ErrorMsgs:   []string{},
 			TokenList:   []TokenLocationWithFile{},
 		}
 		for _, parserError := range parserErrors {
-			specError.ErrorMsg += parserError.ErrorMessage + "\n"
+			specError.ErrorMsgs = append(specError.ErrorMsgs, parserError.ErrorMessage)
 			specError.TokenList = append(specError.TokenList, TokenLocationWithFile{
 				File:     specFilePath,
 				Location: parserError.Location,
@@ -106,7 +105,7 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string) (*spec.Specific
 	if err != nil {
 		specError := &SpecError{
 			AnalyzerMsg: "Failed to parse main config file",
-			ErrorMsg:    err.Error(),
+			ErrorMsgs:   []string{err.Error()},
 			TokenList: []TokenLocationWithFile{
 				{
 					File:     specFilePath,
@@ -135,7 +134,7 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string) (*spec.Specific
 		if alias == mainFileAlias {
 			specError := &SpecError{
 				AnalyzerMsg: "Alias conflicts: '" + mainFileAlias + "' is reserved and used internally",
-				ErrorMsg:    "",
+				ErrorMsgs:   []string{},
 				TokenList: []TokenLocationWithFile{
 					{
 						File:     specFilePath,
@@ -150,7 +149,7 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string) (*spec.Specific
 		if _, ok := files[alias]; ok {
 			specError := &SpecError{
 				AnalyzerMsg: fmt.Sprintf("Alias conflicts: '%s' is already used for another imported spec", alias),
-				ErrorMsg:    "",
+				ErrorMsgs:   []string{},
 				TokenList: []TokenLocationWithFile{
 					{
 						File:     specFilePath,
@@ -166,7 +165,7 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string) (*spec.Specific
 		if err != nil {
 			specError := &SpecError{
 				AnalyzerMsg: fmt.Sprintf("Failed to obtain imported spec file %s", importedSpecFilePath),
-				ErrorMsg:    err.Error(),
+				ErrorMsgs:   []string{err.Error()},
 				TokenList: []TokenLocationWithFile{
 					{
 						File:     specFilePath,
@@ -178,7 +177,7 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string) (*spec.Specific
 		} else if len(parserErrors) > 0 {
 			specError := &SpecError{
 				AnalyzerMsg: fmt.Sprintf("Failed to parse imported spec file %s", importedSpecFilePath),
-				ErrorMsg:    "",
+				ErrorMsgs:   []string{},
 				TokenList: []TokenLocationWithFile{
 					{
 						File:     specFilePath,
@@ -187,7 +186,7 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string) (*spec.Specific
 				},
 			}
 			for _, parserError := range parserErrors {
-				specError.ErrorMsg += parserError.ErrorMessage + "\n"
+				specError.ErrorMsgs = append(specError.ErrorMsgs, parserError.ErrorMessage)
 				specError.TokenList = append(specError.TokenList, TokenLocationWithFile{
 					File:     importedSpecFilePath,
 					Location: parserError.Location,
@@ -204,7 +203,7 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string) (*spec.Specific
 		if err != nil {
 			specError := &SpecError{
 				AnalyzerMsg: fmt.Sprintf("Failed to parse imported config file %s on spec %s", importedSpec.File, importedSpecFilePath),
-				ErrorMsg:    err.Error(),
+				ErrorMsgs:   []string{err.Error()},
 				TokenList: []TokenLocationWithFile{
 					{
 						File:     specFilePath,
@@ -349,7 +348,7 @@ func (a *analyzerImpl) findAndParseAllFields(
 			if err != nil {
 				return nil, nil, nil, &SpecError{
 					AnalyzerMsg: fmt.Sprintf("Failed to get field %s from file %s", fspec.Field, configFilePaths[fileAlias]),
-					ErrorMsg:    err.Error(),
+					ErrorMsgs:   []string{err.Error()},
 					TokenList: []TokenLocationWithFile{
 						{
 							File:     specFilePaths[fileAlias],
@@ -360,7 +359,7 @@ func (a *analyzerImpl) findAndParseAllFields(
 			} else if fnode == nil && !fspec.Optional { // Field not found and not optial
 				return nil, nil, nil, &SpecError{
 					AnalyzerMsg: fmt.Sprintf("Field %s not found in file %s", fspec.Field, configFilePaths[fileAlias]),
-					ErrorMsg:    "",
+					ErrorMsgs:   []string{},
 					TokenList: []TokenLocationWithFile{
 						{
 							File:     specFilePaths[fileAlias],
@@ -377,7 +376,7 @@ func (a *analyzerImpl) findAndParseAllFields(
 						AnalyzerMsg: fmt.Sprintf("failed to parse field %s from file %s as type %s",
 							fspec.Field, configFilePaths[fileAlias], fspec.Type,
 						),
-						ErrorMsg: err.Error(),
+						ErrorMsgs: []string{err.Error()},
 						TokenList: []TokenLocationWithFile{
 							{
 								File:     specFilePaths[fileAlias],
@@ -426,7 +425,7 @@ func (a *analyzerImpl) runChecks(
 			if result == nil {
 				return nil, &SpecError{
 					AnalyzerMsg: fmt.Sprintf("failed to evaluate check %s for field %s", checkInfo.Check, fspec.Field),
-					ErrorMsg:    err.Error(),
+					ErrorMsgs:   []string{err.Error()},
 					TokenList: []TokenLocationWithFile{
 						{
 							File:     specFilePaths[mainFileAlias],
@@ -478,7 +477,7 @@ func (a *analyzerImpl) parserSpecFile(specFilePath string) (*spec.Specification,
 
 	// Parse specification
 	spec, errs := a.specParser.Parse(string(specBytes))
-	if err != nil {
+	if len(errs) > 0 {
 		return nil, errs, errors.Wrap(err, "failed to parse specification file")
 	}
 
