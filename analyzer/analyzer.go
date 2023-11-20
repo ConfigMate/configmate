@@ -25,8 +25,16 @@ type SpecError struct {
 	TokenList   []TokenLocationWithFile `json:"token_list"` // list of tokens involved in the error
 }
 
+type CheckStatus int
+
+const (
+	CheckPassed CheckStatus = iota
+	CheckFailed
+	CheckSkipped
+)
+
 type CheckResult struct {
-	Passed        bool                    `json:"passed"`         // true if the check passed, false if it failed
+	Status        CheckStatus             `json:"status"`         // whether the check passed, failed or was skipped
 	ResultComment string                  `json:"result_comment"` // an error msg or comment about the result
 	Field         spec.FieldSpec          `json:"field"`          // the rule that was checked
 	CheckNum      int                     `json:"check_num"`      // the number of the check that was evaluated
@@ -384,7 +392,7 @@ func (a *analyzerImpl) runChecks(
 				}
 			} else if skipping {
 				res = append(res, CheckResult{
-					Passed:        true,
+					Status:        CheckSkipped,
 					ResultComment: err.Error(),
 					Field:         mainFieldSpecs[index],
 					CheckNum:      checkNum,
@@ -396,8 +404,13 @@ func (a *analyzerImpl) runChecks(
 					resComment = err.Error()
 				}
 
+				checkStatus := CheckPassed
+				if !result.Value().(bool) {
+					checkStatus = CheckFailed
+				}
+
 				res = append(res, CheckResult{
-					Passed:        result.Value().(bool),
+					Status:        checkStatus,
 					ResultComment: resComment,
 					Field:         mainFieldSpecs[index],
 					CheckNum:      checkNum,

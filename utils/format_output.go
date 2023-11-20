@@ -9,16 +9,20 @@ import (
 const linesPaddingForErrors = 2
 
 func FormatResult(res analyzer.CheckResult, fileLinesMap map[string]map[int]string) string {
-	var passed, comment, check, fieldType, optional string
+	var status, comment, check, fieldType, optional string
 
 	// Format of the result
 	format := "%s:\n\tField: %s %s %s \n\tCheck: %s %s \n"
 
 	// format values
-	if res.Passed {
-		passed = ColorText("PASSED", Green)
+	if res.Status == analyzer.CheckPassed {
+		status = ColorText("PASSED", Green)
+	} else if res.Status == analyzer.CheckSkipped {
+		status = ColorText("SKIPPED", Yellow)
+		comment = ColorText(res.ResultComment, Yellow)
+		comment = fmt.Sprintf("- %s", comment)
 	} else {
-		passed = ColorText("FAILED", Red)
+		status = ColorText("FAILED", Red)
 		comment = ColorText(res.ResultComment, Red)
 		comment = fmt.Sprintf("- %s", comment)
 	}
@@ -33,7 +37,7 @@ func FormatResult(res analyzer.CheckResult, fileLinesMap map[string]map[int]stri
 	}
 
 	// Format the values
-	formatted := fmt.Sprintf(format, passed, res.Field.Field, fieldType, optional, check, comment)
+	formatted := fmt.Sprintf(format, status, res.Field.Field, fieldType, optional, check, comment)
 
 	if res.Field.Default != "" {
 		formatted = fmt.Sprintf("%s\tDefault: %v\n", formatted, res.Field.Default)
@@ -44,7 +48,7 @@ func FormatResult(res analyzer.CheckResult, fileLinesMap map[string]map[int]stri
 	}
 
 	// If check failed, print the problematic line
-	if !res.Passed {
+	if res.Status == analyzer.CheckFailed {
 		for _, token := range res.TokenList {
 			// Add the file alias to the formatted string
 			formatted = fmt.Sprintf("%s\tFile: %s\n\n", formatted, ColorText(token.File, Red))

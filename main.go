@@ -60,9 +60,14 @@ func main() {
 				UsageText: "configm check <path-to-rulebook>",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{
+						Name:    "skipped",
+						Aliases: []string{"s"},
+						Usage:   "Outputs the result for skipped checks.",
+					},
+					&cli.BoolFlag{
 						Name:    "all",
 						Aliases: []string{"a"},
-						Usage:   "Outputs the result for successful checks also.",
+						Usage:   "Outputs the result for successful and skipped checks also.",
 					},
 				},
 				Action: func(c *cli.Context) error {
@@ -93,24 +98,35 @@ func main() {
 						return fmt.Errorf(specError.AnalyzerMsg, specError.ErrorMsg)
 					}
 
-					successfulChecks := make([]analyzer.CheckResult, 0)
+					passedChecks := make([]analyzer.CheckResult, 0)
+					skippedChecks := make([]analyzer.CheckResult, 0)
 					// Print results for failed checks
 					for _, result := range res {
-						if !result.Passed {
+						if result.Status == analyzer.CheckFailed {
 							formattedResult := utils.FormatResult(result, filesLines)
 							fmt.Print(formattedResult)
-						} else {
-							successfulChecks = append(successfulChecks, result)
+						} else if result.Status == analyzer.CheckSkipped {
+							skippedChecks = append(skippedChecks, result)
+						} else if result.Status == analyzer.CheckPassed {
+							passedChecks = append(passedChecks, result)
 						}
 					}
 
-					if len(successfulChecks) == len(res) {
+					if len(passedChecks)+len(skippedChecks) == len(res) {
 						fmt.Println("All checks passed!")
 					}
 
 					// Print results for successful checks if --all flag is set
 					if c.Bool("all") {
-						for _, result := range successfulChecks {
+						for _, result := range passedChecks {
+							formattedResult := utils.FormatResult(result, filesLines)
+							fmt.Print(formattedResult)
+						}
+					}
+
+					// Print results for skipped checks if --all or --skipped flag is set
+					if c.Bool("all") || c.Bool("skipped") {
+						for _, result := range skippedChecks {
 							formattedResult := utils.FormatResult(result, filesLines)
 							fmt.Print(formattedResult)
 						}
