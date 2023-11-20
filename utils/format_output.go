@@ -2,11 +2,13 @@ package utils
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ConfigMate/configmate/analyzer"
 )
 
 const linesPaddingForErrors = 2
+const rightPaddingForMultilineErrorArrows = 2
 
 func FormatCheckResult(res analyzer.CheckResult, fileLinesMap map[string]map[int]string) string {
 	var status, comment, check, fieldType, optional string
@@ -118,9 +120,16 @@ func createTokenErrorView(token analyzer.TokenLocationWithFile, fileLinesMap map
 
 		// Format the line
 		output = fmt.Sprintf("\t  Line %d: %s%s%s\n", startLineNum, preTokenContent, tokenContent, postTokenContent)
+
+		// Create string of empty spaces the size of that startLineNum would take
+		lineNumberSpace := ""
+		for i := 0; i < len(fmt.Sprintf("%d", startLineNum)); i++ {
+			lineNumberSpace = fmt.Sprintf("%s ", lineNumberSpace)
+		}
+
 		// Add arrows below the token
-		output = fmt.Sprintf("%s\t          ", output)
-		for i := 0; i <= startColNum; i++ {
+		output = fmt.Sprintf("%s\t         %s", output, lineNumberSpace)
+		for i := 0; i < startColNum; i++ {
 			output = fmt.Sprintf("%s ", output)
 		}
 		for i := 0; i < tokenLength; i++ {
@@ -128,6 +137,15 @@ func createTokenErrorView(token analyzer.TokenLocationWithFile, fileLinesMap map
 		}
 		output = fmt.Sprintf("%s\n", output)
 	} else { // Case where the token is in multiple lines
+		// Find the max length of the lines
+		maxLength := 0
+		for i := startLineNum; i <= endLineNum; i++ {
+			length := len(strings.TrimRight(fileLinesMap[token.File][i], " "))
+			if length > maxLength {
+				maxLength = length
+			}
+		}
+
 		// Get the start line
 		startLine := fileLinesMap[token.File][startLineNum]
 
@@ -137,16 +155,34 @@ func createTokenErrorView(token analyzer.TokenLocationWithFile, fileLinesMap map
 		// Get the rest of the line and color it red
 		startLineTokenContent := ColorText(startLine[startColNum:], Red)
 
+		// Find offset for the start line
+		offset := maxLength - len(strings.TrimRight(startLine, " "))
+
+		// Create arrowOffset of that offset plus the padding
+		arrowOffset := ""
+		for i := 0; i < offset+rightPaddingForMultilineErrorArrows; i++ {
+			arrowOffset = fmt.Sprintf("%s ", arrowOffset)
+		}
+
 		// Format the start line
-		output = fmt.Sprintf("\t  Line %d: %s%s\n", startLineNum, preTokenContent, startLineTokenContent)
+		output = fmt.Sprintf("\t  Line %d: %s%s%s%s\n", startLineNum, preTokenContent, startLineTokenContent, arrowOffset, ColorText("<", Red))
 
 		// Get the middle lines
 		for i := startLineNum + 1; i < endLineNum; i++ {
 			// Get the line
 			line := fileLinesMap[token.File][i]
 
+			// Find offset for this line
+			offset = maxLength - len(strings.TrimRight(line, " "))
+
+			// Create arrowOffset of that offset plus the padding
+			arrowOffset = ""
+			for i := 0; i < offset+rightPaddingForMultilineErrorArrows; i++ {
+				arrowOffset = fmt.Sprintf("%s ", arrowOffset)
+			}
+
 			// Format the line
-			output = fmt.Sprintf("%s\t  Line %d: %s\n", output, i, ColorText(line, Red))
+			output = fmt.Sprintf("%s\t  Line %d: %s%s%s\n", output, i, ColorText(line, Red), arrowOffset, ColorText("<", Red))
 		}
 
 		// Get the end line
@@ -158,8 +194,17 @@ func createTokenErrorView(token analyzer.TokenLocationWithFile, fileLinesMap map
 		// Get the rest of the line
 		postTokenContent := endLine[endColNum:]
 
+		// Find offset for the end line
+		offset = maxLength - len(strings.TrimRight(endLine, " "))
+
+		// Create arrowOffset of that offset plus the padding
+		arrowOffset = ""
+		for i := 0; i < offset+rightPaddingForMultilineErrorArrows; i++ {
+			arrowOffset = fmt.Sprintf("%s ", arrowOffset)
+		}
+
 		// Format the end line
-		output = fmt.Sprintf("%s\t  Line %d: %s%s\n", output, endLineNum, endLineTokenContent, postTokenContent)
+		output = fmt.Sprintf("%s\t  Line %d: %s%s%s%s\n", output, endLineNum, endLineTokenContent, postTokenContent, arrowOffset, ColorText("<", Red))
 	}
 
 	// Add padding top

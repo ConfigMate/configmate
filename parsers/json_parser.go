@@ -105,7 +105,7 @@ func (l *JsonParser) EnterObj(ctx *parser_json.ObjContext) {
 
 	// Add start location information of the object
 	l.getTOS().ValueLocation.Start.Line = ctx.GetStart().GetLine()
-	l.getTOS().ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+	l.getTOS().ValueLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the object
 	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
@@ -131,7 +131,7 @@ func (l *JsonParser) EnterPair(ctx *parser_json.PairContext) {
 
 	// Add start location information of the pair key
 	node.NameLocation.Start.Line = ctx.GetStart().GetLine()
-	node.NameLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+	node.NameLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the pair key
 	node.NameLocation.End.Line = ctx.GetStart().GetLine()
@@ -185,7 +185,7 @@ func (l *JsonParser) EnterArr(ctx *parser_json.ArrContext) {
 
 	// Add start location information of the array
 	l.getTOS().ValueLocation.Start.Line = ctx.GetStart().GetLine()
-	l.getTOS().ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+	l.getTOS().ValueLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the array
 	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
@@ -258,7 +258,7 @@ func (l *JsonParser) EnterNumber(ctx *parser_json.NumberContext) {
 
 	// Add start location information of the string value
 	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
-	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the string value
 	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
@@ -312,7 +312,7 @@ func (l *JsonParser) EnterString(ctx *parser_json.StringContext) {
 
 	// Add start location information of the string value
 	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
-	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the string value
 	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
@@ -364,7 +364,7 @@ func (l *JsonParser) EnterBooleanTrue(ctx *parser_json.BooleanTrueContext) {
 
 	// Add start location information of the string value
 	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
-	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the string value
 	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
@@ -416,7 +416,7 @@ func (l *JsonParser) EnterBooleanFalse(ctx *parser_json.BooleanFalseContext) {
 
 	// Add start location information of the string value
 	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
-	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the string value
 	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
@@ -468,7 +468,7 @@ func (l *JsonParser) EnterNull(ctx *parser_json.NullContext) {
 
 	// Add start location information of the string value
 	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
-	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn() + 1 // ANTLR count columns from 0 instead of 1
+	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the string value
 	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
