@@ -74,13 +74,27 @@ func NewAnalyzer(
 
 func (a *analyzerImpl) AnalyzeSpecification(specFilePath string) (*spec.Specification, []CheckResult, *SpecError) {
 	// Parse specification
-	mainSpec, err := a.parserSpecFile(specFilePath)
+	mainSpec, parserErrors, err := a.parserSpecFile(specFilePath)
 	if err != nil {
 		return nil, nil, &SpecError{
-			AnalyzerMsg: "Failed to parse specification file",
+			AnalyzerMsg: "Failed to obtain specification file",
 			ErrorMsg:    err.Error(),
 			TokenList:   []TokenLocationWithFile{{File: specFilePath}},
 		}
+	} else if len(parserErrors) > 0 {
+		specError := &SpecError{
+			AnalyzerMsg: "Failed to parse specification file",
+			ErrorMsg:    "",
+			TokenList:   []TokenLocationWithFile{},
+		}
+		for _, parserError := range parserErrors {
+			specError.ErrorMsg += parserError.ErrorMessage + "\n"
+			specError.TokenList = append(specError.TokenList, TokenLocationWithFile{
+				File:     specFilePath,
+				Location: parserError.Location,
+			})
+		}
+		return nil, nil, specError
 	}
 
 	// Create fields map
@@ -148,10 +162,10 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string) (*spec.Specific
 		}
 
 		// Parse imported spec file
-		importedSpec, err := a.parserSpecFile(importedSpecFilePath)
+		importedSpec, parserErrors, err := a.parserSpecFile(importedSpecFilePath)
 		if err != nil {
 			specError := &SpecError{
-				AnalyzerMsg: fmt.Sprintf("Failed to parse imported spec file %s", importedSpecFilePath),
+				AnalyzerMsg: fmt.Sprintf("Failed to obtain imported spec file %s", importedSpecFilePath),
 				ErrorMsg:    err.Error(),
 				TokenList: []TokenLocationWithFile{
 					{
@@ -159,6 +173,25 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string) (*spec.Specific
 						Location: mainSpec.ImportsLocation[alias],
 					},
 				},
+			}
+			return mainSpec, nil, specError
+		} else if len(parserErrors) > 0 {
+			specError := &SpecError{
+				AnalyzerMsg: fmt.Sprintf("Failed to parse imported spec file %s", importedSpecFilePath),
+				ErrorMsg:    "",
+				TokenList: []TokenLocationWithFile{
+					{
+						File:     specFilePath,
+						Location: mainSpec.ImportsLocation[alias],
+					},
+				},
+			}
+			for _, parserError := range parserErrors {
+				specError.ErrorMsg += parserError.ErrorMessage + "\n"
+				specError.TokenList = append(specError.TokenList, TokenLocationWithFile{
+					File:     importedSpecFilePath,
+					Location: parserError.Location,
+				})
 			}
 			return mainSpec, nil, specError
 		}
@@ -236,8 +269,8 @@ func (a *analyzerImpl) AllFilesContent(specFilePath string) map[string][]byte {
 	files[specFilePath] = specBytes
 
 	// Parse specification
-	spec, err := a.specParser.Parse(string(specBytes))
-	if err != nil {
+	spec, parserErrors := a.specParser.Parse(string(specBytes))
+	if len(parserErrors) > 0 {
 		return files
 	}
 
@@ -262,8 +295,8 @@ func (a *analyzerImpl) AllFilesContent(specFilePath string) map[string][]byte {
 		files[importedSpecFilePath] = importedSpecBytes
 
 		// Parse imported spec file
-		importedSpec, err := a.specParser.Parse(string(importedSpecBytes))
-		if err != nil {
+		importedSpec, parserErrors := a.specParser.Parse(string(importedSpecBytes))
+		if len(parserErrors) > 0 {
 			continue
 		}
 
@@ -436,20 +469,20 @@ func (a *analyzerImpl) runChecks(
 	return res, nil
 }
 
-func (a *analyzerImpl) parserSpecFile(specFilePath string) (*spec.Specification, error) {
+func (a *analyzerImpl) parserSpecFile(specFilePath string) (*spec.Specification, []spec.SpecParserError, error) {
 	// Get specification file
 	specBytes, err := a.fileFetcher.FetchFile(specFilePath)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch specification file")
+		return nil, nil, errors.Wrap(err, "failed to fetch specification file")
 	}
 
 	// Parse specification
-	spec, err := a.specParser.Parse(string(specBytes))
+	spec, errs := a.specParser.Parse(string(specBytes))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse specification file")
+		return nil, errs, errors.Wrap(err, "failed to parse specification file")
 	}
 
-	return spec, nil
+	return spec, nil, nil
 }
 
 func (a *analyzerImpl) parseConfigFileFromSpec(spec *spec.Specification) (*parsers.Node, error) {

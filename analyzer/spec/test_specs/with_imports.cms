@@ -1,0 +1,8 @@
+file: "./some/file.json" json
+
+import(
+    someSpec: "./specs/someSpec.cms",
+    someOtherSpec: "./specs/someOtherSpec.cms"
+)
+
+spec {}

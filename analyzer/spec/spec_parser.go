@@ -10,11 +10,15 @@ import (
 	parser_cmsl "github.com/ConfigMate/configmate/parsers/gen/parser_cmsl/parsers/grammars"
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/golang-collections/collections/stack"
-	"go.uber.org/multierr"
 )
 
 type SpecParser interface {
-	Parse(spec string) (*Specification, error)
+	Parse(spec string) (*Specification, []SpecParserError)
+}
+
+type SpecParserError struct {
+	ErrorMessage string
+	Location     parsers.TokenLocation
 }
 
 func NewSpecParser() SpecParser {
@@ -23,12 +27,24 @@ func NewSpecParser() SpecParser {
 
 type cmslErrorListener struct {
 	*antlr.DefaultErrorListener
-	errors []error
+	errors []SpecParserError
 }
 
 func (d *cmslErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol interface{},
 	line, column int, msg string, e antlr.RecognitionException) {
-	d.errors = append(d.errors, fmt.Errorf("line %d:%d %s", line, column, msg))
+	d.errors = append(d.errors, SpecParserError{
+		ErrorMessage: msg,
+		Location: parsers.TokenLocation{
+			Start: parsers.CharLocation{
+				Line:   line,
+				Column: column,
+			},
+			End: parsers.CharLocation{
+				Line:   line,
+				Column: column + 1,
+			},
+		},
+	})
 }
 
 type specParserImpl struct {
@@ -36,23 +52,20 @@ type specParserImpl struct {
 
 	spec           Specification
 	itemFieldStack stack.Stack
-	errs           error // Errors encountered while parsing
+	errs           []SpecParserError
 }
 
-func (p *specParserImpl) Parse(spec string) (*Specification, error) {
-	// Parse check
+func (p *specParserImpl) Parse(spec string) (*Specification, []SpecParserError) {
+	// Create error listener
+	errorListener := &cmslErrorListener{}
+
+	// Create lexer
 	input := antlr.NewInputStream(spec)
 	lexer := parser_cmsl.NewCMSLLexer(input)
 
 	// Add error listener
-	errorListener := &cmslErrorListener{}
 	lexer.RemoveErrorListeners()
 	lexer.AddErrorListener(errorListener)
-
-	// Check for errors
-	if len(errorListener.errors) > 0 {
-		return nil, fmt.Errorf("syntax errors: %v", multierr.Combine(errorListener.errors...))
-	}
 
 	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	parser := parser_cmsl.NewCMSLParser(stream)
@@ -65,14 +78,15 @@ func (p *specParserImpl) Parse(spec string) (*Specification, error) {
 
 	// Check for errors
 	if len(errorListener.errors) > 0 {
-		return nil, fmt.Errorf("syntax errors: %v", multierr.Combine(errorListener.errors...))
+		return nil, errorListener.errors
 	}
 
 	// Zero out the spec and errs
 	p.spec = Specification{
-		Imports:         make(map[string]string),
-		ImportsLocation: make(map[string]parsers.TokenLocation),
-		Fields:          make([]FieldSpec, 0),
+		Imports:              make(map[string]string),
+		ImportsAliasLocation: make(map[string]parsers.TokenLocation),
+		ImportsLocation:      make(map[string]parsers.TokenLocation),
+		Fields:               make([]FieldSpec, 0),
 	}
 	p.errs = nil
 
@@ -82,6 +96,11 @@ func (p *specParserImpl) Parse(spec string) (*Specification, error) {
 	// Walk the tree
 	walker := antlr.NewParseTreeWalker()
 	walker.Walk(p, tree)
+
+	// Check for errors
+	if len(p.errs) > 0 {
+		return nil, p.errs
+	}
 
 	return &p.spec, nil
 }
@@ -182,7 +201,19 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 		case *parser_cmsl.TypeMetadataContext:
 			// Check if type has already been found
 			if foundType {
-				p.errs = multierr.Append(p.errs, fmt.Errorf("duplicate type metadata for field %s", fieldName))
+				p.errs = append(p.errs, SpecParserError{
+					ErrorMessage: fmt.Sprintf("duplicate type metadata for field %s", fieldName),
+					Location: parsers.TokenLocation{
+						Start: parsers.CharLocation{
+							Line:   item.GetStart().GetLine(),
+							Column: item.GetStart().GetColumn(),
+						},
+						End: parsers.CharLocation{
+							Line:   item.GetStop().GetLine(),
+							Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
+						},
+					},
+				})
 				continue
 			}
 			foundType = true
@@ -202,7 +233,19 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 		case *parser_cmsl.OptionalMetadataContext:
 			// Check if optional has already been found
 			if foundOptional {
-				p.errs = multierr.Append(p.errs, fmt.Errorf("duplicate optional metadata for field %s", fieldName))
+				p.errs = append(p.errs, SpecParserError{
+					ErrorMessage: fmt.Sprintf("duplicate optional metadata for field %s", fieldName),
+					Location: parsers.TokenLocation{
+						Start: parsers.CharLocation{
+							Line:   item.GetStart().GetLine(),
+							Column: item.GetStart().GetColumn(),
+						},
+						End: parsers.CharLocation{
+							Line:   item.GetStop().GetLine(),
+							Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
+						},
+					},
+				})
 				continue
 			}
 			foundOptional = true
@@ -227,7 +270,19 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 		case *parser_cmsl.DefaultMetadataContext:
 			// Check if default has already been found
 			if foundDefault {
-				p.errs = multierr.Append(p.errs, fmt.Errorf("duplicate default metadata for field %s", fieldName))
+				p.errs = append(p.errs, SpecParserError{
+					ErrorMessage: fmt.Sprintf("duplicate default metadata for field %s", fieldName),
+					Location: parsers.TokenLocation{
+						Start: parsers.CharLocation{
+							Line:   item.GetStart().GetLine(),
+							Column: item.GetStart().GetColumn(),
+						},
+						End: parsers.CharLocation{
+							Line:   item.GetStop().GetLine(),
+							Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
+						},
+					},
+				})
 				continue
 			}
 			foundDefault = true
@@ -247,9 +302,22 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 		case *parser_cmsl.NotesMetadataContext:
 			// Check if notes has already been found
 			if foundNotes {
-				p.errs = multierr.Append(p.errs, fmt.Errorf("duplicate notes metadata for field %s", fieldName))
+				p.errs = append(p.errs, SpecParserError{
+					ErrorMessage: fmt.Sprintf("duplicate notes metadata for field %s", fieldName),
+					Location: parsers.TokenLocation{
+						Start: parsers.CharLocation{
+							Line:   item.GetStart().GetLine(),
+							Column: item.GetStart().GetColumn(),
+						},
+						End: parsers.CharLocation{
+							Line:   item.GetStop().GetLine(),
+							Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
+						},
+					},
+				})
 				continue
 			}
+			foundNotes = true
 
 			// Add notes to field
 			fieldSpecification.Notes = removeStrQuotesAndCleanSpaces(item.StringExpr().GetText())
@@ -270,7 +338,19 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 	}
 
 	if !foundType {
-		p.errs = multierr.Append(p.errs, fmt.Errorf("missing type metadata for field %s", fieldName))
+		p.errs = append(p.errs, SpecParserError{
+			ErrorMessage: fmt.Sprintf("missing type metadata for field %s", fieldName),
+			Location: parsers.TokenLocation{
+				Start: parsers.CharLocation{
+					Line:   ctx.GetStart().GetLine(),
+					Column: ctx.GetStart().GetColumn(),
+				},
+				End: parsers.CharLocation{
+					Line:   ctx.GetStop().GetLine(),
+					Column: ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText()),
+				},
+			},
+		})
 	}
 
 	// For each check statement

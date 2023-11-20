@@ -26,8 +26,9 @@ func TestParseSimple(t *testing.T) {
 			Start: parsers.CharLocation{Line: 1, Column: 47},
 			End:   parsers.CharLocation{Line: 1, Column: 51},
 		},
-		Imports:         map[string]string{},
-		ImportsLocation: map[string]parsers.TokenLocation{},
+		Imports:              map[string]string{},
+		ImportsAliasLocation: map[string]parsers.TokenLocation{},
+		ImportsLocation:      map[string]parsers.TokenLocation{},
 		Fields: []FieldSpec{
 			{
 				Field: "server",
@@ -184,11 +185,200 @@ func TestParseSimple(t *testing.T) {
 	}
 
 	parser := NewSpecParser()
-	result, err := parser.Parse(string(simpleCMS))
-	if err != nil {
-		t.Errorf("Unexpected error: %s", err)
+	result, errs := parser.Parse(string(simpleCMS))
+	if len(errs) > 0 {
+		t.Errorf("Unexpected errors: %#v", errs)
 	}
 	if !reflect.DeepEqual(result, expectedSpec) {
 		t.Errorf("Expected: %#v\nGot: %#v", expectedSpec, result)
+	}
+}
+
+// TestParseWithImports tests the parser's ability to parse imort statements
+func TestParseWithImports(t *testing.T) {
+	withImportsCMS, err := os.ReadFile("./test_specs/with_imports.cms")
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+
+	expectedSpec := &Specification{
+		File: "./some/file.json",
+		FileLocation: parsers.TokenLocation{
+			Start: parsers.CharLocation{Line: 1, Column: 6},
+			End:   parsers.CharLocation{Line: 1, Column: 24},
+		},
+		FileFormat: "json",
+		FileFormatLocation: parsers.TokenLocation{
+			Start: parsers.CharLocation{Line: 1, Column: 25},
+			End:   parsers.CharLocation{Line: 1, Column: 29},
+		},
+		Imports: map[string]string{
+			"someSpec":      "./specs/someSpec.cms",
+			"someOtherSpec": "./specs/someOtherSpec.cms",
+		},
+		ImportsAliasLocation: map[string]parsers.TokenLocation{
+			"someSpec": {
+				Start: parsers.CharLocation{Line: 4, Column: 4},
+				End:   parsers.CharLocation{Line: 4, Column: 12},
+			},
+			"someOtherSpec": {
+				Start: parsers.CharLocation{Line: 5, Column: 4},
+				End:   parsers.CharLocation{Line: 5, Column: 17},
+			},
+		},
+		ImportsLocation: map[string]parsers.TokenLocation{
+			"someSpec": {
+				Start: parsers.CharLocation{Line: 4, Column: 14},
+				End:   parsers.CharLocation{Line: 4, Column: 36},
+			},
+			"someOtherSpec": {
+				Start: parsers.CharLocation{Line: 5, Column: 19},
+				End:   parsers.CharLocation{Line: 5, Column: 46},
+			},
+		},
+		Fields: []FieldSpec{},
+	}
+
+	parser := NewSpecParser()
+	result, errs := parser.Parse(string(withImportsCMS))
+	if len(errs) > 0 {
+		t.Errorf("Unexpected errors: %#v", errs)
+	}
+	if !reflect.DeepEqual(result, expectedSpec) {
+		t.Errorf("Expected: %#v\nGot: %#v", expectedSpec, result)
+	}
+}
+
+// TestParserHighLevelErrors tests the parser's ability to report high level errors
+func TestParserHighLevelErrors(t *testing.T) {
+	cmsWithHighLevelErrors, err := os.ReadFile("./test_specs/with_highlevel_errors.cms")
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+
+	expectedErrors := []SpecParserError{
+		{
+			ErrorMessage: "duplicate default metadata for field server.host",
+			Location: parsers.TokenLocation{
+				Start: parsers.CharLocation{Line: 8, Column: 12},
+				End:   parsers.CharLocation{Line: 8, Column: 32},
+			},
+		},
+		{
+			ErrorMessage: "duplicate notes metadata for field server.port",
+			Location: parsers.TokenLocation{
+				Start: parsers.CharLocation{Line: 18, Column: 12},
+				End:   parsers.CharLocation{Line: 18, Column: 69},
+			},
+		},
+		{
+			ErrorMessage: "missing type metadata for field server.port",
+			Location: parsers.TokenLocation{
+				Start: parsers.CharLocation{Line: 12, Column: 8},
+				End:   parsers.CharLocation{Line: 19, Column: 29},
+			},
+		},
+		{
+			ErrorMessage: "duplicate type metadata for field server.ssl_enabled",
+			Location: parsers.TokenLocation{
+				Start: parsers.CharLocation{Line: 23, Column: 12},
+				End:   parsers.CharLocation{Line: 23, Column: 22},
+			},
+		},
+		{
+			ErrorMessage: "duplicate optional metadata for field server.dns_servers",
+			Location: parsers.TokenLocation{
+				Start: parsers.CharLocation{Line: 31, Column: 12},
+				End:   parsers.CharLocation{Line: 31, Column: 26},
+			},
+		},
+	}
+
+	parser := NewSpecParser()
+	_, errs := parser.Parse(string(cmsWithHighLevelErrors))
+	if len(errs) == 0 {
+		t.Errorf("Expecting errors, no errors where returned instead")
+	} else if !reflect.DeepEqual(errs, expectedErrors) {
+		t.Errorf("Expected: %#v\nGot: %#v", expectedErrors, errs)
+	}
+}
+
+// TestParserLexerSyntaxErrors tests the parser's ability to report errors in the lexer stage
+func TestParserLexerSyntaxErrors(t *testing.T) {
+	cmsWithLexerErrors, err := os.ReadFile("./test_specs/with_lexer_errors.cms")
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+
+	expectedErrors := []SpecParserError{
+		{
+			ErrorMessage: "mismatched input '\"./examples/configurations/config0.json' json\\n\\nspec {\\n    server <type: object> {\\n        host <\\n            type: string,\\n            default: \"' expecting SHORT_STRING",
+			Location: parsers.TokenLocation{
+				Start: parsers.CharLocation{Line: 1, Column: 6},
+				End:   parsers.CharLocation{Line: 1, Column: 7},
+			},
+		},
+		{
+			ErrorMessage: "token recognition error at: '\"\n        > ( len().gte(3-5); )\n    }\n}\n'",
+			Location: parsers.TokenLocation{
+				Start: parsers.CharLocation{Line: 29, Column: 50},
+				End:   parsers.CharLocation{Line: 29, Column: 51},
+			},
+		},
+	}
+
+	parser := NewSpecParser()
+	_, errs := parser.Parse(string(cmsWithLexerErrors))
+	if len(errs) == 0 {
+		t.Errorf("Expecting errors, no errors where returned instead")
+	} else if !reflect.DeepEqual(errs, expectedErrors) {
+		t.Errorf("Expected: %#v\nGot: %#v", expectedErrors, errs)
+	}
+}
+
+// TestParserSyntaxErrors tests the parser's ability to report syntax errors
+func TestParserSyntaxErrors(t *testing.T) {
+	cmsWithParserErrors, err := os.ReadFile("./test_specs/with_parser_errors.cms")
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+
+	expectedErrors := []SpecParserError{
+		{
+			ErrorMessage: "extraneous input ':' expecting IDENTIFIER",
+			Location: parsers.TokenLocation{
+				Start: parsers.CharLocation{Line: 1, Column: 47},
+				End:   parsers.CharLocation{Line: 1, Column: 48},
+			},
+		},
+		{
+			ErrorMessage: "missing ';' at ')'",
+			Location: parsers.TokenLocation{
+				Start: parsers.CharLocation{Line: 18, Column: 27},
+				End:   parsers.CharLocation{Line: 18, Column: 28},
+			},
+		},
+		{
+			ErrorMessage: "missing '>' at ','",
+			Location: parsers.TokenLocation{
+				Start: parsers.CharLocation{Line: 27, Column: 29},
+				End:   parsers.CharLocation{Line: 27, Column: 30},
+			},
+		},
+		{
+			ErrorMessage: "mismatched input '\"true\"' expecting BOOL",
+			Location: parsers.TokenLocation{
+				Start: parsers.CharLocation{Line: 28, Column: 22},
+				End:   parsers.CharLocation{Line: 28, Column: 23},
+			},
+		},
+	}
+
+	parser := NewSpecParser()
+	_, errs := parser.Parse(string(cmsWithParserErrors))
+	if len(errs) == 0 {
+		t.Errorf("Expecting errors, no errors where returned instead")
+	} else if !reflect.DeepEqual(errs, expectedErrors) {
+		t.Errorf("Expected: %#v\nGot: %#v", expectedErrors, errs)
 	}
 }
