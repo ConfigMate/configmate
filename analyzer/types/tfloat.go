@@ -13,7 +13,7 @@ func floatFactory(value interface{}) (IType, error) {
 		return &tFloat{value: value}, nil
 	}
 
-	return nil, fmt.Errorf("value %v is not a float", value)
+	return nil, fmt.Errorf("value is not a float")
 }
 
 func (t tFloat) TypeName() string {

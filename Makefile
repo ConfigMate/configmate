@@ -65,4 +65,4 @@ mocks:
 	./scripts/generate_mocks.sh
 
 clean_mocks:
-	find ./ -type d -name 'mocks' -exec rm -rf {} +
+	find ./ -type f -name '*_mocks.go' -exec rm {} +

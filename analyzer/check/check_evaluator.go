@@ -1,4 +1,4 @@
-package analyzer
+package check
 
 import (
 	"fmt"
@@ -10,6 +10,10 @@ import (
 	"github.com/ConfigMate/configmate/analyzer/types"
 	"github.com/golang-collections/collections/stack"
 )
+
+type CheckEvaluator interface {
+	Evaluate(check string, primaryField string, fields map[string]types.IType, optMissingFields map[string]bool) (types.IType, bool, error)
+}
 
 type cmclNodeType int
 
@@ -41,7 +45,7 @@ type cmclNode struct {
 	elseStatement    *cmclNode
 }
 
-type CheckEvaluator struct {
+type checkEvaluatorImpl struct {
 	primaryField     string
 	fields           map[string]types.IType
 	optMissingFields map[string]bool
@@ -52,18 +56,17 @@ type CheckEvaluator struct {
 	evalFieldStack stack.Stack
 }
 
-func newCheckEvaluator(primaryField string, fields map[string]types.IType, optMissingFields map[string]bool) *CheckEvaluator {
-	// Create evaluator
-	evaluator := &CheckEvaluator{
-		primaryField:     primaryField,
-		fields:           fields,
-		optMissingFields: optMissingFields,
-	}
-
-	return evaluator
+func NewCheckEvaluator() CheckEvaluator {
+	return &checkEvaluatorImpl{}
 }
 
-func (ce *CheckEvaluator) evaluate(check string) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) Evaluate(check string, primaryField string, fields map[string]types.IType, optMissingFields map[string]bool) (types.IType, bool, error) {
+	// Set fields
+	ce.primaryField = primaryField
+	ce.fields = fields
+	ce.optMissingFields = optMissingFields
+	ce.evalFieldStack = stack.Stack{}
+
 	// Parse check
 	parser := &CheckParser{}
 	node, err := parser.parse(check)
@@ -75,8 +78,8 @@ func (ce *CheckEvaluator) evaluate(check string) (types.IType, bool, error) {
 	if pField, ok := ce.fields[ce.primaryField]; ok {
 		ce.fields["this"] = pField
 		ce.evalFieldStack.Push(pField)
-	} else if ce.optMissingFields[ce.primaryField] {
-		// Skipping check because optional field is missing
+	} else if _, ok := ce.optMissingFields[ce.primaryField]; ok {
+		// Skipping check because primary field is optional and missing
 		// Make bool false to return
 		t, _ := types.MakeType("bool", false)
 		return t, true, fmt.Errorf("skipping check because primary field %s is optional and missing", ce.primaryField)
@@ -100,7 +103,7 @@ func (ce *CheckEvaluator) evaluate(check string) (types.IType, bool, error) {
 	return res, skipping, err
 }
 
-func (ce *CheckEvaluator) visit(node *cmclNode) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) visit(node *cmclNode) (types.IType, bool, error) {
 	switch node.nodeType {
 	case cmclIfCheck:
 		return ce.visitIfCheck(node)
@@ -133,7 +136,7 @@ func (ce *CheckEvaluator) visit(node *cmclNode) (types.IType, bool, error) {
 	}
 }
 
-func (ce *CheckEvaluator) visitIfCheck(node *cmclNode) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) visitIfCheck(node *cmclNode) (types.IType, bool, error) {
 	// Evaluate if statement
 	condition, skipping, err := ce.visit(node.children[0])
 	if condition == nil {
@@ -184,7 +187,7 @@ func (ce *CheckEvaluator) visitIfCheck(node *cmclNode) (types.IType, bool, error
 	return t, false, nil
 }
 
-func (ce *CheckEvaluator) visitForeachCheck(node *cmclNode) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) visitForeachCheck(node *cmclNode) (types.IType, bool, error) {
 	// Get alias for list items during evaluation
 	alias := node.children[0].value
 
@@ -244,7 +247,7 @@ func (ce *CheckEvaluator) visitForeachCheck(node *cmclNode) (types.IType, bool, 
 	return t, false, nil
 }
 
-func (ce *CheckEvaluator) visitFieldExpr(node *cmclNode) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) visitFieldExpr(node *cmclNode) (types.IType, bool, error) {
 	// Get field name
 	fieldName := node.value
 	// Check if the field exists
@@ -287,13 +290,13 @@ func (ce *CheckEvaluator) visitFieldExpr(node *cmclNode) (types.IType, bool, err
 	return nil, false, fmt.Errorf("field %s does not exist", fieldName)
 }
 
-func (ce *CheckEvaluator) visitFuncExpr(node *cmclNode) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) visitFuncExpr(node *cmclNode) (types.IType, bool, error) {
 	// Place this as the node the function applies to
 	node.value = "this"
 	return ce.visitFieldExpr(node)
 }
 
-func (ce *CheckEvaluator) visitOrExpr(node *cmclNode) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) visitOrExpr(node *cmclNode) (types.IType, bool, error) {
 	// Evaluate left expression
 	left, skipping, err := ce.visit(node.children[0])
 	if left == nil {
@@ -349,7 +352,7 @@ func (ce *CheckEvaluator) visitOrExpr(node *cmclNode) (types.IType, bool, error)
 	return right, false, multierr.Combine(errs...)
 }
 
-func (ce *CheckEvaluator) visitAndExpr(node *cmclNode) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) visitAndExpr(node *cmclNode) (types.IType, bool, error) {
 	// Evaluate left expression
 	left, skipping, err := ce.visit(node.children[0])
 	if left == nil {
@@ -398,7 +401,7 @@ func (ce *CheckEvaluator) visitAndExpr(node *cmclNode) (types.IType, bool, error
 	return right, false, nil
 }
 
-func (ce *CheckEvaluator) visitNotExpr(node *cmclNode) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) visitNotExpr(node *cmclNode) (types.IType, bool, error) {
 	// Evaluate expression
 	expr, skipping, err := ce.visit(node.children[0])
 	if expr == nil {
@@ -425,7 +428,7 @@ func (ce *CheckEvaluator) visitNotExpr(node *cmclNode) (types.IType, bool, error
 	return t, false, nil
 }
 
-func (ce *CheckEvaluator) visitParenExpr(node *cmclNode) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) visitParenExpr(node *cmclNode) (types.IType, bool, error) {
 	// Evaluate expression
 	expr, skipping, err := ce.visit(node.children[0])
 	if expr == nil {
@@ -437,7 +440,7 @@ func (ce *CheckEvaluator) visitParenExpr(node *cmclNode) (types.IType, bool, err
 	return expr, false, err
 }
 
-func (ce *CheckEvaluator) visitFunction(node *cmclNode) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) visitFunction(node *cmclNode) (types.IType, bool, error) {
 	// Get function name
 	functionName := node.value
 
@@ -467,7 +470,7 @@ func (ce *CheckEvaluator) visitFunction(node *cmclNode) (types.IType, bool, erro
 	return result, false, err
 }
 
-func (ce *CheckEvaluator) visitString(node *cmclNode) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) visitString(node *cmclNode) (types.IType, bool, error) {
 	// Remove quotes
 	value := node.value[1 : len(node.value)-1]
 
@@ -476,7 +479,7 @@ func (ce *CheckEvaluator) visitString(node *cmclNode) (types.IType, bool, error)
 	return t, false, err
 }
 
-func (ce *CheckEvaluator) visitInt(node *cmclNode) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) visitInt(node *cmclNode) (types.IType, bool, error) {
 	// Parse int
 	intValue, err := strconv.Atoi(node.value)
 	if err != nil {
@@ -488,7 +491,7 @@ func (ce *CheckEvaluator) visitInt(node *cmclNode) (types.IType, bool, error) {
 	return t, false, err
 }
 
-func (ce *CheckEvaluator) visitFloat(node *cmclNode) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) visitFloat(node *cmclNode) (types.IType, bool, error) {
 	// Parse float
 	floatValue, err := strconv.ParseFloat(node.value, 64)
 	if err != nil {
@@ -500,7 +503,7 @@ func (ce *CheckEvaluator) visitFloat(node *cmclNode) (types.IType, bool, error) 
 	return t, false, err
 }
 
-func (ce *CheckEvaluator) visitBool(node *cmclNode) (types.IType, bool, error) {
+func (ce *checkEvaluatorImpl) visitBool(node *cmclNode) (types.IType, bool, error) {
 	// Parse bool
 	boolValue, err := strconv.ParseBool(node.value)
 	if err != nil {

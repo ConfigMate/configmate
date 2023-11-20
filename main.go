@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/BurntSushi/toml"
 	"github.com/ConfigMate/configmate/analyzer"
+	"github.com/ConfigMate/configmate/analyzer/check"
+	"github.com/ConfigMate/configmate/analyzer/spec"
+	"github.com/ConfigMate/configmate/files"
 	"github.com/ConfigMate/configmate/parsers"
 	"github.com/ConfigMate/configmate/server"
 	"github.com/ConfigMate/configmate/utils"
@@ -58,9 +60,14 @@ func main() {
 				UsageText: "configm check <path-to-rulebook>",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{
+						Name:    "skipped",
+						Aliases: []string{"s"},
+						Usage:   "Outputs the result for skipped checks.",
+					},
+					&cli.BoolFlag{
 						Name:    "all",
 						Aliases: []string{"a"},
-						Usage:   "Outputs the result for successful checks also.",
+						Usage:   "Outputs the result for successful and skipped checks also.",
 					},
 				},
 				Action: func(c *cli.Context) error {
@@ -70,87 +77,59 @@ func main() {
 					}
 
 					// Get the rulebook path from the arguments
-					rulebookPath := c.Args().Get(0)
-
-					// Read the rulebook file
-					ruleBookData, err := os.ReadFile(rulebookPath)
-					if err != nil {
-						return err
-					}
-
-					// Decode the TOML data into the Rulebook struct
-					var rulebook analyzer.Rulebook
-					if _, err := toml.Decode(string(ruleBookData), &rulebook); err != nil {
-						return fmt.Errorf("error decoding file into a rulebook object: %v", err)
-					}
-
-					// Parse rulebooks
-					files := make(map[string]*parsers.Node)
-					for alias, file := range rulebook.Files {
-						// Read the file
-						data, err := os.ReadFile(file.Path)
-						if err != nil {
-							return err
-						}
-
-						// Parse the file
-						parsedFile, err := parsers.Parse(data, file.Format)
-						if err != nil {
-							return err
-						}
-
-						// Append the parse result to the files map
-						files[alias] = parsedFile
-					}
-
-					// Get rules
-					rules := rulebook.Rules
-
-					// Map the file content to the corresponding line numbers
-					filesLines := make(map[string]map[int]string)
-					for alias, details := range rulebook.Files {
-						// Read file
-						fileData, err := os.ReadFile(details.Path)
-						if err != nil {
-							return err
-						}
-
-						// Create line map
-						lineMap, err := utils.CreateLineMap(fileData)
-						if err != nil {
-							return nil
-						}
-
-						// Append line map to filesLines
-						filesLines[alias] = lineMap
-					}
+					specFilePath := c.Args().Get(0)
 
 					// Get analyzer
-					a := analyzer.NewAnalyzer()
-					res, err := a.AnalyzeConfigFiles(files, rules)
-					if err != nil {
-						return err
+					a := analyzer.NewAnalyzer(
+						spec.NewSpecParser(),
+						check.NewCheckEvaluator(),
+						files.NewFileFetcher(),
+						parsers.NewParserProvider(),
+					)
+
+					// Get all files
+					files := a.AllFilesContent(specFilePath)
+
+					// Map the files contents to the corresponding line numbers
+					filesLines := utils.CreateLinesMapForFiles(files)
+
+					_, res, specError := a.AnalyzeSpecification(specFilePath)
+					if specError != nil {
+						formattedResult := utils.FormatSpecError(*specError, filesLines)
+						fmt.Print(formattedResult)
+						return nil
 					}
 
-					successfulChecks := make([]analyzer.Result, 0)
+					passedChecks := make([]analyzer.CheckResult, 0)
+					skippedChecks := make([]analyzer.CheckResult, 0)
 					// Print results for failed checks
 					for _, result := range res {
-						if !result.Passed {
-							formattedResult := utils.FormatResult(result, rulebook.Files, filesLines)
+						if result.Status == analyzer.CheckFailed {
+							formattedResult := utils.FormatCheckResult(result, filesLines)
 							fmt.Print(formattedResult)
-						} else {
-							successfulChecks = append(successfulChecks, result)
+						} else if result.Status == analyzer.CheckSkipped {
+							skippedChecks = append(skippedChecks, result)
+						} else if result.Status == analyzer.CheckPassed {
+							passedChecks = append(passedChecks, result)
 						}
 					}
 
-					if len(successfulChecks) == len(res) {
+					if len(passedChecks)+len(skippedChecks) == len(res) {
 						fmt.Println("All checks passed!")
 					}
 
 					// Print results for successful checks if --all flag is set
 					if c.Bool("all") {
-						for _, result := range successfulChecks {
-							formattedResult := utils.FormatResult(result, rulebook.Files, filesLines)
+						for _, result := range passedChecks {
+							formattedResult := utils.FormatCheckResult(result, filesLines)
+							fmt.Print(formattedResult)
+						}
+					}
+
+					// Print results for skipped checks if --all or --skipped flag is set
+					if c.Bool("all") || c.Bool("skipped") {
+						for _, result := range skippedChecks {
+							formattedResult := utils.FormatCheckResult(result, filesLines)
 							fmt.Print(formattedResult)
 						}
 					}
@@ -172,7 +151,7 @@ func main() {
 				},
 				Action: func(c *cli.Context) error {
 					// Create server
-					srv := server.CreateServer(c.Int("port"), analyzer.NewAnalyzer())
+					srv := server.CreateServer(c.Int("port"))
 
 					// Start server
 					if err := srv.Serve(); err != nil {

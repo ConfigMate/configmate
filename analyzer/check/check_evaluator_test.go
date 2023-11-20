@@ -1,4 +1,4 @@
-package analyzer
+package check
 
 import (
 	"fmt"
@@ -309,11 +309,11 @@ func TestEvaluateBasicFunctionality(t *testing.T) {
 
 	for _, test := range tests {
 		// Create evaluator
-		evaluator := newCheckEvaluator(test.primaryField, test.fields, test.optMissingFields)
+		evaluator := NewCheckEvaluator()
 
 		// Evaluate checks
 		for _, check := range test.checks {
-			res, skipped, err := evaluator.evaluate(check)
+			res, skipped, err := evaluator.Evaluate(check, test.primaryField, test.fields, test.optMissingFields)
 			errMessage := ""
 			if err != nil {
 				errMessage = err.Error()
@@ -396,11 +396,11 @@ func TestEvaluateOptionalMissingFields(t *testing.T) {
 
 	for _, test := range tests {
 		// Create evaluator
-		evaluator := newCheckEvaluator(test.primaryField, test.fields, test.optMissingFields)
+		evaluator := NewCheckEvaluator()
 
 		// Evaluate checks
 		for _, check := range test.checks {
-			res, skipped, err := evaluator.evaluate(check)
+			res, skipped, err := evaluator.Evaluate(check, test.primaryField, test.fields, test.optMissingFields)
 			errMessage := ""
 			if err != nil {
 				errMessage = err.Error()
@@ -650,11 +650,11 @@ func TestEvaluateLogicalExpressions(t *testing.T) {
 
 	for _, test := range tests {
 		// Create evaluator
-		evaluator := newCheckEvaluator(test.primaryField, test.fields, test.optMissingFields)
+		evaluator := NewCheckEvaluator()
 
 		// Evaluate check
 		for _, check := range test.checks {
-			res, skipped, err := evaluator.evaluate(check)
+			res, skipped, err := evaluator.Evaluate(check, test.primaryField, test.fields, test.optMissingFields)
 			errMessage := ""
 			if err != nil {
 				errMessage = err.Error()
@@ -779,11 +779,11 @@ func TestEvaluateControlExpressions(t *testing.T) {
 
 	for _, test := range tests {
 		// Create evaluator
-		evaluator := newCheckEvaluator(test.primaryField, test.fields, test.optMissingFields)
+		evaluator := NewCheckEvaluator()
 
 		// Evaluate check
 		for _, check := range test.checks {
-			res, skipped, err := evaluator.evaluate(check)
+			res, skipped, err := evaluator.Evaluate(check, test.primaryField, test.fields, test.optMissingFields)
 			errMessage := ""
 			if err != nil {
 				errMessage = err.Error()
@@ -959,11 +959,11 @@ func TestEvaluateErroneousExpressions(t *testing.T) {
 
 	for _, test := range tests {
 		// Create evaluator
-		evaluator := newCheckEvaluator(test.primaryField, test.fields, test.optMissingFields)
+		evaluator := NewCheckEvaluator()
 
 		// Evaluate check
 		for _, check := range test.checks {
-			res, skipped, err := evaluator.evaluate(check)
+			res, skipped, err := evaluator.Evaluate(check, test.primaryField, test.fields, test.optMissingFields)
 			errMessage := ""
 			if err != nil {
 				errMessage = err.Error()
@@ -1028,7 +1028,7 @@ func TestEvaluateSyntaxErrors(t *testing.T) {
 				fields:           map[string]types.IType{},
 				optMissingFields: map[string]bool{},
 				checks:           checks,
-				expectedErr:      fmt.Errorf("syntax errors: line 1:11 extraneous input '.' expecting NAME; line 1:17 no viable alternative at input 'field)'"),
+				expectedErr:      fmt.Errorf("syntax errors: line 1:11 extraneous input '.' expecting IDENTIFIER; line 1:17 no viable alternative at input 'field)'"),
 			}
 		}(),
 		// Test 5: Missing curly brace in IF statement
@@ -1043,7 +1043,7 @@ func TestEvaluateSyntaxErrors(t *testing.T) {
 				expectedErr:      fmt.Errorf("syntax errors: line 1:13 missing '{' at 'eq'; line 1:23 missing '}' at '<EOF>'"),
 			}
 		}(),
-		// Test 6: Using angled brackets in field (this is not allowed in CMCL)
+		// Test 6: Using square brackets in field (this is not allowed in CMCL)
 		func() checkEvaluatorTestStructure {
 			checks := []string{"if(field[0]){ eq(false) }"}
 
@@ -1052,7 +1052,7 @@ func TestEvaluateSyntaxErrors(t *testing.T) {
 				fields:           map[string]types.IType{},
 				optMissingFields: map[string]bool{},
 				checks:           checks,
-				expectedErr:      fmt.Errorf("syntax errors: line 1:8 mismatched input '[' expecting ')'"),
+				expectedErr:      fmt.Errorf("syntax errors: line 1:8 token recognition error at: '['; line 1:10 token recognition error at: ']'; line 1:9 extraneous input '0' expecting ')'"),
 			}
 		}(),
 		// Test 7: AND expression missing right side
@@ -1064,7 +1064,7 @@ func TestEvaluateSyntaxErrors(t *testing.T) {
 				fields:           map[string]types.IType{},
 				optMissingFields: map[string]bool{},
 				checks:           checks,
-				expectedErr:      fmt.Errorf("syntax errors: line 1:8 mismatched input '<EOF>' expecting {'!', NAME, '('}"),
+				expectedErr:      fmt.Errorf("syntax errors: line 1:8 mismatched input '<EOF>' expecting {'(', '!', IDENTIFIER}"),
 			}
 		}(),
 		// Test 8: OR expression missing right side
@@ -1076,18 +1076,18 @@ func TestEvaluateSyntaxErrors(t *testing.T) {
 				fields:           map[string]types.IType{},
 				optMissingFields: map[string]bool{},
 				checks:           checks,
-				expectedErr:      fmt.Errorf("syntax errors: line 1:8 mismatched input '<EOF>' expecting {'!', NAME, '('}"),
+				expectedErr:      fmt.Errorf("syntax errors: line 1:8 mismatched input '<EOF>' expecting {'(', '!', IDENTIFIER}"),
 			}
 		}(),
 	}
 
 	for _, test := range tests {
 		// Create evaluator
-		evaluator := newCheckEvaluator(test.primaryField, test.fields, test.optMissingFields)
+		evaluator := NewCheckEvaluator()
 
 		// Evaluate check
 		for _, check := range test.checks {
-			res, skipped, err := evaluator.evaluate(check)
+			res, skipped, err := evaluator.Evaluate(check, test.primaryField, test.fields, test.optMissingFields)
 			errMessage := ""
 			if err != nil {
 				errMessage = err.Error()

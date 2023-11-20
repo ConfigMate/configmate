@@ -14,7 +14,7 @@ func boolFactory(value interface{}) (IType, error) {
 		return &tBool{value: value}, nil
 	}
 
-	return nil, fmt.Errorf("value %v is not a bool", value)
+	return nil, fmt.Errorf("value is not a bool")
 }
 
 func (t tBool) TypeName() string {

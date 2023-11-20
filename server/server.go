@@ -2,30 +2,22 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
-
-	"github.com/BurntSushi/toml"
-	"github.com/ConfigMate/configmate/analyzer"
-	"github.com/ConfigMate/configmate/parsers"
 )
 
 type Server struct {
-	port     int               // Port to listen on
-	analyzer analyzer.Analyzer // Analyzer to use for checking
-
-	srv *http.Server // HTTP server
+	port int          // Port to listen on
+	srv  *http.Server // HTTP server
 }
 
-func CreateServer(port int, analyzer analyzer.Analyzer) *Server {
+func CreateServer(port int) *Server {
 	// Create server
 	server := &Server{
-		port:     port,
-		analyzer: analyzer,
+		port: port,
 	}
 
 	// Create HTTP server
@@ -34,7 +26,7 @@ func CreateServer(port int, analyzer analyzer.Analyzer) *Server {
 	}
 
 	// Add handlers
-	http.HandleFunc("/api/check", server.checkHandler())
+	http.HandleFunc("/api/analyze_spec", server.analyzeSpecHandler())
 
 	return server
 }
@@ -65,73 +57,4 @@ func (server *Server) Serve() error {
 
 	fmt.Println("Server gracefully stopped!")
 	return nil
-}
-
-// checkHandler returns a handler for the check endpoint.
-func (server *Server) checkHandler() http.HandlerFunc {
-	// Return handler for check endpoint
-	return func(w http.ResponseWriter, r *http.Request) {
-		var p struct {
-			RulebookPath string `json:"rulebook_path"` // Path to the rulebook
-		}
-
-		decoder := json.NewDecoder(r.Body)
-		if err := decoder.Decode(&p); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		// Read the rulebook file
-		ruleBookData, err := os.ReadFile(p.RulebookPath)
-		if err != nil {
-			errMsg := fmt.Sprintf("error reading rulebook file: %s", err.Error())
-			http.Error(w, errMsg, http.StatusBadRequest)
-			return
-		}
-
-		// Decode the TOML data into the Rulebook struct
-		var rulebook analyzer.Rulebook
-		if _, err := toml.Decode(string(ruleBookData), &rulebook); err != nil {
-			errMsg := fmt.Sprintf("error decoding file into a rulebook object: %v", err)
-			http.Error(w, errMsg, http.StatusBadRequest)
-			return
-		}
-
-		// Parse rulebooks
-		files := make(map[string]*parsers.Node)
-		for alias, file := range rulebook.Files {
-			// Read the file
-			data, err := os.ReadFile(file.Path)
-			if err != nil {
-				errMsg := fmt.Sprintf("error reading file %s: %s", file.Path, err.Error())
-				http.Error(w, errMsg, http.StatusBadRequest)
-				return
-			}
-
-			// Parse the file
-			parsedFile, err := parsers.Parse(data, file.Format)
-			if err != nil {
-				errMsg := fmt.Sprintf("error parsing file %s: %s", file.Path, err.Error())
-				http.Error(w, errMsg, http.StatusBadRequest)
-				return
-			}
-
-			// Append the parse result to the files map
-			files[alias] = parsedFile
-		}
-
-		// Analyzer files
-		res, err := server.analyzer.AnalyzeConfigFiles(files, rulebook.Rules)
-		if err != nil {
-			errMsg := fmt.Sprintf("error analyzing files: %s", err.Error())
-			http.Error(w, errMsg, http.StatusBadRequest)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(res); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
 }

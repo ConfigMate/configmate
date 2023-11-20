@@ -5,67 +5,441 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/pkg/errors"
+
+	"github.com/ConfigMate/configmate/analyzer/check"
+	"github.com/ConfigMate/configmate/analyzer/spec"
 	"github.com/ConfigMate/configmate/analyzer/types"
+	"github.com/ConfigMate/configmate/files"
 	"github.com/ConfigMate/configmate/parsers"
 )
 
 type Analyzer interface {
-	AnalyzeConfigFiles(Files map[string]*parsers.Node, Rules []Rule) (res []Result, err error)
+	AnalyzeSpecification(specFilePath string) (*spec.Specification, []CheckResult, *SpecError)
+	AllFilesContent(specFilePath string) map[string][]byte
 }
 
-type Result struct {
-	Passed        bool                         `json:"passed"`         // true if the check passed, false if it failed
-	ResultComment string                       `json:"result_comment"` // an error msg or comment about the result
-	Rule          *Rule                        `json:"rule"`           // the rule that was checked
-	CheckNum      int                          `json:"check_num"`      // the number of the check that was evaluated
-	TokenList     []TokenLocationWithFileAlias `json:"token_list"`     // a list of tokens that were involved in the rule
+type SpecError struct {
+	AnalyzerMsg string                  `json:"analyzer_msg"`
+	ErrorMsgs   []string                `json:"error_msgs"`
+	TokenList   []TokenLocationWithFile `json:"token_list"` // list of tokens involved in the error
 }
 
-// FieldInfo is a struct that contains information about a field
-type FieldInfo struct {
-	Value    types.IType
-	Location TokenLocationWithFileAlias
+type CheckStatus int
+
+const (
+	CheckPassed CheckStatus = iota
+	CheckFailed
+	CheckSkipped
+)
+
+type CheckResult struct {
+	Status        CheckStatus             `json:"status"`         // whether the check passed, failed or was skipped
+	ResultComment string                  `json:"result_comment"` // an error msg or comment about the result
+	Field         spec.FieldSpec          `json:"field"`          // the rule that was checked
+	CheckNum      int                     `json:"check_num"`      // the number of the check that was evaluated
+	TokenList     []TokenLocationWithFile `json:"token_list"`     // list of tokens involved in the check
 }
 
-// TokenLocationWithFileAlias is a TokenLocation enhanced with a file alias;
+// TokenLocationWithFile is a TokenLocation enhanced with a file path;
 // representing the file the token is in.
-type TokenLocationWithFileAlias struct {
+type TokenLocationWithFile struct {
 	File     string                `json:"file"`
 	Location parsers.TokenLocation `json:"location"`
 }
 
-type analyzerImpl struct{}
+// mainFileAlias is the alias used to reference the main config file.
+const mainFileAlias = "main"
 
-func NewAnalyzer() Analyzer {
-	return &analyzerImpl{}
+type analyzerImpl struct {
+	specParser     spec.SpecParser
+	checkEvaluator check.CheckEvaluator
+
+	fileFetcher    files.FileFetcher
+	parserProvider parsers.ParserProvider
 }
 
-func (a *analyzerImpl) AnalyzeConfigFiles(files map[string]*parsers.Node, rules []Rule) (res []Result, err error) {
-	// Find all fields and parse them
-	// optMissingFields is a map of optional fields that are missing
-	fields, fieldsLocations, optMissingFields, err := a.findAndParseAllFields(files, rules, res)
+func NewAnalyzer(
+	specParser spec.SpecParser,
+	checkEvaluator check.CheckEvaluator,
+	fileFetcher files.FileFetcher,
+	parserProvider parsers.ParserProvider) Analyzer {
+	return &analyzerImpl{
+		specParser:     specParser,
+		checkEvaluator: checkEvaluator,
+		fileFetcher:    fileFetcher,
+		parserProvider: parserProvider,
+	}
+}
+
+func (a *analyzerImpl) AnalyzeSpecification(specFilePath string) (*spec.Specification, []CheckResult, *SpecError) {
+	// Parse specification
+	mainSpec, parserErrors, err := a.parserSpecFile(specFilePath)
 	if err != nil {
-		return nil, err
+		return nil, nil, &SpecError{
+			AnalyzerMsg: "Failed to obtain specification file",
+			ErrorMsgs:   []string{err.Error()},
+		}
+	} else if len(parserErrors) > 0 {
+		specError := &SpecError{
+			AnalyzerMsg: "Failed to parse specification file",
+			ErrorMsgs:   []string{},
+			TokenList:   []TokenLocationWithFile{},
+		}
+		for _, parserError := range parserErrors {
+			specError.ErrorMsgs = append(specError.ErrorMsgs, parserError.ErrorMessage)
+			specError.TokenList = append(specError.TokenList, TokenLocationWithFile{
+				File:     specFilePath,
+				Location: parserError.Location,
+			})
+		}
+		return nil, nil, specError
 	}
 
-	// Check rules
-	for ruleIndex, rule := range rules {
-		// Evaluate checks
-		for checkNum, check := range rule.Checks {
-			// Create check e
-			e := newCheckEvaluator(rule.Field, fields, optMissingFields)
+	// Create fields map
+	fields := make(map[string][]spec.FieldSpec)
+	fields[mainFileAlias] = mainSpec.Fields
 
+	// Parse main config file
+	mainConfig, err := a.parseConfigFileFromSpec(mainSpec)
+	if err != nil {
+		specError := &SpecError{
+			AnalyzerMsg: "Failed to parse main config file",
+			ErrorMsgs:   []string{err.Error()},
+			TokenList: []TokenLocationWithFile{
+				{
+					File:     specFilePath,
+					Location: mainSpec.FileLocation,
+				},
+			},
+		}
+		return mainSpec, nil, specError
+	}
+
+	// Create file paths maps for token locations in errors
+	specFilePaths := make(map[string]string)
+	configFilePaths := make(map[string]string)
+
+	// Add main spec and config file path map
+	specFilePaths[mainFileAlias] = specFilePath
+	configFilePaths[mainFileAlias] = mainSpec.File
+
+	// Create files map
+	files := make(map[string]*parsers.Node)
+	files[mainFileAlias] = mainConfig
+
+	// Fetch imported spec files
+	for alias, importedSpecFilePath := range mainSpec.Imports {
+		// Check that alias doesn't conflict with main spec
+		if alias == mainFileAlias {
+			specError := &SpecError{
+				AnalyzerMsg: "Alias conflicts: '" + mainFileAlias + "' is reserved and used internally",
+				ErrorMsgs:   []string{},
+				TokenList: []TokenLocationWithFile{
+					{
+						File:     specFilePath,
+						Location: mainSpec.ImportsAliasLocation[alias],
+					},
+				},
+			}
+			return mainSpec, nil, specError
+		}
+
+		// Check that alias doesn't conflict with other imported specs
+		if _, ok := files[alias]; ok {
+			specError := &SpecError{
+				AnalyzerMsg: fmt.Sprintf("Alias conflicts: '%s' is already used for another imported spec", alias),
+				ErrorMsgs:   []string{},
+				TokenList: []TokenLocationWithFile{
+					{
+						File:     specFilePath,
+						Location: mainSpec.ImportsAliasLocation[alias],
+					},
+				},
+			}
+			return mainSpec, nil, specError
+		}
+
+		// Parse imported spec file
+		importedSpec, parserErrors, err := a.parserSpecFile(importedSpecFilePath)
+		if err != nil {
+			specError := &SpecError{
+				AnalyzerMsg: fmt.Sprintf("Failed to obtain imported spec file %s", importedSpecFilePath),
+				ErrorMsgs:   []string{err.Error()},
+				TokenList: []TokenLocationWithFile{
+					{
+						File:     specFilePath,
+						Location: mainSpec.ImportsLocation[alias],
+					},
+				},
+			}
+			return mainSpec, nil, specError
+		} else if len(parserErrors) > 0 {
+			specError := &SpecError{
+				AnalyzerMsg: fmt.Sprintf("Failed to parse imported spec file %s", importedSpecFilePath),
+				ErrorMsgs:   []string{},
+				TokenList: []TokenLocationWithFile{
+					{
+						File:     specFilePath,
+						Location: mainSpec.ImportsLocation[alias],
+					},
+				},
+			}
+			for _, parserError := range parserErrors {
+				specError.ErrorMsgs = append(specError.ErrorMsgs, parserError.ErrorMessage)
+				specError.TokenList = append(specError.TokenList, TokenLocationWithFile{
+					File:     importedSpecFilePath,
+					Location: parserError.Location,
+				})
+			}
+			return mainSpec, nil, specError
+		}
+
+		// Add imported spec file to fields map
+		fields[alias] = importedSpec.Fields
+
+		// Parse imported config file
+		importedConfig, err := a.parseConfigFileFromSpec(importedSpec)
+		if err != nil {
+			specError := &SpecError{
+				AnalyzerMsg: fmt.Sprintf("Failed to parse imported config file %s on spec %s", importedSpec.File, importedSpecFilePath),
+				ErrorMsgs:   []string{err.Error()},
+				TokenList: []TokenLocationWithFile{
+					{
+						File:     specFilePath,
+						Location: mainSpec.ImportsLocation[alias],
+					},
+					{
+						File:     importedSpecFilePath,
+						Location: importedSpec.FileLocation,
+					},
+				},
+			}
+			return mainSpec, nil, specError
+		}
+
+		// Add imported config file to files map
+		files[alias] = importedConfig
+
+		// Add imported spec and config file to path map
+		specFilePaths[alias] = importedSpecFilePath
+		configFilePaths[alias] = importedSpec.File
+	}
+
+	// Find all fields and parse them
+	// optMissingFields is a map of optional fields that are missing
+	fieldValues, fieldLocations, optMissingFields, specError := a.findAndParseAllFields(
+		files,
+		fields,
+		specFilePaths,
+		configFilePaths,
+	)
+	if specError != nil {
+		return mainSpec, nil, specError
+	}
+
+	// Run checks
+	res, specError := a.runChecks(
+		mainSpec.Fields,
+		fieldValues,
+		fieldLocations,
+		optMissingFields,
+		specFilePaths,
+	)
+	if specError != nil {
+		return mainSpec, nil, specError
+	}
+
+	// Analyze config files
+	return mainSpec, res, nil
+}
+
+func (a *analyzerImpl) AllFilesContent(specFilePath string) map[string][]byte {
+	// Create files map
+	files := make(map[string][]byte)
+
+	// Get specification file
+	specBytes, err := a.fileFetcher.FetchFile(specFilePath)
+	if err != nil {
+		return nil
+	}
+
+	// Add spec file to files map
+	files[specFilePath] = specBytes
+
+	// Parse specification
+	spec, parserErrors := a.specParser.Parse(string(specBytes))
+	if len(parserErrors) > 0 {
+		return files
+	}
+
+	// Get config file
+	configBytes, err := a.fileFetcher.FetchFile(spec.File)
+	if err != nil {
+		return files
+	}
+
+	// Add config file to files map
+	files[spec.File] = configBytes
+
+	// Fetch imported spec files
+	for _, importedSpecFilePath := range spec.Imports {
+		// Get imported spec file
+		importedSpecBytes, err := a.fileFetcher.FetchFile(importedSpecFilePath)
+		if err != nil {
+			continue
+		}
+
+		// Add imported spec file to files map
+		files[importedSpecFilePath] = importedSpecBytes
+
+		// Parse imported spec file
+		importedSpec, parserErrors := a.specParser.Parse(string(importedSpecBytes))
+		if len(parserErrors) > 0 {
+			continue
+		}
+
+		// Get imported config file
+		importedConfigBytes, err := a.fileFetcher.FetchFile(importedSpec.File)
+		if err != nil {
+			continue
+		}
+
+		// Add imported config file to files map
+		files[importedSpec.File] = importedConfigBytes
+	}
+
+	return files
+}
+
+func (a *analyzerImpl) findAndParseAllFields(
+	files map[string]*parsers.Node,
+	fields map[string][]spec.FieldSpec,
+	specFilePaths map[string]string,
+	configFilePaths map[string]string) (map[string]types.IType, map[string]TokenLocationWithFile, map[string]bool, *SpecError) {
+	// Create maps
+	fieldValues := make(map[string]types.IType)
+	fieldLocations := make(map[string]TokenLocationWithFile)
+	optMissingFields := make(map[string]bool)
+
+	for fileAlias, fileFields := range fields {
+		// Sort file specs by field name lenght (shortest first)
+		// This guarantees parent fields are checked before child fields
+		sort.Slice(fileFields, func(i, j int) bool {
+			return len(fileFields[i].Field) < len(fileFields[j].Field)
+		})
+
+		for _, fspec := range fileFields {
+			// Check if a parent field is an optional
+			// field that is missing, which makes the
+			// current field optional as well
+			for optMissingField := range optMissingFields {
+				if strings.HasPrefix(fileAlias+"."+fspec.Field, optMissingField) {
+					optMissingFields[fileAlias+"."+fspec.Field] = true
+					break
+				}
+			}
+			if optMissingFields[fileAlias+"."+fspec.Field] {
+				continue
+			}
+
+			// Get field from file tree
+			fnode, err := files[fileAlias].Get(fspec.Field)
+			if err != nil {
+				return nil, nil, nil, &SpecError{
+					AnalyzerMsg: fmt.Sprintf("Failed to get field %s from file %s", fspec.Field, configFilePaths[fileAlias]),
+					ErrorMsgs:   []string{err.Error()},
+					TokenList: []TokenLocationWithFile{
+						{
+							File:     specFilePaths[fileAlias],
+							Location: fspec.FieldLocation,
+						},
+					},
+				}
+			} else if fnode == nil && !fspec.Optional { // Field not found and not optial
+				return nil, nil, nil, &SpecError{
+					AnalyzerMsg: fmt.Sprintf("Field %s not found in file %s", fspec.Field, configFilePaths[fileAlias]),
+					ErrorMsgs:   []string{},
+					TokenList: []TokenLocationWithFile{
+						{
+							File:     specFilePaths[fileAlias],
+							Location: fspec.FieldLocation,
+						},
+					},
+				}
+			} else if fnode == nil && fspec.Optional { // Field not found and optional
+				optMissingFields[fileAlias+"."+fspec.Field] = true
+			} else { // Field found
+				t, err := types.MakeType(fspec.Type, fnode.Value)
+				if err != nil {
+					return nil, nil, nil, &SpecError{
+						AnalyzerMsg: fmt.Sprintf("failed to parse field %s from file %s as type %s",
+							fspec.Field, configFilePaths[fileAlias], fspec.Type,
+						),
+						ErrorMsgs: []string{err.Error()},
+						TokenList: []TokenLocationWithFile{
+							{
+								File:     specFilePaths[fileAlias],
+								Location: fspec.TypeLocation,
+							},
+							{
+								File:     configFilePaths[fileAlias],
+								Location: fnode.ValueLocation,
+							},
+						},
+					}
+				} else {
+					fieldValues[fileAlias+"."+fspec.Field] = t
+					fieldLocations[fileAlias+"."+fspec.Field] = TokenLocationWithFile{
+						File:     configFilePaths[fileAlias],
+						Location: fnode.ValueLocation,
+					}
+				}
+			}
+		}
+	}
+
+	return fieldValues, fieldLocations, optMissingFields, nil
+}
+
+func (a *analyzerImpl) runChecks(
+	mainFieldSpecs []spec.FieldSpec,
+	fieldValues map[string]types.IType,
+	fieldLocations map[string]TokenLocationWithFile,
+	optMissingFields map[string]bool,
+	specFilePaths map[string]string) (res []CheckResult, err *SpecError) {
+
+	// Create results list
+	res = []CheckResult{}
+
+	for index, fspec := range mainFieldSpecs {
+		// Evaluate checks
+		for checkNum, checkInfo := range fspec.Checks {
 			// Evaluate check
-			result, skipping, err := e.evaluate(check)
+			result, skipping, err := a.checkEvaluator.Evaluate(
+				checkInfo.Check,
+				mainFileAlias+"."+fspec.Field,
+				fieldValues,
+				optMissingFields,
+			)
 			if result == nil {
-				return nil, err
+				return nil, &SpecError{
+					AnalyzerMsg: fmt.Sprintf("failed to evaluate check %s for field %s", checkInfo.Check, fspec.Field),
+					ErrorMsgs:   []string{err.Error()},
+					TokenList: []TokenLocationWithFile{
+						{
+							File:     specFilePaths[mainFileAlias],
+							Location: fspec.Checks[checkNum].Location,
+						},
+					},
+				}
 			} else if skipping {
-				res = append(res, Result{
-					Passed:        true,
+				res = append(res, CheckResult{
+					Status:        CheckSkipped,
 					ResultComment: err.Error(),
-					Rule:          &rules[ruleIndex],
+					Field:         mainFieldSpecs[index],
 					CheckNum:      checkNum,
-					TokenList:     []TokenLocationWithFileAlias{},
+					TokenList:     []TokenLocationWithFile{},
 				})
 			} else {
 				resComment := ""
@@ -73,70 +447,61 @@ func (a *analyzerImpl) AnalyzeConfigFiles(files map[string]*parsers.Node, rules 
 					resComment = err.Error()
 				}
 
-				res = append(res, Result{
-					Passed:        result.Value().(bool),
+				checkStatus := CheckPassed
+				if !result.Value().(bool) {
+					checkStatus = CheckFailed
+				}
+
+				res = append(res, CheckResult{
+					Status:        checkStatus,
 					ResultComment: resComment,
-					Rule:          &rules[ruleIndex],
+					Field:         mainFieldSpecs[index],
 					CheckNum:      checkNum,
-					TokenList: []TokenLocationWithFileAlias{
-						fieldsLocations[rule.Field],
+					TokenList: []TokenLocationWithFile{
+						fieldLocations[mainFileAlias+"."+fspec.Field],
 					},
 				})
 			}
 		}
-
 	}
 
 	return res, nil
 }
 
-func (a *analyzerImpl) findAndParseAllFields(files map[string]*parsers.Node, rules []Rule, res []Result) (fields map[string]types.IType, fieldsLocations map[string]TokenLocationWithFileAlias, optMissingFields map[string]bool, err error) {
-	// Sort rules by field lenght (shortest first)
-	// This guarantees parent fields are checked before child fields
-	sort.Slice(rules, func(i, j int) bool {
-		return len(rules[i].Field) < len(rules[j].Field)
-	})
-
-	// Check rules and store all fields
-	fields = make(map[string]types.IType)
-	fieldsLocations = make(map[string]TokenLocationWithFileAlias)
-	optMissingFields = make(map[string]bool)
-	for _, rule := range rules {
-		// Check if a parent field is an optional
-		// field that is missing, which makes the
-		// current field optional as well
-		for optMissingField := range optMissingFields {
-			if strings.HasPrefix(rule.Field, optMissingField) {
-				optMissingFields[rule.Field] = true
-				break
-			}
-		}
-		if optMissingFields[rule.Field] {
-			continue
-		}
-
-		// Separate field string into file alias and path
-		fileAlias, fieldPath, err := splitFileAliasAndPath(rule.Field)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("failed to parse field %s: %s", rule.Field, err.Error())
-		}
-
-		// Get field from file tree
-		field, err := files[fileAlias].Get(fieldPath)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("failed to get field %s: %s", rule.Field, err.Error())
-		} else if field == nil && rule.Optional { // Field not found and optional
-			optMissingFields[rule.Field] = true
-		} else { // Field found
-			t, err := types.MakeType(rule.Type, field.Value)
-			if err != nil {
-				return nil, nil, nil, fmt.Errorf("failed to parse field %s as type %s: %s", rule.Field, rule.Type, err.Error())
-			} else {
-				fields[rule.Field] = t
-				fieldsLocations[rule.Field] = makeValueTokenLocation(fileAlias, field)
-			}
-		}
+func (a *analyzerImpl) parserSpecFile(specFilePath string) (*spec.Specification, []spec.SpecParserError, error) {
+	// Get specification file
+	specBytes, err := a.fileFetcher.FetchFile(specFilePath)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to fetch specification file")
 	}
 
-	return fields, fieldsLocations, optMissingFields, nil
+	// Parse specification
+	spec, errs := a.specParser.Parse(string(specBytes))
+	if len(errs) > 0 {
+		return nil, errs, errors.Wrap(err, "failed to parse specification file")
+	}
+
+	return spec, nil, nil
+}
+
+func (a *analyzerImpl) parseConfigFileFromSpec(spec *spec.Specification) (*parsers.Node, error) {
+	// Fetch config file
+	configBytes, err := a.fileFetcher.FetchFile(spec.File)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch main config file")
+	}
+
+	// Get parser for main config file
+	configParser, err := a.parserProvider.GetParser(spec.FileFormat)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get parser for main config file")
+	}
+
+	// Parse main config file
+	config, err := configParser.Parse(configBytes)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse main config file")
+	}
+
+	return config, nil
 }

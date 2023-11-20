@@ -14,7 +14,7 @@ func stringFactory(value interface{}) (IType, error) {
 		return &tString{value: value}, nil
 	}
 
-	return nil, fmt.Errorf("value %v is not a string", value)
+	return nil, fmt.Errorf("value is not a string")
 }
 
 func (t tString) TypeName() string {

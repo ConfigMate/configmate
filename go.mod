@@ -6,6 +6,7 @@ require (
 	github.com/antlr4-go/antlr/v4 v4.13.0
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/mock v1.6.0
+	github.com/pkg/errors v0.9.1
 	go.uber.org/multierr v1.11.0
 )
 
@@ -17,7 +18,6 @@ require (
 )
 
 require (
-	github.com/BurntSushi/toml v1.3.2
 	github.com/urfave/cli/v2 v2.25.7
 	golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc // indirect
 )

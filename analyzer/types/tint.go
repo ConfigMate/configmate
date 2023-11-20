@@ -14,7 +14,7 @@ func intFactory(value interface{}) (IType, error) {
 		return &tInt{value: value}, nil
 	}
 
-	return nil, fmt.Errorf("value %v is not an int", value)
+	return nil, fmt.Errorf("value is not an int")
 }
 
 func (t tInt) TypeName() string {

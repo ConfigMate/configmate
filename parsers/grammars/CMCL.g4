@@ -30,32 +30,47 @@ elseif: ELSEIF_SYM LPAREN check RPAREN LBRACE check RBRACE;
 
 else: ELSE_SYM LBRACE check RBRACE;
 
-foreach: FOREACH_SYM LPAREN NAME COLON field RPAREN LBRACE check RBRACE;
+foreach: FOREACH_SYM LPAREN IDENTIFIER COLON fieldName RPAREN LBRACE check RBRACE;
 
 not: NOT_SYM atom;
 
 functionExpression: function (DOT function)*;
 
-fieldExpression: field (DOT functionExpression)?;
+fieldExpression: fieldName (DOT functionExpression)?;
 
 function
-    : NAME LPAREN argument (COMMA argument)* RPAREN
-    | NAME LPAREN RPAREN;
+    : IDENTIFIER LPAREN argument (COMMA argument)* RPAREN
+    | IDENTIFIER LPAREN RPAREN;
 
 argument: primitive | check;
 
+// A primitive is a string, an integer, a float, or a boolean.
 primitive
-    : STRING # string
+    : SHORT_STRING # string
     | INT # int
     | FLOAT # float
     | BOOL # boolean
     ;
 
-// A field is a list of comma separated unquoted strings or index expressions
+// A field is a list of dot separated identifiers.
 // Such as "foo", "bar.xyz".
-field: NAME (DOT NAME)*;
+fieldName: IDENTIFIER (DOT IDENTIFIER)*;
 
-// Tokens
+// Common Tokens
+LPAREN : '(' ;            // Left parenthesis
+RPAREN : ')' ;            // Right parenthesis
+LBRACE : '{' ;            // Left curly brace
+RBRACE : '}' ;            // Right curly brace
+COMMA : ',' ;             // Comma
+COLON : ':' ;             // Colon
+DOT : '.' ;               // Dot
+
+SHORT_STRING: '"'  ('\\' (RN | .) | ~[\\\r\n"])* '"';
+INT : DIGIT+ ;               // Integer numbers
+FLOAT : DIGIT+ '.' DIGIT+ ;  // Floating point numbers
+BOOL : 'true' | 'false' ;    // Boolean values
+
+// CMCL Tokens
 IF_SYM: 'if';
 ELSEIF_SYM: 'elseif';
 ELSE_SYM: 'else';
@@ -63,21 +78,15 @@ FOREACH_SYM: 'foreach';
 AND_SYM: '&&';
 OR_SYM: '||';
 NOT_SYM: '!';
-BOOL: 'true' | 'false';
-NAME: [a-zA-Z_][a-zA-Z0-9_]*;
-INT: [0-9]+;
-FLOAT: [0-9]+[.][0-9]+;
-STRING: '"' (ESC | ~["\\])* '"' | '\'' (ESC | ~["\\])* '\'';
-LPAREN: '(';
-RPAREN: ')';
-LBRACKET: '[';
-RBRACKET: ']';
-LBRACE: '{';
-RBRACE: '}';
-DOT: '.';
-COMMA: ',';
-COLON: ':';
-ESC: '\\' [btnfr"'\\];
+
+IDENTIFIER : LETTER (CHARACTER)* ;    // Typical definition of an identifier
+
+// Auxiliary lexer rules
+fragment LETTER : [a-zA-Z] ;
+fragment DIGIT : [0-9] ;
+fragment CHARACTER : [a-zA-Z0-9_-] ;
+fragment RN : '\r'? '\n';
+
 WS: [ \t\r\n]+ -> skip;
 
 
