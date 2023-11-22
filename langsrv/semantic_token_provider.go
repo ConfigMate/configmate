@@ -1,13 +1,12 @@
 package langsrv
 
 import (
-	"github.com/ConfigMate/configmate/files"
 	parser_cmsl "github.com/ConfigMate/configmate/parsers/gen/parser_cmsl/parsers/grammars"
 	"github.com/antlr4-go/antlr/v4"
 )
 
 type SemanticTokenProvider interface {
-	GetSemanticTokens(specPath string) ([]ParsedToken, error)
+	GetSemanticTokens(content []byte) ([]ParsedToken, error)
 }
 
 type ParsedToken struct {
@@ -31,28 +30,18 @@ const (
 	STTOperator  SemanticTokenType = "operator"
 )
 
-func NewSemanticTokenProvider(fileFetcher files.FileFetcher) SemanticTokenProvider {
-	return &semanticTokenProviderImpl{
-		fileFetcher: fileFetcher,
-	}
+func NewSemanticTokenProvider() SemanticTokenProvider {
+	return &semanticTokenProviderImpl{}
 }
 
 type semanticTokenProviderImpl struct {
 	*parser_cmsl.BaseCMSLListener
-	fileFetcher files.FileFetcher
-
 	tokens []ParsedToken
 }
 
-func (p *semanticTokenProviderImpl) GetSemanticTokens(specPath string) ([]ParsedToken, error) {
-	// Fetch spec
-	spec, err := p.fileFetcher.FetchFile(specPath)
-	if err != nil {
-		return nil, err
-	}
-
+func (p *semanticTokenProviderImpl) GetSemanticTokens(content []byte) ([]ParsedToken, error) {
 	// Create lexer
-	input := antlr.NewInputStream(string(spec))
+	input := antlr.NewInputStream(string(content))
 	lexer := parser_cmsl.NewCMSLLexer(input)
 	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	parser := parser_cmsl.NewCMSLParser(stream)
