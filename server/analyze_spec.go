@@ -25,9 +25,7 @@ type AnalyzeSpecResponse struct {
 func (server *Server) analyzeSpecHandler() http.HandlerFunc {
 	// Return handler for check endpoint
 	return func(w http.ResponseWriter, r *http.Request) {
-		var p struct {
-			SpecFilePath string `json:"specFilePath"` // Path to the spec file
-		}
+		var p AnalyzeSpecRequest
 
 		decoder := json.NewDecoder(r.Body)
 		if err := decoder.Decode(&p); err != nil {

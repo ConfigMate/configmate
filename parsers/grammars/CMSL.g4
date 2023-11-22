@@ -11,16 +11,16 @@ cmsl: specification EOF;
 specification: fileDeclaration importStatement? specificationBody;
 
 // A file declaration contains the path and format of the file.
-fileDeclaration: 'file' COLON SHORT_STRING IDENTIFIER;
+fileDeclaration: FILE_DCLR_KW COLON SHORT_STRING IDENTIFIER;
 
 // An import contains the name of the file to import.
-importStatement: 'import' LPAREN importItem (COMMA importItem)* RPAREN;
+importStatement: IMPORT_KW LPAREN importItem (COMMA importItem)* RPAREN;
 
 // An import item contains the name of the file to import.
 importItem: IDENTIFIER COLON SHORT_STRING;
 
 // A specification body contains a list of declarations.
-specificationBody: 'spec' LBRACE specificationItem* RBRACE;
+specificationBody: SPEC_ROOT_KW LBRACE specificationItem* RBRACE;
 
 // A specification item starts with the field name, followed by the
 // metadata inside angled brackets, optionally followed by a list of semicolon separated
@@ -36,16 +36,16 @@ metadataExpression: LANGLE metadataItem (COMMA metadataItem)* RANGLE;
 
 // A metadata item is a key-value pair of strings.
 metadataItem
-    : 'type' COLON typeExpr # typeMetadata
-    | 'notes' COLON stringExpr  # notesMetadata
-    | 'default' COLON primitive # defaultMetadata
-    | 'optional' COLON BOOL # optionalMetadata
+    : TYPE_METAD_KW COLON typeExpr # typeMetadata
+    | NOTES_METAD_KW COLON stringExpr  # notesMetadata
+    | DEFAULT_METAD_KW COLON primitive # defaultMetadata
+    | OPTIONAL_METAD_KW COLON BOOL # optionalMetadata
     ;
 
 // A type expression denotes the type.
 typeExpr
     : IDENTIFIER
-    | 'list' LANGLE typeExpr RANGLE
+    | LIST_TYPE_KW LANGLE typeExpr RANGLE
     ;
 
 // A primitive is a string, an integer, a float, or a boolean.
@@ -61,6 +61,16 @@ stringExpr
     : SHORT_STRING 
     | DOUBLE_QUOTES LONG_STRING DOUBLE_QUOTES
     ;
+
+// Keywords
+FILE_DCLR_KW : 'file' ;     // File declaration keyword
+IMPORT_KW : 'import' ;     // Import keyword
+SPEC_ROOT_KW : 'spec' ;     // Specification keyword
+TYPE_METAD_KW : 'type' ;         // Type keyword
+OPTIONAL_METAD_KW : 'optional' ; // Optional keyword
+DEFAULT_METAD_KW : 'default' ;   // Default keyword
+NOTES_METAD_KW : 'notes' ;       // Notes keyword
+LIST_TYPE_KW : 'list' ;         // List keyword
 
 // Tokens
 LPAREN : '(' ;            // Left parenthesis
