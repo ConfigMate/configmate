@@ -17,7 +17,7 @@ type JsonErrorListener struct {
 
 // Error handling
 func (s *JsonErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol interface{}, line, column int, msg string, e antlr.RecognitionException) {
-	s.errors = append(s.errors, fmt.Errorf("line %d:%d %s", line, column, msg))
+	s.errors = append(s.errors, fmt.Errorf("line %d:%d %s", line-1, column, msg))
 }
 
 type JsonParser struct {
@@ -106,11 +106,11 @@ func (l *JsonParser) EnterObj(ctx *parser_json.ObjContext) {
 	}
 
 	// Add start location information of the object
-	l.getTOS().ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	l.getTOS().ValueLocation.Start.Line = ctx.GetStart().GetLine() - 1
 	l.getTOS().ValueLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the object
-	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
+	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine() - 1
 	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
@@ -132,11 +132,11 @@ func (l *JsonParser) EnterPair(ctx *parser_json.PairContext) {
 	l.stack.Push(node)
 
 	// Add start location information of the pair key
-	node.NameLocation.Start.Line = ctx.GetStart().GetLine()
+	node.NameLocation.Start.Line = ctx.GetStart().GetLine() - 1
 	node.NameLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the pair key
-	node.NameLocation.End.Line = ctx.GetStart().GetLine()
+	node.NameLocation.End.Line = ctx.GetStart().GetLine() - 1
 	node.NameLocation.End.Column = ctx.GetStart().GetColumn() + len(ctx.GetStart().GetText())
 }
 
@@ -186,11 +186,11 @@ func (l *JsonParser) EnterArr(ctx *parser_json.ArrContext) {
 	}
 
 	// Add start location information of the array
-	l.getTOS().ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	l.getTOS().ValueLocation.Start.Line = ctx.GetStart().GetLine() - 1
 	l.getTOS().ValueLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the array
-	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine()
+	l.getTOS().ValueLocation.End.Line = ctx.GetStop().GetLine() - 1
 	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
@@ -259,11 +259,11 @@ func (l *JsonParser) EnterNumber(ctx *parser_json.NumberContext) {
 	}
 
 	// Add start location information of the string value
-	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine() - 1
 	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the string value
-	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
+	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine() - 1
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
@@ -313,11 +313,11 @@ func (l *JsonParser) EnterString(ctx *parser_json.StringContext) {
 	}
 
 	// Add start location information of the string value
-	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine() - 1
 	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the string value
-	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
+	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine() - 1
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
@@ -365,11 +365,11 @@ func (l *JsonParser) EnterBooleanTrue(ctx *parser_json.BooleanTrueContext) {
 	}
 
 	// Add start location information of the string value
-	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine() - 1
 	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the string value
-	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
+	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine() - 1
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
@@ -417,11 +417,11 @@ func (l *JsonParser) EnterBooleanFalse(ctx *parser_json.BooleanFalseContext) {
 	}
 
 	// Add start location information of the string value
-	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine() - 1
 	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the string value
-	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
+	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine() - 1
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
@@ -469,11 +469,11 @@ func (l *JsonParser) EnterNull(ctx *parser_json.NullContext) {
 	}
 
 	// Add start location information of the string value
-	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine()
+	locationInfoDest.ValueLocation.Start.Line = ctx.GetStart().GetLine() - 1
 	locationInfoDest.ValueLocation.Start.Column = ctx.GetStart().GetColumn()
 
 	// Add end location information of the string value
-	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine()
+	locationInfoDest.ValueLocation.End.Line = ctx.GetStop().GetLine() - 1
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 

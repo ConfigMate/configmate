@@ -106,7 +106,7 @@ func createTokenErrorView(token analyzer.TokenLocationWithFile, fileLinesMap map
 	endColNum := token.Location.End.Column
 
 	// Add the file path to the output
-	fileLine := fmt.Sprintf("\tFile: %s\n\n", ColorText(fmt.Sprintf("%s:%d", token.File, startLineNum), Red))
+	fileLine := fmt.Sprintf("\tFile: %s\n\n", ColorText(fmt.Sprintf("%s:%d", token.File, startLineNum+1), Red))
 
 	var output string
 	// Case where the token is in one line
