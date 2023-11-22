@@ -19,7 +19,6 @@ spec {
             default: false,
             notes: "This is whether or not SSL is enabled."
         > ( eq(false); )
-
     }
     
     dns_servers <

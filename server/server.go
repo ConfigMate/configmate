@@ -27,6 +27,7 @@ func CreateServer(port int) *Server {
 
 	// Add handlers
 	http.HandleFunc("/api/analyze_spec", server.analyzeSpecHandler())
+	http.HandleFunc("/api/get_semantic_tokens", server.getSemanticTokensHandler())
 
 	return server
 }
