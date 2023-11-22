@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/ConfigMate/configmate/files"
 	"github.com/ConfigMate/configmate/langsrv"
 )
 
 type GetSemanticTokensRequest struct {
-	SpecFilePath string `json:"spec_file_path"`
+	Content []byte `json:"content"`
 }
 
 type GetSemanticTokensResponse struct {
@@ -30,16 +29,17 @@ func (server *Server) getSemanticTokensHandler() http.HandlerFunc {
 		}
 
 		// Semantic tokens provider
-		stp := langsrv.NewSemanticTokenProvider(
-			files.NewFileFetcher(),
-		)
-
-		tokens, err := stp.GetSemanticTokens(p.SpecFilePath)
+		stp := langsrv.NewSemanticTokenProvider()
+		tokens, err := stp.GetSemanticTokens(p.Content)
+		errMessage := ""
+		if err != nil {
+			errMessage = err.Error()
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(&GetSemanticTokensResponse{
 			SemanticTokens: tokens,
-			Error:          err.Error(),
+			Error:          errMessage,
 		}); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

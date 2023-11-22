@@ -1,13 +1,12 @@
 package langsrv
 
 import (
-	"github.com/ConfigMate/configmate/files"
 	parser_cmsl "github.com/ConfigMate/configmate/parsers/gen/parser_cmsl/parsers/grammars"
 	"github.com/antlr4-go/antlr/v4"
 )
 
 type SemanticTokenProvider interface {
-	GetSemanticTokens(specPath string) ([]ParsedToken, error)
+	GetSemanticTokens(content []byte) ([]ParsedToken, error)
 }
 
 type ParsedToken struct {
@@ -31,28 +30,18 @@ const (
 	STTOperator  SemanticTokenType = "operator"
 )
 
-func NewSemanticTokenProvider(fileFetcher files.FileFetcher) SemanticTokenProvider {
-	return &semanticTokenProviderImpl{
-		fileFetcher: fileFetcher,
-	}
+func NewSemanticTokenProvider() SemanticTokenProvider {
+	return &semanticTokenProviderImpl{}
 }
 
 type semanticTokenProviderImpl struct {
 	*parser_cmsl.BaseCMSLListener
-	fileFetcher files.FileFetcher
-
 	tokens []ParsedToken
 }
 
-func (p *semanticTokenProviderImpl) GetSemanticTokens(specPath string) ([]ParsedToken, error) {
-	// Fetch spec
-	spec, err := p.fileFetcher.FetchFile(specPath)
-	if err != nil {
-		return nil, err
-	}
-
+func (p *semanticTokenProviderImpl) GetSemanticTokens(content []byte) ([]ParsedToken, error) {
 	// Create lexer
-	input := antlr.NewInputStream(string(spec))
+	input := antlr.NewInputStream(string(content))
 	lexer := parser_cmsl.NewCMSLLexer(input)
 	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	parser := parser_cmsl.NewCMSLParser(stream)
@@ -77,6 +66,15 @@ func (s *semanticTokenProviderImpl) EnterFileDeclaration(ctx *parser_cmsl.FileDe
 		Column:    fileKeyword.GetSymbol().GetColumn(),
 		Length:    len(fileKeyword.GetText()),
 		TokenType: STTKeyword,
+	})
+
+	// Add file path token
+	filePath := ctx.SHORT_STRING()
+	s.tokens = append(s.tokens, ParsedToken{
+		Line:      filePath.GetSymbol().GetLine() - 1,
+		Column:    filePath.GetSymbol().GetColumn(),
+		Length:    len(filePath.GetText()),
+		TokenType: STTString,
 	})
 
 	// Add the file format token
@@ -110,6 +108,15 @@ func (s *semanticTokenProviderImpl) EnterImportItem(ctx *parser_cmsl.ImportItemC
 		Column:    importAlias.GetSymbol().GetColumn(),
 		Length:    len(importAlias.GetText()),
 		TokenType: STTVariable,
+	})
+
+	// Add file path token
+	filePath := ctx.SHORT_STRING()
+	s.tokens = append(s.tokens, ParsedToken{
+		Line:      filePath.GetSymbol().GetLine() - 1,
+		Column:    filePath.GetSymbol().GetColumn(),
+		Length:    len(filePath.GetText()),
+		TokenType: STTString,
 	})
 }
 
@@ -182,6 +189,15 @@ func (s *semanticTokenProviderImpl) EnterOptionalMetadata(ctx *parser_cmsl.Optio
 		Length:    len(optionalKeyword.GetText()),
 		TokenType: STTKeyword,
 	})
+
+	// Add the boolean token
+	booleanKeyword := ctx.BOOL()
+	s.tokens = append(s.tokens, ParsedToken{
+		Line:      booleanKeyword.GetSymbol().GetLine() - 1,
+		Column:    booleanKeyword.GetSymbol().GetColumn(),
+		Length:    len(booleanKeyword.GetText()),
+		TokenType: STTKeyword,
+	})
 }
 
 // EnterTypeExpr is called when production typeExpr is entered.
@@ -195,7 +211,7 @@ func (s *semanticTokenProviderImpl) EnterTypeExpr(ctx *parser_cmsl.TypeExprConte
 			Length:    len(ctx.GetText()),
 			TokenType: STTType,
 		})
-	} else {
+	} else if ctx.LIST_TYPE_KW() != nil {
 		// Get the list type keyword
 		listKeyword := ctx.LIST_TYPE_KW()
 		s.tokens = append(s.tokens, ParsedToken{
