@@ -222,7 +222,7 @@ func (s *semanticTokenProviderImpl) EnterTypeExpr(ctx *parser_cmsl.TypeExprConte
 			Length:    len(ctx.GetText()),
 			TokenType: STTType,
 		})
-	} else {
+	} else if ctx.LIST_TYPE_KW() != nil {
 		// Get the list type keyword
 		listKeyword := ctx.LIST_TYPE_KW()
 		s.tokens = append(s.tokens, ParsedToken{
