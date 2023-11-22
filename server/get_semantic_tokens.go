@@ -35,11 +35,15 @@ func (server *Server) getSemanticTokensHandler() http.HandlerFunc {
 		)
 
 		tokens, err := stp.GetSemanticTokens(p.SpecFilePath)
+		errMessage := ""
+		if err != nil {
+			errMessage = err.Error()
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(&GetSemanticTokensResponse{
 			SemanticTokens: tokens,
-			Error:          err.Error(),
+			Error:          errMessage,
 		}); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

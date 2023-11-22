@@ -79,6 +79,15 @@ func (s *semanticTokenProviderImpl) EnterFileDeclaration(ctx *parser_cmsl.FileDe
 		TokenType: STTKeyword,
 	})
 
+	// Add file path token
+	filePath := ctx.SHORT_STRING()
+	s.tokens = append(s.tokens, ParsedToken{
+		Line:      filePath.GetSymbol().GetLine() - 1,
+		Column:    filePath.GetSymbol().GetColumn(),
+		Length:    len(filePath.GetText()),
+		TokenType: STTString,
+	})
+
 	// Add the file format token
 	fileFormat := ctx.IDENTIFIER()
 	s.tokens = append(s.tokens, ParsedToken{
@@ -110,6 +119,15 @@ func (s *semanticTokenProviderImpl) EnterImportItem(ctx *parser_cmsl.ImportItemC
 		Column:    importAlias.GetSymbol().GetColumn(),
 		Length:    len(importAlias.GetText()),
 		TokenType: STTVariable,
+	})
+
+	// Add file path token
+	filePath := ctx.SHORT_STRING()
+	s.tokens = append(s.tokens, ParsedToken{
+		Line:      filePath.GetSymbol().GetLine() - 1,
+		Column:    filePath.GetSymbol().GetColumn(),
+		Length:    len(filePath.GetText()),
+		TokenType: STTString,
 	})
 }
 
@@ -180,6 +198,15 @@ func (s *semanticTokenProviderImpl) EnterOptionalMetadata(ctx *parser_cmsl.Optio
 		Line:      optionalKeyword.GetSymbol().GetLine() - 1,
 		Column:    optionalKeyword.GetSymbol().GetColumn(),
 		Length:    len(optionalKeyword.GetText()),
+		TokenType: STTKeyword,
+	})
+
+	// Add the boolean token
+	booleanKeyword := ctx.BOOL()
+	s.tokens = append(s.tokens, ParsedToken{
+		Line:      booleanKeyword.GetSymbol().GetLine() - 1,
+		Column:    booleanKeyword.GetSymbol().GetColumn(),
+		Length:    len(booleanKeyword.GetText()),
 		TokenType: STTKeyword,
 	})
 }
