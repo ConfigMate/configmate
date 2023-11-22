@@ -13,7 +13,7 @@ import (
 )
 
 type SpecParser interface {
-	Parse(spec string) (*Specification, []SpecParserError)
+	Parse(spec []byte) (*Specification, []SpecParserError)
 }
 
 type SpecParserError struct {
@@ -55,12 +55,12 @@ type specParserImpl struct {
 	errs           []SpecParserError
 }
 
-func (p *specParserImpl) Parse(spec string) (*Specification, []SpecParserError) {
+func (p *specParserImpl) Parse(spec []byte) (*Specification, []SpecParserError) {
 	// Create error listener
 	errorListener := &cmslErrorListener{}
 
 	// Create lexer
-	input := antlr.NewInputStream(spec)
+	input := antlr.NewInputStream(string(spec))
 	lexer := parser_cmsl.NewCMSLLexer(input)
 
 	// Add error listener

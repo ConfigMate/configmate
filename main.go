@@ -93,7 +93,7 @@ func main() {
 					// Map the files contents to the corresponding line numbers
 					filesLines := utils.CreateLinesMapForFiles(files)
 
-					_, res, specError := a.AnalyzeSpecification(specFilePath)
+					_, res, specError := a.AnalyzeSpecification(specFilePath, nil)
 					if specError != nil {
 						formattedResult := utils.FormatSpecError(*specError, filesLines)
 						fmt.Print(formattedResult)

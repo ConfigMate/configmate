@@ -12,7 +12,8 @@ import (
 )
 
 type AnalyzeSpecRequest struct {
-	SpecFilePath string `json:"spec_file_path"`
+	SpecFilePath    string `json:"spec_file_path"`
+	SpecFileContent []byte `json:"spec_file_content"`
 }
 
 type AnalyzeSpecResponse struct {
@@ -41,7 +42,7 @@ func (server *Server) analyzeSpecHandler() http.HandlerFunc {
 			parsers.NewParserProvider(),
 		)
 
-		spec, res, specError := a.AnalyzeSpecification(p.SpecFilePath)
+		spec, res, specError := a.AnalyzeSpecification(p.SpecFilePath, p.SpecFileContent)
 
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(&AnalyzeSpecResponse{

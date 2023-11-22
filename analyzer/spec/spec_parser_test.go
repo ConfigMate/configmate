@@ -185,7 +185,7 @@ func TestParseSimple(t *testing.T) {
 	}
 
 	parser := NewSpecParser()
-	result, errs := parser.Parse(string(simpleCMS))
+	result, errs := parser.Parse(simpleCMS)
 	if len(errs) > 0 {
 		t.Errorf("Unexpected errors: %#v", errs)
 	}
@@ -240,7 +240,7 @@ func TestParseWithImports(t *testing.T) {
 	}
 
 	parser := NewSpecParser()
-	result, errs := parser.Parse(string(withImportsCMS))
+	result, errs := parser.Parse(withImportsCMS)
 	if len(errs) > 0 {
 		t.Errorf("Unexpected errors: %#v", errs)
 	}
@@ -295,7 +295,7 @@ func TestParserHighLevelErrors(t *testing.T) {
 	}
 
 	parser := NewSpecParser()
-	_, errs := parser.Parse(string(cmsWithHighLevelErrors))
+	_, errs := parser.Parse(cmsWithHighLevelErrors)
 	if len(errs) == 0 {
 		t.Errorf("Expecting errors, no errors where returned instead")
 	} else if !reflect.DeepEqual(errs, expectedErrors) {
@@ -328,7 +328,7 @@ func TestParserLexerSyntaxErrors(t *testing.T) {
 	}
 
 	parser := NewSpecParser()
-	_, errs := parser.Parse(string(cmsWithLexerErrors))
+	_, errs := parser.Parse(cmsWithLexerErrors)
 	if len(errs) == 0 {
 		t.Errorf("Expecting errors, no errors where returned instead")
 	} else if !reflect.DeepEqual(errs, expectedErrors) {
@@ -375,7 +375,7 @@ func TestParserSyntaxErrors(t *testing.T) {
 	}
 
 	parser := NewSpecParser()
-	_, errs := parser.Parse(string(cmsWithParserErrors))
+	_, errs := parser.Parse(cmsWithParserErrors)
 	if len(errs) == 0 {
 		t.Errorf("Expecting errors, no errors where returned instead")
 	} else if !reflect.DeepEqual(errs, expectedErrors) {
