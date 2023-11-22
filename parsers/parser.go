@@ -5,7 +5,7 @@ import (
 )
 
 type Parser interface {
-	Parse(content []byte) (*Node, error)
+	Parse(content []byte) (*Node, []CMParserError)
 }
 
 type ParserProvider interface {
@@ -27,7 +27,7 @@ func NewParserProvider() ParserProvider {
 func (p *parserProviderImpl) GetParser(format string) (Parser, error) {
 	parser, ok := p.parsers[format]
 	if !ok {
-		return nil, fmt.Errorf("parser for format %s not found", format)
+		return nil, fmt.Errorf("format '%s' not supported", format)
 	}
 
 	return parser, nil

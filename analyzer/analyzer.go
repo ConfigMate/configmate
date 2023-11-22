@@ -5,8 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	"github.com/ConfigMate/configmate/analyzer/check"
 	"github.com/ConfigMate/configmate/analyzer/spec"
 	"github.com/ConfigMate/configmate/analyzer/types"
@@ -79,14 +77,15 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string, specFileContent
 		specFileContent, err = a.fileFetcher.FetchFile(specFilePath)
 		if err != nil {
 			return nil, nil, &SpecError{
-				AnalyzerMsg: "Failed to obtain specification file",
+				AnalyzerMsg: "Failed to get specification file",
 				ErrorMsgs:   []string{err.Error()},
 			}
 		}
 	}
 
+	// Parse specification from contents
 	mainSpec, parserErrors := a.specParser.Parse(specFileContent)
-	if len(parserErrors) > 0 {
+	if len(parserErrors) > 0 { // Check for parser errors
 		specError := &SpecError{
 			AnalyzerMsg: "Failed to parse specification file",
 			ErrorMsgs:   []string{},
@@ -106,11 +105,11 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string, specFileContent
 	fields := make(map[string][]spec.FieldSpec)
 	fields[mainFileAlias] = mainSpec.Fields
 
-	// Parse main config file
-	mainConfig, err := a.parseConfigFileFromSpec(mainSpec)
+	// Get main config file
+	mainConfigContent, err := a.fileFetcher.FetchFile(mainSpec.File)
 	if err != nil {
 		specError := &SpecError{
-			AnalyzerMsg: "Failed to parse main config file",
+			AnalyzerMsg: "Failed to get main config file",
 			ErrorMsgs:   []string{err.Error()},
 			TokenList: []TokenLocationWithFile{
 				{
@@ -118,6 +117,45 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string, specFileContent
 					Location: mainSpec.FileLocation,
 				},
 			},
+		}
+		return mainSpec, nil, specError
+	}
+
+	// Get parser for main config file
+	mainConfigParser, err := a.parserProvider.GetParser(mainSpec.FileFormat)
+	if err != nil {
+		specError := &SpecError{
+			AnalyzerMsg: "Failed to get parser for main config file",
+			ErrorMsgs:   []string{err.Error()},
+			TokenList: []TokenLocationWithFile{
+				{
+					File:     specFilePath,
+					Location: mainSpec.FileFormatLocation,
+				},
+			},
+		}
+		return mainSpec, nil, specError
+	}
+
+	// Parse main config file
+	mainConfig, parserErrs := mainConfigParser.Parse(mainConfigContent)
+	if len(parserErrs) > 0 {
+		specError := &SpecError{
+			AnalyzerMsg: "Failed to parse main config file",
+			ErrorMsgs:   []string{},
+			TokenList: []TokenLocationWithFile{
+				{
+					File:     specFilePath,
+					Location: mainSpec.FileLocation,
+				},
+			},
+		}
+		for _, parserError := range parserErrs {
+			specError.ErrorMsgs = append(specError.ErrorMsgs, parserError.Message)
+			specError.TokenList = append(specError.TokenList, TokenLocationWithFile{
+				File:     mainSpec.File,
+				Location: parserError.Location,
+			})
 		}
 		return mainSpec, nil, specError
 	}
@@ -166,11 +204,11 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string, specFileContent
 			return mainSpec, nil, specError
 		}
 
-		// Parse imported spec file
-		importedSpec, parserErrors, err := a.fetchAndParseSpecFile(importedSpecFilePath)
+		// Get imported spec file
+		importedSpecBytes, err := a.fileFetcher.FetchFile(importedSpecFilePath)
 		if err != nil {
 			specError := &SpecError{
-				AnalyzerMsg: fmt.Sprintf("Failed to obtain imported spec file %s", importedSpecFilePath),
+				AnalyzerMsg: "Failed to get imported specification file",
 				ErrorMsgs:   []string{err.Error()},
 				TokenList: []TokenLocationWithFile{
 					{
@@ -180,7 +218,11 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string, specFileContent
 				},
 			}
 			return mainSpec, nil, specError
-		} else if len(parserErrors) > 0 {
+		}
+
+		// Parse imported spec file
+		importedSpec, parserErrors := a.specParser.Parse(importedSpecBytes)
+		if len(parserErrors) > 0 {
 			specError := &SpecError{
 				AnalyzerMsg: fmt.Sprintf("Failed to parse imported spec file %s", importedSpecFilePath),
 				ErrorMsgs:   []string{},
@@ -204,11 +246,11 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string, specFileContent
 		// Add imported spec file to fields map
 		fields[alias] = importedSpec.Fields
 
-		// Parse imported config file
-		importedConfig, err := a.parseConfigFileFromSpec(importedSpec)
+		// Get imported config file
+		importedConfigContent, err := a.fileFetcher.FetchFile(importedSpec.File)
 		if err != nil {
 			specError := &SpecError{
-				AnalyzerMsg: fmt.Sprintf("Failed to parse imported config file %s on spec %s", importedSpec.File, importedSpecFilePath),
+				AnalyzerMsg: fmt.Sprintf("Failed to get imported config file from spec %s", alias),
 				ErrorMsgs:   []string{err.Error()},
 				TokenList: []TokenLocationWithFile{
 					{
@@ -220,6 +262,53 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string, specFileContent
 						Location: importedSpec.FileLocation,
 					},
 				},
+			}
+			return mainSpec, nil, specError
+		}
+
+		// Get parser for imported config file
+		importedConfigParser, err := a.parserProvider.GetParser(importedSpec.FileFormat)
+		if err != nil {
+			specError := &SpecError{
+				AnalyzerMsg: fmt.Sprintf("Failed to get parser for imported config file from spec %s", alias),
+				ErrorMsgs:   []string{err.Error()},
+				TokenList: []TokenLocationWithFile{
+					{
+						File:     specFilePath,
+						Location: mainSpec.ImportsLocation[alias],
+					},
+					{
+						File:     importedSpecFilePath,
+						Location: importedSpec.FileFormatLocation,
+					},
+				},
+			}
+			return mainSpec, nil, specError
+		}
+
+		// Parse imported config file
+		importedConfig, parserErrs := importedConfigParser.Parse(importedConfigContent)
+		if len(parserErrs) > 0 {
+			specError := &SpecError{
+				AnalyzerMsg: fmt.Sprintf("Failed to parse imported config file from spec %s", alias),
+				ErrorMsgs:   []string{err.Error()},
+				TokenList: []TokenLocationWithFile{
+					{
+						File:     specFilePath,
+						Location: mainSpec.ImportsLocation[alias],
+					},
+					{
+						File:     importedSpecFilePath,
+						Location: importedSpec.FileLocation,
+					},
+				},
+			}
+			for _, parserError := range parserErrs {
+				specError.ErrorMsgs = append(specError.ErrorMsgs, parserError.Message)
+				specError.TokenList = append(specError.TokenList, TokenLocationWithFile{
+					File:     importedSpec.File,
+					Location: parserError.Location,
+				})
 			}
 			return mainSpec, nil, specError
 		}
@@ -472,42 +561,4 @@ func (a *analyzerImpl) runChecks(
 	}
 
 	return res, nil
-}
-
-func (a *analyzerImpl) fetchAndParseSpecFile(specFilePath string) (*spec.Specification, []spec.SpecParserError, error) {
-	// Get specification file
-	specBytes, err := a.fileFetcher.FetchFile(specFilePath)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to fetch specification file")
-	}
-
-	// Parse specification
-	spec, errs := a.specParser.Parse(specBytes)
-	if len(errs) > 0 {
-		return nil, errs, errors.Wrap(err, "failed to parse specification file")
-	}
-
-	return spec, nil, nil
-}
-
-func (a *analyzerImpl) parseConfigFileFromSpec(spec *spec.Specification) (*parsers.Node, error) {
-	// Fetch config file
-	configBytes, err := a.fileFetcher.FetchFile(spec.File)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch main config file")
-	}
-
-	// Get parser for main config file
-	configParser, err := a.parserProvider.GetParser(spec.FileFormat)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get parser for main config file")
-	}
-
-	// Parse main config file
-	config, err := configParser.Parse(configBytes)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse main config file")
-	}
-
-	return config, nil
 }

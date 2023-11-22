@@ -1,7 +1,6 @@
 package parsers
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -9,16 +8,6 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/golang-collections/collections/stack"
 )
-
-type JsonErrorListener struct {
-	antlr.DefaultErrorListener
-	errors []error
-}
-
-// Error handling
-func (s *JsonErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol interface{}, line, column int, msg string, e antlr.RecognitionException) {
-	s.errors = append(s.errors, fmt.Errorf("line %d:%d %s", line-1, column, msg))
-}
 
 type JsonParser struct {
 	*parser_json.BaseJSONListener
@@ -28,9 +17,9 @@ type JsonParser struct {
 }
 
 // Custom Json Parser
-func (p *JsonParser) Parse(data []byte) (*Node, error) {
+func (p *JsonParser) Parse(data []byte) (*Node, []CMParserError) {
 	// Initialize the error listener
-	errorListener := &JsonErrorListener{}
+	errorListener := &CMErrorListener{}
 
 	input := antlr.NewInputStream(string(data))
 	lexer := parser_json.NewJSONLexer(input)
@@ -49,7 +38,7 @@ func (p *JsonParser) Parse(data []byte) (*Node, error) {
 
 	// Check for errors after parsing
 	if len(errorListener.errors) > 0 {
-		return nil, fmt.Errorf("syntax errors: %v", errorListener.errors)
+		return nil, errorListener.errors
 	}
 
 	// Initialize config file

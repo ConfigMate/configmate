@@ -1,20 +1,19 @@
 package parsers
 
 import (
-	"fmt"
 	"os"
 	"reflect"
 	"testing"
 )
 
 type jsonParserTestCase struct {
-	input    []byte
-	expected *Node
-	err      bool
+	input        []byte
+	expected     *Node
+	expectedErrs []CMParserError
 }
 
 // TestParseSimpleJson tests the Parse function of a *JsonParser using a simple json config.
-func TestParseSimpleJson(t *testing.T) {
+func TestParseSimpleConfig_JsonParser(t *testing.T) {
 	// Input
 	testConfig, err := os.ReadFile("./test_configs/parseSimple.json")
 	if err != nil {
@@ -95,456 +94,182 @@ func TestParseSimpleJson(t *testing.T) {
 				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
 				ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 10, Column: 1}},
 			},
-			err: false,
+			expectedErrs: []CMParserError{},
 		},
 	}
 
 	// Run tests
 	for _, test := range testCases {
 		parser := &JsonParser{}
-		actual, err := parser.Parse(test.input)
+		result, errs := parser.Parse(test.input)
 
-		if err != nil && !test.err {
-			t.Errorf("Unexpected error: %s", err)
-		} else if err == nil && test.err {
-			t.Errorf("Expected error, got nil")
-		} else if !reflect.DeepEqual(actual, test.expected) {
-			t.Errorf("Expected %v, got %v", test.expected, actual)
+		if len(errs) > 0 {
+			t.Errorf("Unexpected errors: %#v", errs)
+		} else if !reflect.DeepEqual(test.expected, result) {
+			t.Errorf("Expected %v, got %v", test.expected, result)
 		}
 	}
 }
 
-// TestEmptyObj_Json_Parse tests the Parse function of a *JsonParser using an empty object json config.
-func TestEmptyObj_Json_Parse(t *testing.T) {
-	// Input
-	var jsonConfig = []byte(`{}`)
-
+// TestSimpleExpressionsJsonParser tests the Parse function of a *JsonParser using simple expressions.
+func TestSimpleExpressions_JsonParser(t *testing.T) {
 	// Test cases
-	type testCase struct {
-		input    []byte
-		expected *Node
-		err      bool
-	}
-
-	// Mock Node result
-	expectedNode := &Node{
-		Type:          Object,
-		Value:         map[string]*Node{},
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 2}},
-	}
-
-	testCases := []testCase{
-		{
-			input:    jsonConfig,
-			expected: expectedNode,
-			err:      false,
+	testCases := []jsonParserTestCase{
+		{ // empty object json config
+			input: []byte(`{}`),
+			expected: &Node{
+				Type:          Object,
+				Value:         map[string]*Node{},
+				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 2}},
+			},
+			expectedErrs: nil,
 		},
-	}
-
-	// Run tests
-	for _, test := range testCases {
-		parser := &JsonParser{}
-		actual, err := parser.Parse(test.input)
-
-		if err != nil && !test.err {
-			t.Errorf("Unexpected error: %s", err)
-		} else if err == nil && test.err {
-			t.Errorf("Expected error, got nil")
-		} else if !reflect.DeepEqual(actual, test.expected) {
-			t.Errorf("Expected %v, got %v", test.expected, actual)
-		}
-	}
-}
-
-// TestEmptyArray_Json_Parse tests the Parse function of a *JsonParser using an empty array json config.
-func TestEmptyArray_Json_Parse(t *testing.T) {
-	// Input
-	var jsonConfig = []byte(`[]`)
-
-	// Test cases
-	type testCase struct {
-		input    []byte
-		expected *Node
-		err      bool
-	}
-
-	// Mock Node result
-	expectedNode := &Node{
-		Type:          Array,
-		Value:         []*Node{},
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 2}},
-	}
-
-	testCases := []testCase{
-		{
-			input:    jsonConfig,
-			expected: expectedNode,
-			err:      false,
+		{ // empty array json config
+			input: []byte(`[]`),
+			expected: &Node{
+				Type:          Array,
+				Value:         []*Node{},
+				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 2}},
+			},
+			expectedErrs: nil,
 		},
-	}
-
-	// Run tests
-	for _, test := range testCases {
-		parser := &JsonParser{}
-		actual, err := parser.Parse(test.input)
-
-		if err != nil && !test.err {
-			t.Errorf("Unexpected error: %s", err)
-		} else if err == nil && test.err {
-			t.Errorf("Expected error, got nil")
-		} else if !reflect.DeepEqual(actual, test.expected) {
-			t.Errorf("Expected %v, got %v", test.expected, actual)
-		}
-	}
-}
-
-func TestSingleArray_Json_Parse(t *testing.T) {
-	// Input
-	var jsonConfig = []byte(`["sample"]`)
-
-	// Test cases
-	type testCase struct {
-		input    []byte
-		expected *Node
-		err      bool
-	}
-
-	// Mock Node result
-	expectedNode := &Node{
-		Type:      Array,
-		ArrayType: String,
-		Value: []*Node{
-			{
+		{ // simple array json config
+			input: []byte(`["sample"]`),
+			expected: &Node{
+				Type:      Array,
+				ArrayType: String,
+				Value: []*Node{
+					{
+						Type:          String,
+						Value:         "sample",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 1}, End: CharLocation{Line: 0, Column: 9}},
+					},
+				},
+				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 10}},
+			},
+			expectedErrs: nil,
+		},
+		{ // single string json config
+			input: []byte(`"sample"`),
+			expected: &Node{
 				Type:          String,
 				Value:         "sample",
 				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-				ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 1}, End: CharLocation{Line: 0, Column: 9}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 8}},
 			},
+			expectedErrs: nil,
 		},
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 10}},
-	}
-
-	testCases := []testCase{
-		{
-			input:    jsonConfig,
-			expected: expectedNode,
-			err:      false,
+		{ // single int number json config
+			input: []byte(`12345`),
+			expected: &Node{
+				Type:          Int,
+				Value:         12345,
+				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 5}},
+			},
+			expectedErrs: nil,
 		},
-	}
-
-	// Run tests
-	for _, test := range testCases {
-		parser := &JsonParser{}
-		actual, err := parser.Parse(test.input)
-
-		if err != nil && !test.err {
-			t.Errorf("Unexpected error: %s", err)
-		} else if err == nil && test.err {
-			t.Errorf("Expected error, got nil")
-		} else if !reflect.DeepEqual(actual, test.expected) {
-			t.Errorf("Expected %v, got %v", test.expected, actual)
-		}
-	}
-}
-
-// TestSingleString_JSON_Parse tests the Parse function of a *JsonParser using a single string json config.
-func TestSingleString_Json_Parse(t *testing.T) {
-	// Input
-	var jsonConfig = []byte(`"sample"`)
-
-	// Test cases
-	type testCase struct {
-		input    []byte
-		expected *Node
-		err      bool
-	}
-
-	// Mock Node result
-	expectedNode := &Node{
-		Type:          String,
-		Value:         "sample",
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 8}},
-	}
-
-	testCases := []testCase{
-		{
-			input:    jsonConfig,
-			expected: expectedNode,
-			err:      false,
+		{ // single float number json config
+			input: []byte(`123.45`),
+			expected: &Node{
+				Type:          Float,
+				Value:         123.45,
+				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 6}},
+			},
+			expectedErrs: nil,
+		},
+		{ // single true bool json config
+			input: []byte(`true`),
+			expected: &Node{
+				Type:          Bool,
+				Value:         true,
+				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 4}},
+			},
+			expectedErrs: nil,
+		},
+		{ // single false bool json config
+			input: []byte(`false`),
+			expected: &Node{
+				Type:          Bool,
+				Value:         false,
+				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 5}},
+			},
+			expectedErrs: nil,
+		},
+		{ // single null json config
+			input: []byte(`null`),
+			expected: &Node{
+				Type:          Null,
+				Value:         nil,
+				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 4}},
+			},
+			expectedErrs: nil,
 		},
 	}
 
 	// Run tests
 	for _, test := range testCases {
 		parser := &JsonParser{}
-		actual, err := parser.Parse(test.input)
+		result, errs := parser.Parse(test.input)
 
-		if err != nil && !test.err {
-			t.Errorf("Unexpected error: %s", err)
-		} else if err == nil && test.err {
-			t.Errorf("Expected error, got nil")
-		} else if !reflect.DeepEqual(actual, test.expected) {
-			t.Errorf("Expected %v, got %v", test.expected, actual)
+		if len(errs) > 0 {
+			t.Errorf("Unexpected errors: %#v", errs)
+		} else if !reflect.DeepEqual(test.expected, result) {
+			t.Errorf("Expected %v, got %v", test.expected, result)
 		}
 	}
 }
 
-// TestSingleIntNumber_Json_Parse tests the Parse function of a *JsonParser using a single int number json config.
-func TestSingleIntNumber_Json_Parse(t *testing.T) {
+// TestErrorConditions_JsonParser tests the Parse function of a *JsonParser with erroneous json expressions.
+func TestErrorConditions_JsonParser(t *testing.T) {
 	// Input
-	var jsonConfig = []byte(`12345`)
-
-	// Test cases
-	type testCase struct {
-		input    []byte
-		expected *Node
-		err      bool
-	}
-
-	// Mock Node result
-	expectedNode := &Node{
-		Type:          Int,
-		Value:         12345,
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 5}},
-	}
-
-	testCases := []testCase{
-		{
-			input:    jsonConfig,
-			expected: expectedNode,
-			err:      false,
-		},
-	}
-
-	// Run tests
-	for _, test := range testCases {
-		parser := &JsonParser{}
-		actual, err := parser.Parse(test.input)
-
-		if err != nil && !test.err {
-			t.Errorf("Unexpected error: %s", err)
-		} else if err == nil && test.err {
-			t.Errorf("Expected error, got nil")
-		} else if !reflect.DeepEqual(actual, test.expected) {
-			t.Errorf("Expected %v, got %v", test.expected, actual)
-		}
-	}
-}
-
-// TestSingleFloatNumber_Json_Parse tests the Parse function of a *JsonParser using a single float json config.
-func TestSingleFloatNumber_Json_Parse(t *testing.T) {
-	// Input
-	var jsonConfig = []byte(`123.45`)
-
-	// Test cases
-	type testCase struct {
-		input    []byte
-		expected *Node
-		err      bool
-	}
-
-	// Mock Node result
-	expectedNode := &Node{
-		Type:          Float,
-		Value:         123.45,
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 6}},
-	}
-
-	testCases := []testCase{
-		{
-			input:    jsonConfig,
-			expected: expectedNode,
-			err:      false,
-		},
-	}
-
-	// Run tests
-	for _, test := range testCases {
-		parser := &JsonParser{}
-		actual, err := parser.Parse(test.input)
-
-		if err != nil && !test.err {
-			t.Errorf("Unexpected error: %s", err)
-		} else if err == nil && test.err {
-			t.Errorf("Expected error, got nil")
-		} else if !reflect.DeepEqual(actual, test.expected) {
-			t.Errorf("Expected %v, got %v", test.expected, actual)
-		}
-	}
-}
-
-// TestSingleTrueBool_Json_Parse tests the Parse function of a *JsonParser using a single true bool json config.
-func TestSingleTrueBool_Json_Parse(t *testing.T) {
-	// Input
-	var jsonConfig = []byte(`true`)
-
-	// Test cases
-	type testCase struct {
-		input    []byte
-		expected *Node
-		err      bool
-	}
-
-	// Mock Node result
-	expectedNode := &Node{
-		Type:          Bool,
-		Value:         true,
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 4}},
-	}
-
-	testCases := []testCase{
-		{
-			input:    jsonConfig,
-			expected: expectedNode,
-			err:      false,
-		},
-	}
-
-	// Run tests
-	for _, test := range testCases {
-		parser := &JsonParser{}
-		actual, err := parser.Parse(test.input)
-
-		if err != nil && !test.err {
-			t.Errorf("Unexpected error: %s", err)
-		} else if err == nil && test.err {
-			t.Errorf("Expected error, got nil")
-		} else if !reflect.DeepEqual(actual, test.expected) {
-			t.Errorf("Expected %v, got %v", test.expected, actual)
-		}
-	}
-}
-
-// TestSingleFalseBool_Json_Parse tests the Parse function of a *JsonParser using a single false bool json config.
-func TestSingleFalseBool_Json_Parse(t *testing.T) {
-	// Input
-	var jsonConfig = []byte(`false`)
-
-	// Test cases
-	type testCase struct {
-		input    []byte
-		expected *Node
-		err      bool
-	}
-
-	// Mock Node result
-	expectedNode := &Node{
-		Type:          Bool,
-		Value:         false,
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 5}},
-	}
-
-	testCases := []testCase{
-		{
-			input:    jsonConfig,
-			expected: expectedNode,
-			err:      false,
-		},
-	}
-
-	// Run tests
-	for _, test := range testCases {
-		parser := &JsonParser{}
-		actual, err := parser.Parse(test.input)
-
-		if err != nil && !test.err {
-			t.Errorf("Unexpected error: %s", err)
-		} else if err == nil && test.err {
-			t.Errorf("Expected error, got nil")
-		} else if !reflect.DeepEqual(actual, test.expected) {
-			t.Errorf("Expected %v, got %v", test.expected, actual)
-		}
-	}
-}
-
-// TestSingleNull_Json_Parse tests the Parse function of a *JsonParser using a single null json config.
-func TestSingleNull_Json_Parse(t *testing.T) {
-	// Input
-	var jsonConfig = []byte(`null`)
-
-	// Test cases
-	type testCase struct {
-		input    []byte
-		expected *Node
-		err      bool
-	}
-
-	// Mock Node result
-	expectedNode := &Node{
-		Type:          Null,
-		Value:         nil,
-		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 4}},
-	}
-
-	testCases := []testCase{
-		{
-			input:    jsonConfig,
-			expected: expectedNode,
-			err:      false,
-		},
-	}
-
-	// Run tests
-	for _, test := range testCases {
-		parser := &JsonParser{}
-		actual, err := parser.Parse(test.input)
-
-		if err != nil && !test.err {
-			t.Errorf("Unexpected error: %s", err)
-		} else if err == nil && test.err {
-			t.Errorf("Expected error, got nil")
-		} else if !reflect.DeepEqual(actual, test.expected) {
-			t.Errorf("Expected %v, got %v", test.expected, actual)
-		}
-	}
-}
-
-// TestSingleError_Parse tests the Parse function of a *JsonParser using a wrong json config.
-func TestSingleError_Parse(t *testing.T) {
-	// Input
-	var jsonConfig = []byte(`{
+	var errJsonConfig0 = []byte(`{
 		"name": "sample",
 		"version": 1.3,
 		"active": true
 		"features": ["auth", "logs"]
 	`)
 
-	// Test cases
-	type testCase struct {
-		input    []byte
-		expected error
-		err      bool
-	}
-
-	// Mock Node result
-	testCases := []testCase{
+	testCases := []jsonParserTestCase{
 		{
-			input:    jsonConfig,
-			expected: fmt.Errorf(`syntax errors: [line 4:2 extraneous input '"features"' expecting {',', '}'} line 4:29 mismatched input ']' expecting ':']`),
-			err:      true,
+			input:    errJsonConfig0,
+			expected: nil,
+			expectedErrs: []CMParserError{
+				{
+					Message: "extraneous input '\"features\"' expecting {',', '}'}",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 4, Column: 2},
+						End:   CharLocation{Line: 4, Column: 3},
+					},
+				},
+				{
+					Message: "mismatched input ']' expecting ':'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 4, Column: 29},
+						End:   CharLocation{Line: 4, Column: 30},
+					},
+				},
+			},
 		},
 	}
 
 	// Run tests
 	for _, test := range testCases {
 		parser := &JsonParser{}
-		_, err := parser.Parse(test.input)
+		_, errs := parser.Parse(test.input)
 
-		if err != nil && !test.err {
-			t.Errorf("Unexpected error: %s", err)
-		} else if err == nil && test.err {
-			t.Errorf("Expected error, got nil")
-		} else if err != nil && test.err && err.Error() != test.expected.Error() {
-			t.Errorf("Expected %v, got %v", test.expected, err)
+		if len(errs) == 0 {
+			t.Errorf("Expected errors, got none")
+		} else if reflect.DeepEqual(test.expected, errs) {
+			t.Errorf("Expected %v, got %v", test.expected, errs)
 		}
 	}
 }
