@@ -31,20 +31,20 @@ func TestParseSimpleJson(t *testing.T) {
 					"name": {
 						Type:          String,
 						Value:         "sample",
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 1}, End: CharLocation{Line: 2, Column: 7}},  // Indented with tabs instead of spaces
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 9}, End: CharLocation{Line: 2, Column: 17}}, // Indented with tabs instead of spaces
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 7}},  // Indented with tabs instead of spaces
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 9}, End: CharLocation{Line: 1, Column: 17}}, // Indented with tabs instead of spaces
 					},
 					"version": {
 						Type:          Float,
 						Value:         1.3,
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 3, Column: 4}, End: CharLocation{Line: 3, Column: 13}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 3, Column: 15}, End: CharLocation{Line: 3, Column: 18}},
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 4}, End: CharLocation{Line: 2, Column: 13}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 15}, End: CharLocation{Line: 2, Column: 18}},
 					},
 					"active": {
 						Type:          Bool,
 						Value:         true,
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 4, Column: 4}, End: CharLocation{Line: 4, Column: 12}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 4, Column: 14}, End: CharLocation{Line: 4, Column: 18}},
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 3, Column: 4}, End: CharLocation{Line: 3, Column: 12}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 3, Column: 14}, End: CharLocation{Line: 3, Column: 18}},
 					},
 					"settings": {
 						Type: Object,
@@ -52,24 +52,24 @@ func TestParseSimpleJson(t *testing.T) {
 							"theme": {
 								Type:          String,
 								Value:         "dark",
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 6, Column: 8}, End: CharLocation{Line: 6, Column: 15}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 6, Column: 17}, End: CharLocation{Line: 6, Column: 23}},
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 5, Column: 8}, End: CharLocation{Line: 5, Column: 15}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 5, Column: 17}, End: CharLocation{Line: 5, Column: 23}},
 							},
 							"notifications": {
 								Type:          Null,
 								Value:         nil,
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 7, Column: 8}, End: CharLocation{Line: 7, Column: 23}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 7, Column: 25}, End: CharLocation{Line: 7, Column: 29}},
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 6, Column: 8}, End: CharLocation{Line: 6, Column: 23}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 6, Column: 25}, End: CharLocation{Line: 6, Column: 29}},
 							},
 							"retryCount": {
 								Type:          Int,
 								Value:         3,
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 8, Column: 8}, End: CharLocation{Line: 8, Column: 20}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 8, Column: 22}, End: CharLocation{Line: 8, Column: 23}},
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 7, Column: 8}, End: CharLocation{Line: 7, Column: 20}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 7, Column: 22}, End: CharLocation{Line: 7, Column: 23}},
 							},
 						},
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 5, Column: 4}, End: CharLocation{Line: 5, Column: 14}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 5, Column: 16}, End: CharLocation{Line: 9, Column: 5}},
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 4, Column: 4}, End: CharLocation{Line: 4, Column: 14}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 4, Column: 16}, End: CharLocation{Line: 8, Column: 5}},
 					},
 					"features": {
 						Type:      Array,
@@ -79,21 +79,21 @@ func TestParseSimpleJson(t *testing.T) {
 								Type:          String,
 								Value:         "auth",
 								NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 10, Column: 17}, End: CharLocation{Line: 10, Column: 23}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 9, Column: 17}, End: CharLocation{Line: 9, Column: 23}},
 							},
 							{
 								Type:          String,
 								Value:         "logs",
 								NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 10, Column: 25}, End: CharLocation{Line: 10, Column: 31}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 9, Column: 25}, End: CharLocation{Line: 9, Column: 31}},
 							},
 						},
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 10, Column: 4}, End: CharLocation{Line: 10, Column: 14}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 10, Column: 16}, End: CharLocation{Line: 10, Column: 32}},
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 9, Column: 4}, End: CharLocation{Line: 9, Column: 14}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 9, Column: 16}, End: CharLocation{Line: 9, Column: 32}},
 					},
 				},
 				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-				ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 0}, End: CharLocation{Line: 11, Column: 1}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 10, Column: 1}},
 			},
 			err: false,
 		},
@@ -131,7 +131,7 @@ func TestEmptyObj_Json_Parse(t *testing.T) {
 		Type:          Object,
 		Value:         map[string]*Node{},
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 0}, End: CharLocation{Line: 1, Column: 2}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 2}},
 	}
 
 	testCases := []testCase{
@@ -174,7 +174,7 @@ func TestEmptyArray_Json_Parse(t *testing.T) {
 		Type:          Array,
 		Value:         []*Node{},
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 0}, End: CharLocation{Line: 1, Column: 2}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 2}},
 	}
 
 	testCases := []testCase{
@@ -220,11 +220,11 @@ func TestSingleArray_Json_Parse(t *testing.T) {
 				Type:          String,
 				Value:         "sample",
 				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-				ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 9}},
+				ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 1}, End: CharLocation{Line: 0, Column: 9}},
 			},
 		},
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 0}, End: CharLocation{Line: 1, Column: 10}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 10}},
 	}
 
 	testCases := []testCase{
@@ -267,7 +267,7 @@ func TestSingleString_Json_Parse(t *testing.T) {
 		Type:          String,
 		Value:         "sample",
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 0}, End: CharLocation{Line: 1, Column: 8}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 8}},
 	}
 
 	testCases := []testCase{
@@ -310,7 +310,7 @@ func TestSingleIntNumber_Json_Parse(t *testing.T) {
 		Type:          Int,
 		Value:         12345,
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 0}, End: CharLocation{Line: 1, Column: 5}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 5}},
 	}
 
 	testCases := []testCase{
@@ -353,7 +353,7 @@ func TestSingleFloatNumber_Json_Parse(t *testing.T) {
 		Type:          Float,
 		Value:         123.45,
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 0}, End: CharLocation{Line: 1, Column: 6}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 6}},
 	}
 
 	testCases := []testCase{
@@ -396,7 +396,7 @@ func TestSingleTrueBool_Json_Parse(t *testing.T) {
 		Type:          Bool,
 		Value:         true,
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 0}, End: CharLocation{Line: 1, Column: 4}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 4}},
 	}
 
 	testCases := []testCase{
@@ -439,7 +439,7 @@ func TestSingleFalseBool_Json_Parse(t *testing.T) {
 		Type:          Bool,
 		Value:         false,
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 0}, End: CharLocation{Line: 1, Column: 5}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 5}},
 	}
 
 	testCases := []testCase{
@@ -482,7 +482,7 @@ func TestSingleNull_Json_Parse(t *testing.T) {
 		Type:          Null,
 		Value:         nil,
 		NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-		ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 0}, End: CharLocation{Line: 1, Column: 4}},
+		ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 4}},
 	}
 
 	testCases := []testCase{
@@ -529,7 +529,7 @@ func TestSingleError_Parse(t *testing.T) {
 	testCases := []testCase{
 		{
 			input:    jsonConfig,
-			expected: fmt.Errorf(`syntax errors: [line 5:2 extraneous input '"features"' expecting {',', '}'} line 5:29 mismatched input ']' expecting ':']`),
+			expected: fmt.Errorf(`syntax errors: [line 4:2 extraneous input '"features"' expecting {',', '}'} line 4:29 mismatched input ']' expecting ':']`),
 			err:      true,
 		},
 	}

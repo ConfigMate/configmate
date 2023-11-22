@@ -26,7 +26,7 @@ func createLineMap(fileContent []byte) map[int]string {
 	}
 
 	for i, line := range strings.Split(string(fileContent), "\n") {
-		lineMap[i+1] = line
+		lineMap[i] = line
 	}
 
 	return lineMap

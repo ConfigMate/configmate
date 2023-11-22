@@ -36,11 +36,11 @@ func (d *cmslErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSy
 		ErrorMessage: msg,
 		Location: parsers.TokenLocation{
 			Start: parsers.CharLocation{
-				Line:   line,
+				Line:   line - 1,
 				Column: column,
 			},
 			End: parsers.CharLocation{
-				Line:   line,
+				Line:   line - 1,
 				Column: column + 1,
 			},
 		},
@@ -111,11 +111,11 @@ func (p *specParserImpl) EnterFileDeclaration(ctx *parser_cmsl.FileDeclarationCo
 	p.spec.File = removeStrQuotesAndCleanSpaces(ctx.SHORT_STRING().GetText())
 	p.spec.FileLocation = parsers.TokenLocation{
 		Start: parsers.CharLocation{
-			Line:   ctx.SHORT_STRING().GetSymbol().GetLine(),
+			Line:   ctx.SHORT_STRING().GetSymbol().GetLine() - 1,
 			Column: ctx.SHORT_STRING().GetSymbol().GetColumn(),
 		},
 		End: parsers.CharLocation{
-			Line:   ctx.SHORT_STRING().GetSymbol().GetLine(),
+			Line:   ctx.SHORT_STRING().GetSymbol().GetLine() - 1,
 			Column: ctx.SHORT_STRING().GetSymbol().GetColumn() + len(ctx.SHORT_STRING().GetText()),
 		},
 	}
@@ -124,11 +124,11 @@ func (p *specParserImpl) EnterFileDeclaration(ctx *parser_cmsl.FileDeclarationCo
 	p.spec.FileFormat = ctx.IDENTIFIER().GetText()
 	p.spec.FileFormatLocation = parsers.TokenLocation{
 		Start: parsers.CharLocation{
-			Line:   ctx.IDENTIFIER().GetSymbol().GetLine(),
+			Line:   ctx.IDENTIFIER().GetSymbol().GetLine() - 1,
 			Column: ctx.IDENTIFIER().GetSymbol().GetColumn(),
 		},
 		End: parsers.CharLocation{
-			Line:   ctx.IDENTIFIER().GetSymbol().GetLine(),
+			Line:   ctx.IDENTIFIER().GetSymbol().GetLine() - 1,
 			Column: ctx.IDENTIFIER().GetSymbol().GetColumn() + len(ctx.IDENTIFIER().GetText()),
 		},
 	}
@@ -140,11 +140,11 @@ func (p *specParserImpl) EnterImportItem(ctx *parser_cmsl.ImportItemContext) {
 	p.spec.Imports[ctx.IDENTIFIER().GetText()] = removeStrQuotesAndCleanSpaces(ctx.SHORT_STRING().GetText())
 	p.spec.ImportsLocation[ctx.IDENTIFIER().GetText()] = parsers.TokenLocation{
 		Start: parsers.CharLocation{
-			Line:   ctx.SHORT_STRING().GetSymbol().GetLine(),
+			Line:   ctx.SHORT_STRING().GetSymbol().GetLine() - 1,
 			Column: ctx.SHORT_STRING().GetSymbol().GetColumn(),
 		},
 		End: parsers.CharLocation{
-			Line:   ctx.SHORT_STRING().GetSymbol().GetLine(),
+			Line:   ctx.SHORT_STRING().GetSymbol().GetLine() - 1,
 			Column: ctx.SHORT_STRING().GetSymbol().GetColumn() + len(ctx.SHORT_STRING().GetText()),
 		},
 	}
@@ -152,11 +152,11 @@ func (p *specParserImpl) EnterImportItem(ctx *parser_cmsl.ImportItemContext) {
 	// Add import alias location
 	p.spec.ImportsAliasLocation[ctx.IDENTIFIER().GetText()] = parsers.TokenLocation{
 		Start: parsers.CharLocation{
-			Line:   ctx.IDENTIFIER().GetSymbol().GetLine(),
+			Line:   ctx.IDENTIFIER().GetSymbol().GetLine() - 1,
 			Column: ctx.IDENTIFIER().GetSymbol().GetColumn(),
 		},
 		End: parsers.CharLocation{
-			Line:   ctx.IDENTIFIER().GetSymbol().GetLine(),
+			Line:   ctx.IDENTIFIER().GetSymbol().GetLine() - 1,
 			Column: ctx.IDENTIFIER().GetSymbol().GetColumn() + len(ctx.IDENTIFIER().GetText()),
 		},
 	}
@@ -179,11 +179,11 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 		Field: fieldName,
 		FieldLocation: parsers.TokenLocation{
 			Start: parsers.CharLocation{
-				Line:   ctx.FieldName().GetStart().GetLine(),
+				Line:   ctx.FieldName().GetStart().GetLine() - 1,
 				Column: ctx.FieldName().GetStart().GetColumn(),
 			},
 			End: parsers.CharLocation{
-				Line:   ctx.FieldName().GetStop().GetLine(),
+				Line:   ctx.FieldName().GetStop().GetLine() - 1,
 				Column: ctx.FieldName().GetStop().GetColumn() + len(ctx.FieldName().GetStop().GetText()),
 			},
 		},
@@ -205,11 +205,11 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 					ErrorMessage: fmt.Sprintf("duplicate type metadata for field %s", fieldName),
 					Location: parsers.TokenLocation{
 						Start: parsers.CharLocation{
-							Line:   item.GetStart().GetLine(),
+							Line:   item.GetStart().GetLine() - 1,
 							Column: item.GetStart().GetColumn(),
 						},
 						End: parsers.CharLocation{
-							Line:   item.GetStop().GetLine(),
+							Line:   item.GetStop().GetLine() - 1,
 							Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
 						},
 					},
@@ -222,11 +222,11 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 			fieldSpecification.Type = condenseListExpressions(item.TypeExpr().GetText())
 			fieldSpecification.TypeLocation = parsers.TokenLocation{
 				Start: parsers.CharLocation{
-					Line:   item.TypeExpr().GetStart().GetLine(),
+					Line:   item.TypeExpr().GetStart().GetLine() - 1,
 					Column: item.TypeExpr().GetStart().GetColumn(),
 				},
 				End: parsers.CharLocation{
-					Line:   item.TypeExpr().GetStop().GetLine(),
+					Line:   item.TypeExpr().GetStop().GetLine() - 1,
 					Column: item.TypeExpr().GetStop().GetColumn() + len(item.TypeExpr().GetStop().GetText()),
 				},
 			}
@@ -237,11 +237,11 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 					ErrorMessage: fmt.Sprintf("duplicate optional metadata for field %s", fieldName),
 					Location: parsers.TokenLocation{
 						Start: parsers.CharLocation{
-							Line:   item.GetStart().GetLine(),
+							Line:   item.GetStart().GetLine() - 1,
 							Column: item.GetStart().GetColumn(),
 						},
 						End: parsers.CharLocation{
-							Line:   item.GetStop().GetLine(),
+							Line:   item.GetStop().GetLine() - 1,
 							Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
 						},
 					},
@@ -259,11 +259,11 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 			fieldSpecification.Optional = optional
 			fieldSpecification.OptionalLocation = parsers.TokenLocation{
 				Start: parsers.CharLocation{
-					Line:   item.BOOL().GetSymbol().GetLine(),
+					Line:   item.BOOL().GetSymbol().GetLine() - 1,
 					Column: item.BOOL().GetSymbol().GetColumn(),
 				},
 				End: parsers.CharLocation{
-					Line:   item.BOOL().GetSymbol().GetLine(),
+					Line:   item.BOOL().GetSymbol().GetLine() - 1,
 					Column: item.BOOL().GetSymbol().GetColumn() + len(item.BOOL().GetSymbol().GetText()),
 				},
 			}
@@ -274,11 +274,11 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 					ErrorMessage: fmt.Sprintf("duplicate default metadata for field %s", fieldName),
 					Location: parsers.TokenLocation{
 						Start: parsers.CharLocation{
-							Line:   item.GetStart().GetLine(),
+							Line:   item.GetStart().GetLine() - 1,
 							Column: item.GetStart().GetColumn(),
 						},
 						End: parsers.CharLocation{
-							Line:   item.GetStop().GetLine(),
+							Line:   item.GetStop().GetLine() - 1,
 							Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
 						},
 					},
@@ -291,11 +291,11 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 			fieldSpecification.Default = removeStrQuotesAndCleanSpaces(item.Primitive().GetText())
 			fieldSpecification.DefaultLocation = parsers.TokenLocation{
 				Start: parsers.CharLocation{
-					Line:   item.Primitive().GetStart().GetLine(),
+					Line:   item.Primitive().GetStart().GetLine() - 1,
 					Column: item.Primitive().GetStart().GetColumn(),
 				},
 				End: parsers.CharLocation{
-					Line:   item.Primitive().GetStop().GetLine(),
+					Line:   item.Primitive().GetStop().GetLine() - 1,
 					Column: item.Primitive().GetStop().GetColumn() + len(item.Primitive().GetStop().GetText()),
 				},
 			}
@@ -306,11 +306,11 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 					ErrorMessage: fmt.Sprintf("duplicate notes metadata for field %s", fieldName),
 					Location: parsers.TokenLocation{
 						Start: parsers.CharLocation{
-							Line:   item.GetStart().GetLine(),
+							Line:   item.GetStart().GetLine() - 1,
 							Column: item.GetStart().GetColumn(),
 						},
 						End: parsers.CharLocation{
-							Line:   item.GetStop().GetLine(),
+							Line:   item.GetStop().GetLine() - 1,
 							Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
 						},
 					},
@@ -323,11 +323,11 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 			fieldSpecification.Notes = removeStrQuotesAndCleanSpaces(item.StringExpr().GetText())
 			fieldSpecification.NotesLocation = parsers.TokenLocation{
 				Start: parsers.CharLocation{
-					Line:   item.StringExpr().GetStart().GetLine(),
+					Line:   item.StringExpr().GetStart().GetLine() - 1,
 					Column: item.StringExpr().GetStart().GetColumn(),
 				},
 				End: parsers.CharLocation{
-					Line:   item.StringExpr().GetStop().GetLine(),
+					Line:   item.StringExpr().GetStop().GetLine() - 1,
 					Column: item.StringExpr().GetStop().GetColumn() + len(item.StringExpr().GetStop().GetText()),
 				},
 			}
@@ -342,11 +342,11 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 			ErrorMessage: fmt.Sprintf("missing type metadata for field %s", fieldName),
 			Location: parsers.TokenLocation{
 				Start: parsers.CharLocation{
-					Line:   ctx.GetStart().GetLine(),
+					Line:   ctx.GetStart().GetLine() - 1,
 					Column: ctx.GetStart().GetColumn(),
 				},
 				End: parsers.CharLocation{
-					Line:   ctx.GetStop().GetLine(),
+					Line:   ctx.GetStop().GetLine() - 1,
 					Column: ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText()),
 				},
 			},
@@ -360,11 +360,11 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 			Check: check.GetText(),
 			Location: parsers.TokenLocation{
 				Start: parsers.CharLocation{
-					Line:   check.GetStart().GetLine(),
+					Line:   check.GetStart().GetLine() - 1,
 					Column: check.GetStart().GetColumn(),
 				},
 				End: parsers.CharLocation{
-					Line:   check.GetStop().GetLine(),
+					Line:   check.GetStop().GetLine() - 1,
 					Column: check.GetStop().GetColumn() + len(check.GetStop().GetText()),
 				},
 			},
