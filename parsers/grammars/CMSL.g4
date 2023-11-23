@@ -91,7 +91,7 @@ INT : DIGIT+ ;               // Integer numbers
 FLOAT : DIGIT+ '.' DIGIT+ ;  // Floating point numbers
 BOOL : 'true' | 'false' ;    // Boolean values
 
-IDENTIFIER : LETTER (CHARACTER)* ;    // Typical definition of an identifier
+IDENTIFIER : (CHARACTER)+ ;    // Typical definition of an identifier
 
 WS : [ \t\r\n]+ -> skip ;    // Skip whitespace
 

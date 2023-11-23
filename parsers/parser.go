@@ -19,7 +19,7 @@ type parserProviderImpl struct {
 func NewParserProvider() ParserProvider {
 	return &parserProviderImpl{
 		parsers: map[string]Parser{
-			"json": &JsonParser{},
+			"json": &jsonParser{},
 		},
 	}
 }

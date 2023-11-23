@@ -9,9 +9,8 @@ import (
 // Node is a node in a configuration file. Fields of type Object will be encoded as
 // a map[string]*Node and fields of type Array will be encoded as a []*Node.
 type Node struct {
-	Type      FieldType   // Type of field
-	ArrayType FieldType   // Type of elements in array (if Type == Array)
-	Value     interface{} // Value of field
+	Type  FieldType   // Type of field
+	Value interface{} // Value of field
 
 	NameLocation  TokenLocation // Location of field name in the file
 	ValueLocation TokenLocation // Location of field value in the file
@@ -68,14 +67,14 @@ func (ft FieldType) String() string {
 // Paths look like these: "server.port", "settings.users[0].name", "logLevel"
 // If the node is found it is returned, otherwise nil is returned.
 // If the path is invalid, an error is returned.
-func (n *Node) Get(field string) (*Node, error) {
+func (n *Node) Get(path string) (*Node, error) {
 	// Split the key
-	segments := splitPathInSegments(field)
+	segments := splitPathInSegments(path)
 	currentNode := n
 
 	for _, segment := range segments {
 		if currentNode == nil {
-			return nil, fmt.Errorf("cannot traverse nil node in path %s", field)
+			return nil, fmt.Errorf("cannot traverse nil node in path %s", path)
 		}
 
 		switch currentNode.Type {
@@ -97,7 +96,7 @@ func (n *Node) Get(field string) (*Node, error) {
 			// Convert segment to integer index
 			index, err := strconv.Atoi(segment)
 			if err != nil {
-				return nil, fmt.Errorf("failed to convert [%s] to int value in path %s", segment, field)
+				return nil, fmt.Errorf("failed to convert [%s] to int value in path %s", segment, path)
 			}
 
 			// Check if the index is out of bounds
@@ -109,7 +108,7 @@ func (n *Node) Get(field string) (*Node, error) {
 
 		default:
 			// If we are here, it means we're trying to traverse a leaf node
-			return nil, fmt.Errorf("cannot traverse leaf node %s in path %s", segment, field)
+			return nil, fmt.Errorf("cannot traverse leaf node %s in path %s", segment, path)
 		}
 	}
 
@@ -120,6 +119,11 @@ func (n *Node) Get(field string) (*Node, error) {
 // for traversing a ConfigFile. Paths look like these: "server.port", "settings.users[0].name", "logLevel".
 // The segments are split based on the dot and the square brackets.
 func splitPathInSegments(path string) []string {
+	// Check if the path is empty
+	if len(path) == 0 {
+		return []string{}
+	}
+
 	// Split the key based on the dot
 	segments := strings.Split(path, ".")
 

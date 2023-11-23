@@ -12,10 +12,9 @@ type jsonParserTestCase struct {
 	expectedErrs []CMParserError
 }
 
-// TestParseSimpleJson tests the Parse function of a *JsonParser using a simple json config.
-func TestParseSimpleConfig_JsonParser(t *testing.T) {
+func TestParseSimpleConfig_jsonParser(t *testing.T) {
 	// Input
-	testConfig, err := os.ReadFile("./test_configs/parseSimple.json")
+	testConfig, err := os.ReadFile("./test_configs/simple.json")
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
@@ -71,8 +70,7 @@ func TestParseSimpleConfig_JsonParser(t *testing.T) {
 						ValueLocation: TokenLocation{Start: CharLocation{Line: 4, Column: 16}, End: CharLocation{Line: 8, Column: 5}},
 					},
 					"features": {
-						Type:      Array,
-						ArrayType: String,
+						Type: Array,
 						Value: []*Node{
 							{
 								Type:          String,
@@ -100,7 +98,7 @@ func TestParseSimpleConfig_JsonParser(t *testing.T) {
 
 	// Run tests
 	for _, test := range testCases {
-		parser := &JsonParser{}
+		parser := &jsonParser{}
 		result, errs := parser.Parse(test.input)
 
 		if len(errs) > 0 {
@@ -111,8 +109,7 @@ func TestParseSimpleConfig_JsonParser(t *testing.T) {
 	}
 }
 
-// TestSimpleExpressionsJsonParser tests the Parse function of a *JsonParser using simple expressions.
-func TestSimpleExpressions_JsonParser(t *testing.T) {
+func TestSimpleExpressions_jsonParser(t *testing.T) {
 	// Test cases
 	testCases := []jsonParserTestCase{
 		{ // empty object json config
@@ -138,8 +135,7 @@ func TestSimpleExpressions_JsonParser(t *testing.T) {
 		{ // simple array json config
 			input: []byte(`["sample"]`),
 			expected: &Node{
-				Type:      Array,
-				ArrayType: String,
+				Type: Array,
 				Value: []*Node{
 					{
 						Type:          String,
@@ -217,7 +213,7 @@ func TestSimpleExpressions_JsonParser(t *testing.T) {
 
 	// Run tests
 	for _, test := range testCases {
-		parser := &JsonParser{}
+		parser := &jsonParser{}
 		result, errs := parser.Parse(test.input)
 
 		if len(errs) > 0 {
@@ -228,8 +224,7 @@ func TestSimpleExpressions_JsonParser(t *testing.T) {
 	}
 }
 
-// TestErrorConditions_JsonParser tests the Parse function of a *JsonParser with erroneous json expressions.
-func TestErrorConditions_JsonParser(t *testing.T) {
+func TestErrorConditions_jsonParser(t *testing.T) {
 	// Input
 	var errJsonConfig0 = []byte(`{
 		"name": "sample",
@@ -263,13 +258,13 @@ func TestErrorConditions_JsonParser(t *testing.T) {
 
 	// Run tests
 	for _, test := range testCases {
-		parser := &JsonParser{}
+		parser := &jsonParser{}
 		_, errs := parser.Parse(test.input)
 
 		if len(errs) == 0 {
 			t.Errorf("Expected errors, got none")
-		} else if reflect.DeepEqual(test.expected, errs) {
-			t.Errorf("Expected %v, got %v", test.expected, errs)
+		} else if !reflect.DeepEqual(test.expectedErrs, errs) {
+			t.Errorf("Expected %v, got %v", test.expectedErrs, errs)
 		}
 	}
 }

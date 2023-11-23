@@ -1,0 +1,31 @@
+title = "TOML Sample Configuration"
+
+[project_lead]
+name = "Charlie Example"
+birthdate = 1980-11-15T09:45:00-05:00 # Example date format
+
+[database_settings]
+host = "192.168.1.100"
+port_numbers = [ 8005, 8006, 8007 ]
+max_connections = 6000
+is_active = false
+
+[web_servers]
+
+  # Comments to explain settings are encouraged
+  [web_servers."primary"]
+  address = "10.0.0.3"
+  datacenter = "dc01"
+
+  [web_servers.secondary]
+  address = "10.0.0.4"
+  datacenter = "dc02"
+
+[client_info]
+metadata = [ ["epsilon", "zeta"], [3, 4] ]
+
+# Arrays can span multiple lines
+access_nodes = [
+  "beta",
+  "theta"
+]

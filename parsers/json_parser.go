@@ -9,7 +9,7 @@ import (
 	"github.com/golang-collections/collections/stack"
 )
 
-type JsonParser struct {
+type jsonParser struct {
 	*parser_json.BaseJSONListener
 
 	configFile *Node
@@ -17,7 +17,7 @@ type JsonParser struct {
 }
 
 // Custom Json Parser
-func (p *JsonParser) Parse(data []byte) (*Node, []CMParserError) {
+func (p *jsonParser) Parse(data []byte) (*Node, []CMParserError) {
 	// Initialize the error listener
 	errorListener := &CMErrorListener{}
 
@@ -53,7 +53,7 @@ func (p *JsonParser) Parse(data []byte) (*Node, []CMParserError) {
 	return p.configFile, nil
 }
 
-func (l *JsonParser) EnterObj(ctx *parser_json.ObjContext) {
+func (l *jsonParser) EnterObj(ctx *parser_json.ObjContext) {
 	if l.configFile == nil { // This object is the top level entity
 		// Create new node for object
 		node := &Node{Type: Object, Value: map[string]*Node{}}
@@ -83,10 +83,6 @@ func (l *JsonParser) EnterObj(ctx *parser_json.ObjContext) {
 		// Add object node to array
 		l.getTOS().Value = append(l.getTOSArray(), node)
 
-		// Set array type to object. This might be incorrect in
-		// the case of mixed arrays, but it's the best we can do.
-		l.getTOS().ArrayType = Object
-
 		// Push object node to stack
 		l.stack.Push(node)
 
@@ -103,11 +99,11 @@ func (l *JsonParser) EnterObj(ctx *parser_json.ObjContext) {
 	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
-func (l *JsonParser) ExitObj(ctx *parser_json.ObjContext) {
+func (l *jsonParser) ExitObj(ctx *parser_json.ObjContext) {
 	l.stack.Pop()
 }
 
-func (l *JsonParser) EnterPair(ctx *parser_json.PairContext) {
+func (l *jsonParser) EnterPair(ctx *parser_json.PairContext) {
 	// Create new node for pair. The type will be set in Enter<Value>
 	node := &Node{Type: Null, Value: nil}
 
@@ -129,11 +125,11 @@ func (l *JsonParser) EnterPair(ctx *parser_json.PairContext) {
 	node.NameLocation.End.Column = ctx.GetStart().GetColumn() + len(ctx.GetStart().GetText())
 }
 
-func (l *JsonParser) ExitPair(ctx *parser_json.PairContext) {
+func (l *jsonParser) ExitPair(ctx *parser_json.PairContext) {
 	l.stack.Pop()
 }
 
-func (l *JsonParser) EnterArr(ctx *parser_json.ArrContext) {
+func (l *jsonParser) EnterArr(ctx *parser_json.ArrContext) {
 	if l.configFile == nil { // This array is the top level entity
 		// Create new node for array
 		node := &Node{Type: Array, Value: []*Node{}}
@@ -163,10 +159,6 @@ func (l *JsonParser) EnterArr(ctx *parser_json.ArrContext) {
 		// Add array node to array
 		l.getTOS().Value = append(l.getTOSArray(), node)
 
-		// Set array type to array. This might be incorrect in
-		// the case of mixed arrays, but it's the best we can do.
-		l.getTOS().ArrayType = Array
-
 		// Push array node to stack
 		l.stack.Push(node)
 
@@ -183,11 +175,11 @@ func (l *JsonParser) EnterArr(ctx *parser_json.ArrContext) {
 	l.getTOS().ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
-func (l *JsonParser) ExitArr(ctx *parser_json.ArrContext) {
+func (l *jsonParser) ExitArr(ctx *parser_json.ArrContext) {
 	l.stack.Pop()
 }
 
-func (l *JsonParser) EnterNumber(ctx *parser_json.NumberContext) {
+func (l *jsonParser) EnterNumber(ctx *parser_json.NumberContext) {
 	// Get value and type
 	var numberType FieldType
 	var value interface{}
@@ -236,10 +228,6 @@ func (l *JsonParser) EnterNumber(ctx *parser_json.NumberContext) {
 		// Add number node to array
 		l.getTOS().Value = append(l.getTOSArray(), node)
 
-		// Set array type to numberType. This might be incorrect in
-		// the case of mixed arrays, but it's the best we can do.
-		l.getTOS().ArrayType = numberType
-
 		// Set location destination to the newly created node
 		locationInfoDest = node
 
@@ -256,7 +244,7 @@ func (l *JsonParser) EnterNumber(ctx *parser_json.NumberContext) {
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
-func (l *JsonParser) EnterString(ctx *parser_json.StringContext) {
+func (l *jsonParser) EnterString(ctx *parser_json.StringContext) {
 	// Get value
 	value := removeQuotes(ctx.STRING().GetText())
 
@@ -290,10 +278,6 @@ func (l *JsonParser) EnterString(ctx *parser_json.StringContext) {
 		// Add string node to array
 		l.getTOS().Value = append(l.getTOSArray(), node)
 
-		// Set array type to string. This might be incorrect in
-		// the case of mixed arrays, but it's the best we can do.
-		l.getTOS().ArrayType = String
-
 		// Set location destination to the newly created node
 		locationInfoDest = node
 
@@ -310,7 +294,7 @@ func (l *JsonParser) EnterString(ctx *parser_json.StringContext) {
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
-func (l *JsonParser) EnterBooleanTrue(ctx *parser_json.BooleanTrueContext) {
+func (l *jsonParser) EnterBooleanTrue(ctx *parser_json.BooleanTrueContext) {
 
 	// Create holder to store the node where the location information
 	// of the boolean value should be stored
@@ -342,10 +326,6 @@ func (l *JsonParser) EnterBooleanTrue(ctx *parser_json.BooleanTrueContext) {
 		// Add boolean node to array
 		l.getTOS().Value = append(l.getTOSArray(), node)
 
-		// Set array type to bool. This might be incorrect in
-		// the case of mixed arrays, but it's the best we can do.
-		l.getTOS().ArrayType = Bool
-
 		// Set location destination to the newly created node
 		locationInfoDest = node
 
@@ -362,7 +342,7 @@ func (l *JsonParser) EnterBooleanTrue(ctx *parser_json.BooleanTrueContext) {
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
-func (l *JsonParser) EnterBooleanFalse(ctx *parser_json.BooleanFalseContext) {
+func (l *jsonParser) EnterBooleanFalse(ctx *parser_json.BooleanFalseContext) {
 
 	// Create holder to store the node where the location information
 	// of the boolean value should be stored
@@ -394,10 +374,6 @@ func (l *JsonParser) EnterBooleanFalse(ctx *parser_json.BooleanFalseContext) {
 		// Add boolean node to array
 		l.getTOS().Value = append(l.getTOSArray(), node)
 
-		// Set array type to bool. This might be incorrect in
-		// the case of mixed arrays, but it's the best we can do.
-		l.getTOS().ArrayType = Bool
-
 		// Set location destination to the newly created node
 		locationInfoDest = node
 
@@ -414,7 +390,7 @@ func (l *JsonParser) EnterBooleanFalse(ctx *parser_json.BooleanFalseContext) {
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
-func (l *JsonParser) EnterNull(ctx *parser_json.NullContext) {
+func (l *jsonParser) EnterNull(ctx *parser_json.NullContext) {
 
 	// Create holder to store the node where the location information
 	// of the null value should be stored
@@ -446,10 +422,6 @@ func (l *JsonParser) EnterNull(ctx *parser_json.NullContext) {
 		// Add null node to array
 		l.getTOS().Value = append(l.getTOSArray(), node)
 
-		// Set array type to null. This might be incorrect in
-		// the case of mixed arrays, but it's the best we can do.
-		l.getTOS().ArrayType = Null
-
 		// Set location destination to the newly created node
 		locationInfoDest = node
 
@@ -466,15 +438,15 @@ func (l *JsonParser) EnterNull(ctx *parser_json.NullContext) {
 	locationInfoDest.ValueLocation.End.Column = ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText())
 }
 
-func (l *JsonParser) getTOS() *Node {
+func (l *jsonParser) getTOS() *Node {
 	return l.stack.Peek().(*Node)
 }
 
-func (l *JsonParser) getTOSObject() map[string]*Node {
+func (l *jsonParser) getTOSObject() map[string]*Node {
 	return l.getTOS().Value.(map[string]*Node)
 }
 
-func (l *JsonParser) getTOSArray() []*Node {
+func (l *jsonParser) getTOSArray() []*Node {
 	return l.getTOS().Value.([]*Node)
 }
 
