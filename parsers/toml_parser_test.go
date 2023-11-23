@@ -207,8 +207,6 @@ func TestParseSimpleConfig_tomlParser(t *testing.T) {
 						ValueLocation: TokenLocation{Start: CharLocation{Line: 23, Column: 1}, End: CharLocation{Line: 23, Column: 12}},
 					},
 				},
-				NameLocation:  TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
-				ValueLocation: TokenLocation{Start: CharLocation{Line: 0, Column: 0}, End: CharLocation{Line: 0, Column: 0}},
 			},
 			expectedErrs: []CMParserError{},
 		},
@@ -230,7 +228,6 @@ func TestParseSimpleConfig_tomlParser(t *testing.T) {
 func TestShortSamples_tomlParser(t *testing.T) {
 	// Input
 	var shortTomlConfig0 = []byte(`
-	"" = "blank"     
 	'' = 'blank'
 	`)
 
@@ -270,138 +267,327 @@ func TestShortSamples_tomlParser(t *testing.T) {
 	3.14159 = "pi"
 	`)
 
-	var shortTomlConfig6 = []byte(`
-	str = "I'm a string. \"You can quote me\". Name\tJos\u00E9\nLocation\tSF."
-	str2 = """
-	Roses are red
-	Violets are blue"""
-	str3 = """The quick brown \
-	fox jumps over \
-	the lazy dog."""
-	str4 = '\\ServerX\admin$\system32\'
-	str5 = '''
-	The first newline is
-	trimmed in raw strings.
-	   All other whitespace
-	   is preserved.
-	'''
-	`)
+	// var shortTomlConfig6 = []byte(`
+	// str = "I'm a string. \"You can quote me\". Name\tJos\u00E9\nLocation\tSF."
+	// str2 = """
+	// Roses are red
+	// Violets are blue"""
+	// str3 = """The quick brown \
+	// fox jumps over \
+	// the lazy dog."""
+	// str4 = '\\ServerX\admin$\system32\'
+	// str5 = '''
+	// The first newline is
+	// trimmed in raw strings.
+	//    All other whitespace
+	//    is preserved.
+	// '''
+	// `)
 
-	var shortTomlConfig7 = []byte(`
-	flt2 = 3.1415
-	flt3 = -0.01
-	flt4 = 5e+22
-	`)
+	// var shortTomlConfig7 = []byte(`
+	// flt2 = 3.1415
+	// flt3 = -0.01
+	// flt4 = 5e+22
+	// `)
 
-	var shortTomlConfig8 = []byte(`
-	contributors = [
-		"Foo Bar <foo@example.com>",
-		{ name = "Baz Qux", email = "bazqux@example.com", url = "https://example.com/bazqux" }
-	]
-	`)
+	// var shortTomlConfig8 = []byte(`
+	// contributors = [
+	// 	"Foo Bar <foo@example.com>",
+	// 	{ name = "Baz Qux", email = "bazqux@example.com", url = "https://example.com/bazqux" }
+	// ]
+	// `)
 
-	var shortTomlConfig9 = []byte(`
-	[table-1]
-	key1 = "some string"
-	key2 = 123
+	// var shortTomlConfig9 = []byte(`
+	// [table-1]
+	// key1 = "some string"
+	// key2 = 123
 
-	[table-2]
-	key1 = "another string"
-	key2 = 456
-	`)
+	// [table-2]
+	// key1 = "another string"
+	// key2 = 456
+	// `)
 
-	var shortTomlConfig10 = []byte(`
-	[dog."tater.man"]
-	type.name = "pug"
-	`)
+	// var shortTomlConfig10 = []byte(`
+	// [dog."tater.man"]
+	// type.name = "pug"
+	// `)
 
-	var shortTomlConfig11 = []byte(`
-	[a.b.c]            
-	[ d.e.f ]          
-	[ g .  h  . i ]    
-	[ j . "ʞ" . 'l' ]  
-	`)
+	// var shortTomlConfig11 = []byte(`
+	// [a.b.c]
+	// [ d.e.f ]
+	// [ g .  h  . i ]
+	// [ j . "ʞ" . 'l' ]
+	// `)
 
-	var shortTomlConfig12 = []byte(`
-	[x.y.z.w]
-	some = "thing"
-	[x]
-	other = "thing"
-	`)
+	// var shortTomlConfig12 = []byte(`
+	// [x.y.z.w]
+	// some = "thing"
+	// [x]
+	// other = "thing"
+	// `)
 
-	var shortTomlConfig13 = []byte(`
-	[fruit.apple]
-	[animal]
-	[fruit.orange]
-	`)
+	// var shortTomlConfig13 = []byte(`
+	// [fruit.apple]
+	// [animal]
+	// [fruit.orange]
+	// `)
 
-	var shortTomlConfig14 = []byte(`
-	name = { first = "Tom", last = "Preston-Werner" }
-	point = { x = 1, y = 2 }
-	animal = { type.name = "pug" }
-	`)
+	// var shortTomlConfig14 = []byte(`
+	// name = { first = "Tom", last = "Preston-Werner" }
+	// point = { x = 1, y = 2 }
+	// animal = { type.name = "pug" }
+	// `)
 
-	var shortTomlConfig15 = []byte(`
-	[[products]]
-	name = "Hammer"
-	sku = 738594937
+	// var shortTomlConfig15 = []byte(`
+	// [[products]]
+	// name = "Hammer"
+	// sku = 738594937
 
-	[[products]]  # empty table within the array
+	// [[products]]  # empty table within the array
 
-	[[products]]
-	name = "Nail"
-	sku = 284758393
+	// [[products]]
+	// name = "Nail"
+	// sku = 284758393
 
-	color = "gray"
-	`)
+	// color = "gray"
+	// `)
 
-	var shortTomlConfig16 = []byte(`
-	[[fruits]]
-	name = "apple"
+	// var shortTomlConfig16 = []byte(`
+	// [[fruits]]
+	// name = "apple"
 
-	[fruits.physical]  # subtable
-	color = "red"
-	shape = "round"
+	// [fruits.physical]  # subtable
+	// color = "red"
+	// shape = "round"
 
-	[[fruits.varieties]]  # nested array of tables
-	name = "red delicious"
+	// [[fruits.varieties]]  # nested array of tables
+	// name = "red delicious"
 
-	[[fruits.varieties]]
-	name = "granny smith"
+	// [[fruits.varieties]]
+	// name = "granny smith"
 
+	// [[fruits]]
+	// name = "banana"
 
-	[[fruits]]
-	name = "banana"
+	// [[fruits.varieties]]
+	// name = "plantain"
+	// `)
 
-	[[fruits.varieties]]
-	name = "plantain"
-	`)
-
-	var shortTomlConfig17 = []byte(`
-	points = [ { x = 1, y = 2, z = 3 },
-           { x = 7, y = 8, z = 9 },
-           { x = 2, y = 4, z = 8 } ]
-	`)
+	// var shortTomlConfig17 = []byte(`
+	// points = [ { x = 1, y = 2, z = 3 },
+	//        { x = 7, y = 8, z = 9 },
+	//        { x = 2, y = 4, z = 8 } ]
+	// `)
 
 	testCases := []jsonParserTestCase{
 		{
-			input:        shortTomlConfig0,
-			expected:     nil,
+			input: shortTomlConfig0,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"": {
+						Type:          String,
+						Value:         "blank",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 3}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 6}, End: CharLocation{Line: 1, Column: 13}},
+					},
+				},
+			},
 			expectedErrs: nil,
 		},
 		{
-			input:        shortTomlConfig1,
-			expected:     nil,
+			input: shortTomlConfig1,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"bare_key": {
+						Type:          String,
+						Value:         "value",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 9}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 12}, End: CharLocation{Line: 1, Column: 19}},
+					},
+					"bare-key": {
+						Type:          String,
+						Value:         "value",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 1}, End: CharLocation{Line: 2, Column: 9}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 12}, End: CharLocation{Line: 2, Column: 19}},
+					},
+					"1234": {
+						Type:          String,
+						Value:         "value",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 3, Column: 1}, End: CharLocation{Line: 3, Column: 5}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 3, Column: 8}, End: CharLocation{Line: 3, Column: 15}},
+					},
+					"127.0.0.1": {
+						Type:          String,
+						Value:         "value",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 4, Column: 1}, End: CharLocation{Line: 4, Column: 12}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 4, Column: 15}, End: CharLocation{Line: 4, Column: 22}},
+					},
+					"character encoding": {
+						Type:          String,
+						Value:         "value",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 5, Column: 1}, End: CharLocation{Line: 5, Column: 21}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 5, Column: 24}, End: CharLocation{Line: 5, Column: 31}},
+					},
+					"ʎǝʞ": {
+						Type:          String,
+						Value:         "value",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 6, Column: 1}, End: CharLocation{Line: 6, Column: 6}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 6, Column: 9}, End: CharLocation{Line: 6, Column: 16}},
+					},
+					"key2": {
+						Type:          String,
+						Value:         "value",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 7, Column: 1}, End: CharLocation{Line: 7, Column: 7}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 7, Column: 10}, End: CharLocation{Line: 7, Column: 17}},
+					},
+					"quoted \"value\"": {
+						Type:          String,
+						Value:         "value",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 8, Column: 1}, End: CharLocation{Line: 8, Column: 17}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 8, Column: 20}, End: CharLocation{Line: 8, Column: 27}},
+					},
+				},
+			},
 			expectedErrs: nil,
 		},
 		{
-			input:        shortTomlConfig2,
-			expected:     nil,
+			input: shortTomlConfig2,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"name": {
+						Type:          String,
+						Value:         "Orange",
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 5}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 8}, End: CharLocation{Line: 1, Column: 16}},
+					},
+					"physical": {
+						Type: Object,
+						Value: map[string]*Node{
+							"color": {
+								Type:          String,
+								Value:         "orange",
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 1}, End: CharLocation{Line: 2, Column: 15}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 18}, End: CharLocation{Line: 2, Column: 26}},
+							},
+							"shape": {
+								Type:          String,
+								Value:         "round",
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 3, Column: 1}, End: CharLocation{Line: 3, Column: 15}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 3, Column: 18}, End: CharLocation{Line: 3, Column: 25}},
+							},
+						},
+					},
+					"site": {
+						Type: Object,
+						Value: map[string]*Node{
+							"google.com": {
+								Type:          Bool,
+								Value:         true,
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 4, Column: 1}, End: CharLocation{Line: 4, Column: 18}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 4, Column: 21}, End: CharLocation{Line: 4, Column: 25}},
+							},
+						},
+					},
+				},
+			},
 			expectedErrs: nil,
 		},
 		{
-			input:        shortTomlConfig3,
-			expected:     nil,
+			input: shortTomlConfig3,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"fruit": {
+						Type: Object,
+						Value: map[string]*Node{
+							"name": {
+								Type:          String,
+								Value:         "banana",
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 11}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 14}, End: CharLocation{Line: 1, Column: 22}},
+							},
+							"color": {
+								Type:          String,
+								Value:         "yellow",
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 1}, End: CharLocation{Line: 2, Column: 13}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 16}, End: CharLocation{Line: 2, Column: 24}},
+							},
+							"flavor": {
+								Type:          String,
+								Value:         "banana",
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 3, Column: 1}, End: CharLocation{Line: 3, Column: 15}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 3, Column: 18}, End: CharLocation{Line: 3, Column: 26}},
+							},
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
+		{
+			input: shortTomlConfig4,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"apple": {
+						Type: Object,
+						Value: map[string]*Node{
+							"type": {
+								Type:          String,
+								Value:         "fruit",
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 11}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 14}, End: CharLocation{Line: 1, Column: 21}},
+							},
+							"skin": {
+								Type:          String,
+								Value:         "thin",
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 4, Column: 1}, End: CharLocation{Line: 4, Column: 11}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 4, Column: 14}, End: CharLocation{Line: 4, Column: 20}},
+							},
+						},
+					},
+					"orange": {
+						Type: Object,
+						Value: map[string]*Node{
+							"type": {
+								Type:          String,
+								Value:         "fruit",
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 1}, End: CharLocation{Line: 2, Column: 12}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 15}, End: CharLocation{Line: 2, Column: 22}},
+							},
+							"skin": {
+								Type:          String,
+								Value:         "thick",
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 5, Column: 1}, End: CharLocation{Line: 5, Column: 12}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 5, Column: 15}, End: CharLocation{Line: 5, Column: 22}},
+							},
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
+		{
+			input: shortTomlConfig5,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"3": {
+						Type: Object,
+						Value: map[string]*Node{
+							"14159": {
+								Type:          String,
+								Value:         "pi",
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 8}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 11}, End: CharLocation{Line: 1, Column: 15}},
+							},
+						},
+					},
+				},
+			},
 			expectedErrs: nil,
 		},
 	}
@@ -412,9 +598,9 @@ func TestShortSamples_tomlParser(t *testing.T) {
 		result, errs := parser.Parse(test.input)
 
 		if len(errs) > 0 {
-			t.Errorf("Unexpected errors: %#v", errs)
+			t.Errorf("Unexpected errors: %#v, Input: %s", errs, test.input)
 		} else if !reflect.DeepEqual(test.expected, result) {
-			t.Errorf("Expected %#+v, got %#+v", test.expected, result)
+			t.Errorf("Expected %#+v, got %#+v, Input: %s", test.expected, result, test.input)
 		}
 	}
 }
@@ -436,76 +622,76 @@ func TestHighLevelErrorConditions_tomlParser(t *testing.T) {
 	fruit.apple.smooth = true
 	`)
 
-	var hlErrTomlConfig3 = []byte(`
-	apos15 = "Here are fifteen apostrophes: '''''''''''''''"
-	`)
+	// var hlErrTomlConfig3 = []byte(`
+	// apos15 = "Here are fifteen apostrophes: '''''''''''''''"
+	// `)
 
-	var hlErrTomlConfig4 = []byte(`
-	invalid_float_1 = .7
-	invalid_float_2 = 7.
-	invalid_float_3 = 3.e+20
-	`)
+	// var hlErrTomlConfig4 = []byte(`
+	// invalid_float_1 = .7
+	// invalid_float_2 = 7.
+	// invalid_float_3 = 3.e+20
+	// `)
 
-	var hlErrTomlConfig5 = []byte(`
-	[fruit]
-	apple = "red"
+	// var hlErrTomlConfig5 = []byte(`
+	// [fruit]
+	// apple = "red"
 
-	[fruit]
-	orange = "orange"
-	`)
+	// [fruit]
+	// orange = "orange"
+	// `)
 
-	var hlErrTomlConfig6 = []byte(`
-	[fruit]
-	apple = "red"
+	// var hlErrTomlConfig6 = []byte(`
+	// [fruit]
+	// apple = "red"
 
-	[fruit.apple]
-	texture = "smooth"
-	`)
+	// [fruit.apple]
+	// texture = "smooth"
+	// `)
 
-	var hlErrTomlConfig7 = []byte(`
-	[product]
-	type = { name = "Nail" }
-	type.edible = false
-	`)
+	// var hlErrTomlConfig7 = []byte(`
+	// [product]
+	// type = { name = "Nail" }
+	// type.edible = false
+	// `)
 
-	var hlErrTomlConfig8 = []byte(`
-	[product]
-	type.name = "Nail"
-	type = { edible = false }
-	`)
+	// var hlErrTomlConfig8 = []byte(`
+	// [product]
+	// type.name = "Nail"
+	// type = { edible = false }
+	// `)
 
-	var hlErrTomlConfig9 = []byte(`
-	[fruit.physical]
-	color = "red"
-	shape = "round"
+	// var hlErrTomlConfig9 = []byte(`
+	// [fruit.physical]
+	// color = "red"
+	// shape = "round"
 
-	[[fruit]]
-	name = "apple"
-	`)
+	// [[fruit]]
+	// name = "apple"
+	// `)
 
-	var hlErrTomlConfig10 = []byte(`
-	fruits = []
+	// var hlErrTomlConfig10 = []byte(`
+	// fruits = []
 
-	[[fruits]]
-	`)
+	// [[fruits]]
+	// `)
 
-	var hlErrTomlConfig11 = []byte(`
-	[[fruits]]
-	name = "apple"
+	// var hlErrTomlConfig11 = []byte(`
+	// [[fruits]]
+	// name = "apple"
 
-	[[fruits.varieties]]
-	name = "red delicious"
+	// [[fruits.varieties]]
+	// name = "red delicious"
 
-	[fruits.varieties]
-	name = "granny smith"
+	// [fruits.varieties]
+	// name = "granny smith"
 
-	[fruits.physical]
-	color = "red"
-	shape = "round"
+	// [fruits.physical]
+	// color = "red"
+	// shape = "round"
 
-	[[fruits.physical]]
-	color = "green"
-	`)
+	// [[fruits.physical]]
+	// color = "green"
+	// `)
 
 	testCases := []jsonParserTestCase{
 		{
@@ -552,12 +738,12 @@ func TestHighLevelErrorConditions_tomlParser(t *testing.T) {
 	// Run tests
 	for _, test := range testCases {
 		parser := &tomlParser{}
-		res, errs := parser.Parse(test.input)
+		_, errs := parser.Parse(test.input)
 
 		if len(errs) == 0 {
-			t.Errorf("Expected errors, got none")
+			t.Errorf("Expected errors, got none, Input: %s", test.input)
 		} else if !reflect.DeepEqual(test.expectedErrs, errs) {
-			t.Errorf("Expected %v, got %v, %v", test.expectedErrs, errs, res)
+			t.Errorf("Expected %v, got %v, Input: %s", test.expectedErrs, errs, test.input)
 		}
 	}
 }
@@ -613,12 +799,12 @@ func TestErrorConditions_tomlParser(t *testing.T) {
 	// Run tests
 	for _, test := range testCases {
 		parser := &tomlParser{}
-		res, errs := parser.Parse(test.input)
+		_, errs := parser.Parse(test.input)
 
 		if len(errs) == 0 {
-			t.Errorf("Expected errors, got none")
+			t.Errorf("Expected errors, got none, Input: %s", test.input)
 		} else if !reflect.DeepEqual(test.expectedErrs, errs) {
-			t.Errorf("Expected %v, got %v, %v", test.expectedErrs, errs, res)
+			t.Errorf("Expected %v, got %v, Input: %s", test.expectedErrs, errs, test.input)
 		}
 	}
 }

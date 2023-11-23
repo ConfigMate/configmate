@@ -3,7 +3,7 @@ package check
 import (
 	"fmt"
 
-	parser_cmcl "github.com/ConfigMate/configmate/parsers/gen/parser_cmcl/parsers/grammars"
+	"github.com/ConfigMate/configmate/parsers/gen/parser_cmcl"
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/golang-collections/collections/stack"
 	"go.uber.org/multierr"

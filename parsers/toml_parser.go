@@ -5,13 +5,13 @@ import (
 	"strconv"
 	"strings"
 
-	parser_toml "github.com/ConfigMate/configmate/parsers/gen/parser_toml/parsers/grammars"
+	"github.com/ConfigMate/configmate/parsers/gen/parser_toml"
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/golang-collections/collections/stack"
 )
 
 type tomlParser struct {
-	*parser_toml.BaseTOMLListener
+	*parser_toml.BaseTOMLParserListener
 
 	configFile *Node
 	stack      stack.Stack
@@ -165,6 +165,12 @@ func (p *tomlParser) EnterStandard_table(ctx *parser_toml.Standard_tableContext)
 	// Add table node to stack
 	p.stack.Push(tableNode)
 }
+
+// EnterInline_table is called when production inline_table is entered.
+func (p *tomlParser) EnterInline_table(ctx *parser_toml.Inline_tableContext) {}
+
+// ExitInline_table is called when production inline_table is exited.
+func (p *tomlParser) ExitInline_table(ctx *parser_toml.Inline_tableContext) {}
 
 // EnterArray_table is called when production array_table is entered.
 func (p *tomlParser) EnterArray_table(ctx *parser_toml.Array_tableContext) {

@@ -1,7 +1,7 @@
 package langsrv
 
 import (
-	parser_cmsl "github.com/ConfigMate/configmate/parsers/gen/parser_cmsl/parsers/grammars"
+	"github.com/ConfigMate/configmate/parsers/gen/parser_cmsl"
 	"github.com/antlr4-go/antlr/v4"
 )
 
