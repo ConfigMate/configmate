@@ -13,9 +13,18 @@ import (
 type tomlParser struct {
 	*parser_toml.BaseTOMLParserListener
 
-	configFile *Node
-	stack      stack.Stack
-	errs       []CMParserError
+	configFile      *Node
+	stack           stack.Stack
+	directlyDefined map[string]bool
+	errs            []CMParserError
+}
+
+type tomlKey struct {
+	segments []string
+}
+
+func (tk *tomlKey) String() string {
+	return strings.Join(tk.segments, ".")
 }
 
 // Custom TOML parser
@@ -53,6 +62,9 @@ func (p *tomlParser) Parse(data []byte) (*Node, []CMParserError) {
 	p.stack = stack.Stack{}
 	p.stack.Push(p.configFile)
 
+	// Initialize directly defined map
+	p.directlyDefined = make(map[string]bool)
+
 	walker := antlr.NewParseTreeWalker()
 	walker.Walk(p, tree)
 
@@ -62,13 +74,13 @@ func (p *tomlParser) Parse(data []byte) (*Node, []CMParserError) {
 // EnterKey_value is called when production key_value is entered.
 func (p *tomlParser) EnterKey_value(ctx *parser_toml.Key_valueContext) {
 	// Parse key
-	parentKey, fieldKey := p.parseKey(ctx.Key())
+	fieldKey := p.parseKey(ctx.Key())
 
 	// Get parent node in stack
 	parentNode := p.stack.Peek().(*Node)
 
 	// Get or create parent key node
-	parentKeyNode, err := p.getOrCreateNode(parentNode, parentKey)
+	fieldNode, err := p.getOrCreateNode(parentNode, fieldKey)
 	if err != nil {
 		p.errs = append(p.errs, CMParserError{
 			Message: err.Error(),
@@ -86,24 +98,35 @@ func (p *tomlParser) EnterKey_value(ctx *parser_toml.Key_valueContext) {
 		return
 	}
 
-	// Create field node
-	fieldNode := &Node{
-		Type:  Null,
-		Value: nil,
-		NameLocation: TokenLocation{
-			Start: CharLocation{
-				Line:   ctx.Key().GetStart().GetLine() - 1,
-				Column: ctx.Key().GetStart().GetColumn(),
+	// Check if key node already has a value
+	if fieldNode.Type != Null {
+		p.errs = append(p.errs, CMParserError{
+			Message: fmt.Sprintf("can't redefine existing key %s", fieldKey),
+			Location: TokenLocation{
+				Start: CharLocation{
+					Line:   ctx.Key().GetStart().GetLine() - 1,
+					Column: ctx.Key().GetStart().GetColumn(),
+				},
+				End: CharLocation{
+					Line:   ctx.Key().GetStop().GetLine() - 1,
+					Column: ctx.Key().GetStop().GetColumn() + len(ctx.Key().GetStop().GetText()),
+				},
 			},
-			End: CharLocation{
-				Line:   ctx.Key().GetStop().GetLine() - 1,
-				Column: ctx.Key().GetStop().GetColumn() + len(ctx.Key().GetStop().GetText()),
-			},
-		},
+		})
+		return
 	}
 
-	// Add field node to parent key node
-	parentKeyNode.Value.(map[string]*Node)[fieldKey] = fieldNode
+	// Set name location
+	fieldNode.NameLocation = TokenLocation{
+		Start: CharLocation{
+			Line:   ctx.Key().GetStart().GetLine() - 1,
+			Column: ctx.Key().GetStart().GetColumn(),
+		},
+		End: CharLocation{
+			Line:   ctx.Key().GetStop().GetLine() - 1,
+			Column: ctx.Key().GetStop().GetColumn() + len(ctx.Key().GetStop().GetText()),
+		},
+	}
 
 	// Add fieldnode to stack
 	p.stack.Push(fieldNode)
@@ -118,10 +141,31 @@ func (p *tomlParser) ExitKey_value(ctx *parser_toml.Key_valueContext) {
 // EnterStandard_table is called when production standard_table is entered.
 func (p *tomlParser) EnterStandard_table(ctx *parser_toml.Standard_tableContext) {
 	// Parse key
-	parentKey, fieldKey := p.parseKey(ctx.Key())
+	fieldKey := p.parseKey(ctx.Key())
+
+	// Check if it was already directly defined
+	if p.directlyDefined[fieldKey] {
+		p.errs = append(p.errs, CMParserError{
+			Message: fmt.Sprintf("can't redefine existing key %s", fieldKey),
+			Location: TokenLocation{
+				Start: CharLocation{
+					Line:   ctx.Key().GetStart().GetLine() - 1,
+					Column: ctx.Key().GetStart().GetColumn(),
+				},
+				End: CharLocation{
+					Line:   ctx.Key().GetStop().GetLine() - 1,
+					Column: ctx.Key().GetStop().GetColumn() + len(ctx.Key().GetStop().GetText()),
+				},
+			},
+		})
+		return
+	}
+
+	// Set as directly defined
+	p.directlyDefined[fieldKey] = true
 
 	// Get or create parent key node from root
-	parentKeyNode, err := p.getOrCreateNode(p.configFile, parentKey)
+	fieldNode, err := p.getOrCreateNode(p.configFile, fieldKey)
 	if err != nil {
 		p.errs = append(p.errs, CMParserError{
 			Message: err.Error(),
@@ -139,62 +183,58 @@ func (p *tomlParser) EnterStandard_table(ctx *parser_toml.Standard_tableContext)
 		return
 	}
 
-	var tableNode *Node
-	// Check if table already exists
-	if table, exists := parentKeyNode.Value.(map[string]*Node)[fieldKey]; exists {
-		// Add location info
-		table.NameLocation = TokenLocation{
-			Start: CharLocation{
-				Line:   ctx.GetStart().GetLine() - 1,
-				Column: ctx.GetStart().GetColumn(),
-			},
-			End: CharLocation{
-				Line:   ctx.GetStop().GetLine() - 1,
-				Column: ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText()),
-			},
-		}
+	// Add location info
+	fieldNode.NameLocation = TokenLocation{
+		Start: CharLocation{
+			Line:   ctx.GetStart().GetLine() - 1,
+			Column: ctx.GetStart().GetColumn(),
+		},
+		End: CharLocation{
+			Line:   ctx.GetStop().GetLine() - 1,
+			Column: ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText()),
+		},
+	}
 
-		// We cannot find value location, using name location to
-		// guarantee better display result in case this is used
-		table.ValueLocation = table.NameLocation
+	// We cannot find value location, using name location to
+	// guarantee better display result in case this is used
+	fieldNode.ValueLocation = fieldNode.NameLocation
 
-		tableNode = table
-	} else {
-		// Create table node (object)
-		tableNode = &Node{
-			Type:  Object,
-			Value: map[string]*Node{},
-			NameLocation: TokenLocation{
-				Start: CharLocation{
-					Line:   ctx.GetStart().GetLine() - 1,
-					Column: ctx.GetStart().GetColumn(),
-				},
-				End: CharLocation{
-					Line:   ctx.GetStop().GetLine() - 1,
-					Column: ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText()),
-				},
-			},
-		}
-
-		// We cannot find value location, using name location to
-		// guarantee better display result in case this is used
-		tableNode.ValueLocation = tableNode.NameLocation
-
-		// Add table node to parent key node
-		parentKeyNode.Value.(map[string]*Node)[fieldKey] = tableNode
+	// Check if table is new
+	if fieldNode.Type == Null {
+		// Set as object node
+		fieldNode.Type = Object
+		fieldNode.Value = map[string]*Node{}
 	}
 
 	// Add table node to stack
-	p.stack.Push(tableNode)
+	p.stack.Push(fieldNode)
 }
 
 // EnterArray_table is called when production array_table is entered.
 func (p *tomlParser) EnterArray_table(ctx *parser_toml.Array_tableContext) {
 	// Parse key
-	parentKey, fieldKey := p.parseKey(ctx.Key())
+	fieldKey := p.parseKey(ctx.Key())
+
+	// Check if it was already directly defined
+	if p.directlyDefined[fieldKey] {
+		p.errs = append(p.errs, CMParserError{
+			Message: fmt.Sprintf("can't redefine existing key %s", fieldKey),
+			Location: TokenLocation{
+				Start: CharLocation{
+					Line:   ctx.Key().GetStart().GetLine() - 1,
+					Column: ctx.Key().GetStart().GetColumn(),
+				},
+				End: CharLocation{
+					Line:   ctx.Key().GetStop().GetLine() - 1,
+					Column: ctx.Key().GetStop().GetColumn() + len(ctx.Key().GetStop().GetText()),
+				},
+			},
+		})
+		return
+	}
 
 	// Get or create parent key node from root
-	parentKeyNode, err := p.getOrCreateNode(p.configFile, parentKey)
+	fieldNode, err := p.getOrCreateNode(p.configFile, fieldKey)
 	if err != nil {
 		p.errs = append(p.errs, CMParserError{
 			Message: err.Error(),
@@ -210,6 +250,13 @@ func (p *tomlParser) EnterArray_table(ctx *parser_toml.Array_tableContext) {
 			},
 		})
 		return
+	}
+
+	// Check if array is new
+	if fieldNode.Type == Null {
+		// Set as array node
+		fieldNode.Type = Array
+		fieldNode.Value = []*Node{}
 	}
 
 	// Create table node
@@ -232,19 +279,8 @@ func (p *tomlParser) EnterArray_table(ctx *parser_toml.Array_tableContext) {
 	// guarantee better display result in case this is used
 	newInArrayTable.ValueLocation = newInArrayTable.NameLocation
 
-	// Check if array already exists
-	if array, exists := parentKeyNode.Value.(map[string]*Node)[fieldKey]; exists {
-		// Create new array node
-		arrayValue := array.Value.([]*Node)
-		arrayValue = append(arrayValue, newInArrayTable)
-		parentKeyNode.Value.(map[string]*Node)[fieldKey].Value = arrayValue
-	} else {
-		// Add array node to parent key node
-		parentKeyNode.Value.(map[string]*Node)[fieldKey] = &Node{
-			Type:  Array,
-			Value: []*Node{newInArrayTable},
-		}
-	}
+	// Add new node to array
+	fieldNode.Value = append(fieldNode.Value.([]*Node), newInArrayTable)
 
 	// Add table node to stack
 	p.stack.Push(newInArrayTable)
@@ -549,10 +585,11 @@ func (p *tomlParser) EnterDate_time(ctx *parser_toml.Date_timeContext) {
 	}
 }
 
-// parseKey parses a key and returns the parent key and the field key.
-func (p *tomlParser) parseKey(ctx parser_toml.IKeyContext) (string, string) {
+// parseKey parses a key and returns the key after removing in-between spaces
+// and cleaning each simple key string
+func (p *tomlParser) parseKey(ctx parser_toml.IKeyContext) tomlKey {
 	if ctx.Simple_key() != nil {
-		return "", p.cleanString(ctx.Simple_key().GetText())
+		return tomlKey{segments: []string{ctx.Simple_key().GetText()}}
 	} else if ctx.Dotted_key() != nil {
 		return p.parseDottedKey(ctx.Dotted_key())
 	}
@@ -561,25 +598,22 @@ func (p *tomlParser) parseKey(ctx parser_toml.IKeyContext) (string, string) {
 }
 
 // parseDottedKey parses a dotted key and returns the parent key and the field key.
-func (p *tomlParser) parseDottedKey(ctx parser_toml.IDotted_keyContext) (string, string) {
-	parent := ""
-	for i, key := range ctx.AllSimple_key() {
-		if i == len(ctx.AllSimple_key())-1 {
-			return parent[:len(parent)-1], p.cleanString(key.GetText())
-		}
-
-		parent += p.cleanString(key.GetText()) + "."
+func (p *tomlParser) parseDottedKey(ctx parser_toml.IDotted_keyContext) tomlKey {
+	result := tomlKey{}
+	for _, key := range ctx.AllSimple_key() {
+		result.segments = append(result.segments, key.GetText())
 	}
 
-	panic("This should never happen")
+	return result
 }
 
-func (p *tomlParser) getOrCreateNode(parentNode *Node, key string) (*Node, error) {
-	// Split the key
-	segments := splitPathInSegments(key)
+// Gets a node from a path starting at parentNode. If the node doesn't exist
+// it gets created as a Null node. Intermediate nodes are created as Object nodes.
+// If an array is found in the path, the last item in the array is used.
+func (p *tomlParser) getOrCreateNode(parentNode *Node, segments []string) (*Node, error) {
 	currentNode := parentNode
 
-	for _, segment := range segments {
+	for index, segment := range segments {
 		if currentNode == nil {
 			return nil, fmt.Errorf("cannot traverse nil node in path %s", key)
 		}
@@ -593,10 +627,19 @@ func (p *tomlParser) getOrCreateNode(parentNode *Node, key string) (*Node, error
 			if nextNode, exists := objMap[segment]; exists {
 				currentNode = nextNode
 			} else {
-				// Create a new node
-				newNode := &Node{
-					Type:  Object,
-					Value: map[string]*Node{},
+				var newNode *Node
+
+				// If we are at the last segment, create a null node
+				if index == len(segments)-1 {
+					newNode = &Node{
+						Type:  Null,
+						Value: nil,
+					}
+				} else { // Otherwise create an object node
+					newNode = &Node{
+						Type:  Object,
+						Value: map[string]*Node{},
+					}
 				}
 
 				// Add the new node to the map
