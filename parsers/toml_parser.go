@@ -13,15 +13,24 @@ import (
 type tomlParser struct {
 	*parser_toml.BaseTOMLParserListener
 
-	configFile      *Node
-	stack           stack.Stack
-	directlyDefined map[string]bool
-	errs            []CMParserError
+	configFile            *Node
+	stack                 stack.Stack
+	directlyDefinedTables map[string]bool
+	definedTables         map[string]tomlTableDefinitionMode
+	errs                  []CMParserError
 }
 
 type tomlKey struct {
 	segments []string
 }
+
+type tomlTableDefinitionMode int
+
+const (
+	tomlDefModeDirect tomlTableDefinitionMode = iota
+	tomlDefModeTable
+	tomlDefModeInlineTable
+)
 
 func (tk *tomlKey) String() string {
 	return strings.Join(tk.segments, ".")
@@ -58,15 +67,21 @@ func (p *tomlParser) Parse(data []byte) (*Node, []CMParserError) {
 		Value: map[string]*Node{},
 	}
 
+	// Initialize maps
+	p.directlyDefinedTables = make(map[string]bool)
+	p.definedTables = make(map[string]tomlTableDefinitionMode)
+
 	// Initialize Stack
 	p.stack = stack.Stack{}
 	p.stack.Push(p.configFile)
 
-	// Initialize directly defined map
-	p.directlyDefined = make(map[string]bool)
-
 	walker := antlr.NewParseTreeWalker()
 	walker.Walk(p, tree)
+
+	// Check for errors
+	if len(p.errs) > 0 {
+		return nil, p.errs
+	}
 
 	return p.configFile, nil
 }
@@ -80,10 +95,28 @@ func (p *tomlParser) EnterKey_value(ctx *parser_toml.Key_valueContext) {
 	parentNode := p.stack.Peek().(*Node)
 
 	// Get or create parent key node
-	fieldNode, err := p.getOrCreateNode(parentNode, fieldKey)
+	fieldNode, err := p.getOrCreateNode(parentNode, fieldKey, tomlDefModeDirect)
 	if err != nil {
 		p.errs = append(p.errs, CMParserError{
 			Message: err.Error(),
+			Location: TokenLocation{
+				Start: CharLocation{
+					Line:   ctx.Key().GetStart().GetLine() - 1,
+					Column: ctx.Key().GetStart().GetColumn(),
+				},
+				End: CharLocation{
+					Line:   ctx.Key().GetStop().GetLine() - 1,
+					Column: ctx.Key().GetStop().GetColumn() + len(ctx.Key().GetStop().GetText()),
+				},
+			},
+		})
+		return
+	}
+
+	// Check if this key was already defined
+	if fieldNode.Type != Null {
+		p.errs = append(p.errs, CMParserError{
+			Message: fmt.Errorf("can't redefine existing key: '%s'", fieldKey.String()).Error(),
 			Location: TokenLocation{
 				Start: CharLocation{
 					Line:   ctx.Key().GetStart().GetLine() - 1,
@@ -126,10 +159,53 @@ func (p *tomlParser) EnterStandard_table(ctx *parser_toml.Standard_tableContext)
 	fieldKey := p.parseKey(ctx.Key())
 
 	// Get or create parent key node from root
-	fieldNode, err := p.getOrCreateNode(p.configFile, fieldKey)
+	fieldNode, err := p.getOrCreateNode(p.configFile, fieldKey, tomlDefModeTable)
 	if err != nil {
 		p.errs = append(p.errs, CMParserError{
 			Message: err.Error(),
+			Location: TokenLocation{
+				Start: CharLocation{
+					Line:   ctx.Key().GetStart().GetLine() - 1,
+					Column: ctx.Key().GetStart().GetColumn(),
+				},
+				End: CharLocation{
+					Line:   ctx.Key().GetStop().GetLine() - 1,
+					Column: ctx.Key().GetStop().GetColumn() + len(ctx.Key().GetStop().GetText()),
+				},
+			},
+		})
+		return
+	}
+
+	// Check if table was already directly defined
+	if p.directlyDefinedTables[fmt.Sprintf("%p", fieldNode)] {
+		p.errs = append(p.errs, CMParserError{
+			Message: fmt.Errorf("can't redefine existing table: '%s'", fieldKey.String()).Error(),
+			Location: TokenLocation{
+				Start: CharLocation{
+					Line:   ctx.Key().GetStart().GetLine() - 1,
+					Column: ctx.Key().GetStart().GetColumn(),
+				},
+				End: CharLocation{
+					Line:   ctx.Key().GetStop().GetLine() - 1,
+					Column: ctx.Key().GetStop().GetColumn() + len(ctx.Key().GetStop().GetText()),
+				},
+			},
+		})
+		return
+	}
+
+	// Set table as directly defined
+	p.directlyDefinedTables[fmt.Sprintf("%p", fieldNode)] = true
+
+	// Check if table is new
+	if fieldNode.Type == Null {
+		// Set as object node
+		fieldNode.Type = Object
+		fieldNode.Value = map[string]*Node{}
+	} else if fieldNode.Type != Object {
+		p.errs = append(p.errs, CMParserError{
+			Message: fmt.Errorf("can't redefine existing key: '%s'", fieldKey.String()).Error(),
 			Location: TokenLocation{
 				Start: CharLocation{
 					Line:   ctx.Key().GetStart().GetLine() - 1,
@@ -160,13 +236,6 @@ func (p *tomlParser) EnterStandard_table(ctx *parser_toml.Standard_tableContext)
 	// guarantee better display result in case this is used
 	fieldNode.ValueLocation = fieldNode.NameLocation
 
-	// Check if table is new
-	if fieldNode.Type == Null {
-		// Set as object node
-		fieldNode.Type = Object
-		fieldNode.Value = map[string]*Node{}
-	}
-
 	// Add table node to stack
 	p.stack.Push(fieldNode)
 }
@@ -177,7 +246,7 @@ func (p *tomlParser) EnterArray_table(ctx *parser_toml.Array_tableContext) {
 	fieldKey := p.parseKey(ctx.Key())
 
 	// Get or create parent key node from root
-	arrayNode, err := p.getOrCreateNode(p.configFile, fieldKey)
+	arrayNode, err := p.getOrCreateNode(p.configFile, fieldKey, tomlDefModeTable)
 	if err != nil {
 		p.errs = append(p.errs, CMParserError{
 			Message: err.Error(),
@@ -200,6 +269,21 @@ func (p *tomlParser) EnterArray_table(ctx *parser_toml.Array_tableContext) {
 		// Set as array node
 		arrayNode.Type = Array
 		arrayNode.Value = []*Node{}
+	} else if arrayNode.Type != Array {
+		p.errs = append(p.errs, CMParserError{
+			Message: fmt.Errorf("can't redefine existing key: '%s'", fieldKey.String()).Error(),
+			Location: TokenLocation{
+				Start: CharLocation{
+					Line:   ctx.Key().GetStart().GetLine() - 1,
+					Column: ctx.Key().GetStart().GetColumn(),
+				},
+				End: CharLocation{
+					Line:   ctx.Key().GetStop().GetLine() - 1,
+					Column: ctx.Key().GetStop().GetColumn() + len(ctx.Key().GetStop().GetText()),
+				},
+			},
+		})
+		return
 	}
 
 	// Create table node
@@ -266,6 +350,9 @@ func (p *tomlParser) EnterInline_table(ctx *parser_toml.Inline_tableContext) {
 				Column: ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText()),
 			},
 		}
+
+		// Set as inline table definition
+		p.definedTables[fmt.Sprintf("%p", parentNode)] = tomlDefModeInlineTable
 
 		// Push again (redundant) to keep stack consistent
 		p.stack.Push(parentNode)
@@ -553,15 +640,11 @@ func (p *tomlParser) parseDottedKey(ctx parser_toml.IDotted_keyContext) tomlKey 
 // Gets a node from a path starting at parentNode. If the node doesn't exist
 // it gets created as a Null node. Intermediate nodes are created as Object nodes.
 // If an array is found in the path, the last item in the array is used.
-func (p *tomlParser) getOrCreateNode(parentNode *Node, fieldKey tomlKey) (*Node, error) {
+func (p *tomlParser) getOrCreateNode(parentNode *Node, fieldKey tomlKey, mode tomlTableDefinitionMode) (*Node, error) {
 	currentNode := parentNode
 	segments := fieldKey.segments
 
 	for index := 0; index < len(segments); index++ {
-		if currentNode == nil {
-			return nil, fmt.Errorf("cannot traverse nil node in path %s", fieldKey.String())
-		}
-
 		segment := segments[index]
 
 		switch currentNode.Type {
@@ -571,6 +654,16 @@ func (p *tomlParser) getOrCreateNode(parentNode *Node, fieldKey tomlKey) (*Node,
 
 			// Check if the segment exists in the map
 			if nextNode, exists := objMap[segment]; exists {
+				// Check if inline table, these can't be traversed
+				if p.definedTables[fmt.Sprintf("%p", nextNode)] == tomlDefModeInlineTable {
+					return nil, fmt.Errorf("can't redefine existing key: '%s'", segment)
+				}
+
+				// If last segment, check mode
+				if index == len(segments)-1 && p.definedTables[fmt.Sprintf("%p", nextNode)] != mode {
+					return nil, fmt.Errorf("can't redefine existing key: '%s'", segment)
+				}
+
 				currentNode = nextNode
 			} else {
 				var newNode *Node
@@ -587,6 +680,8 @@ func (p *tomlParser) getOrCreateNode(parentNode *Node, fieldKey tomlKey) (*Node,
 						Value: map[string]*Node{},
 					}
 				}
+
+				p.definedTables[fmt.Sprintf("%p", newNode)] = mode
 
 				// Add the new node to the map
 				objMap[segment] = newNode
@@ -613,7 +708,7 @@ func (p *tomlParser) getOrCreateNode(parentNode *Node, fieldKey tomlKey) (*Node,
 
 		default:
 			// If we are here, it means we're trying to traverse a leaf node
-			return nil, fmt.Errorf("cannot traverse leaf node %s in path %s", segment, fieldKey.String())
+			return nil, fmt.Errorf("can't redefine existing key to contain: '%s'", segment)
 		}
 	}
 

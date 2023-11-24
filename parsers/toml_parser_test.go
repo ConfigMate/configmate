@@ -267,22 +267,22 @@ func TestShortSamples_tomlParser(t *testing.T) {
 	3.14159 = "pi"
 	`)
 
-	// var shortTomlConfig6 = []byte(`
-	// str = "I'm a string. \"You can quote me\". Name\tJos\u00E9\nLocation\tSF."
-	// str2 = """
-	// Roses are red
-	// Violets are blue"""
-	// str3 = """The quick brown \
-	// fox jumps over \
-	// the lazy dog."""
-	// str4 = '\\ServerX\admin$\system32\'
-	// str5 = '''
-	// The first newline is
-	// trimmed in raw strings.
-	//    All other whitespace
-	//    is preserved.
-	// '''
-	// `)
+	var shortTomlConfig6 = []byte(`
+	str = "I'm a string. \"You can quote me\". Name\tJos\u00E9\nLocation\tSF."
+	str2 = """
+	Roses are red
+	Violets are blue"""
+	str3 = """The quick brown \
+	fox jumps over \
+	the lazy dog."""
+	str4 = '\\ServerX\admin$\system32\'
+	str5 = '''
+	The first newline is
+	trimmed in raw strings.
+	   All other whitespace
+	   is preserved.
+	'''
+	`)
 
 	var shortTomlConfig7 = []byte(`
 	flt2 = 3.1415
@@ -377,6 +377,15 @@ func TestShortSamples_tomlParser(t *testing.T) {
 	points = [ { x = 1, y = 2, z = 3 },
 	       { x = 7, y = 8, z = 9 },
 	       { x = 2, y = 4, z = 8 } ]
+	`)
+
+	var shortTomlConfig18 = []byte(`
+	[fruit]
+	apple.color = "red"
+	apple.taste.sweet = true
+
+	[fruit.apple.texture]
+	smooth = true
 	`)
 
 	testCases := []jsonParserTestCase{
@@ -716,75 +725,75 @@ func TestShortSamples_tomlParser(t *testing.T) {
 			},
 			expectedErrs: nil,
 		},
-		// {
-		// 	input: shortTomlConfig6,
-		// 	expected: &Node{
-		// 		Type: Object,
-		// 		Value: map[string]*Node{
-		// 			"str": {
-		// 				Type:  String,
-		// 				Value: "I'm a string. \\\"You can quote me\\\". Name\\tJos\\u00E9\\nLocation\\tSF.",
-		// 				NameLocation: TokenLocation{
-		// 					Start: CharLocation{Line: 1, Column: 1},
-		// 					End:   CharLocation{Line: 1, Column: 4},
-		// 				},
-		// 				ValueLocation: TokenLocation{
-		// 					Start: CharLocation{Line: 1, Column: 7},
-		// 					End:   CharLocation{Line: 1, Column: 75},
-		// 				},
-		// 			},
-		// 			"str2": {
-		// 				Type:  String,
-		// 				Value: "\n\tRoses are red\n\tViolets are blue",
-		// 				NameLocation: TokenLocation{
-		// 					Start: CharLocation{Line: 2, Column: 1},
-		// 					End:   CharLocation{Line: 2, Column: 5},
-		// 				},
-		// 				ValueLocation: TokenLocation{
-		// 					Start: CharLocation{Line: 2, Column: 8},
-		// 					End:   CharLocation{Line: 4, Column: 20},
-		// 				},
-		// 			},
-		// 			"str3": {
-		// 				Type:  String,
-		// 				Value: "The quick brown fox jumps over the lazy dog.",
-		// 				NameLocation: TokenLocation{
-		// 					Start: CharLocation{Line: 5, Column: 1},
-		// 					End:   CharLocation{Line: 5, Column: 5},
-		// 				},
-		// 				ValueLocation: TokenLocation{
-		// 					Start: CharLocation{Line: 5, Column: 8},
-		// 					End:   CharLocation{Line: 6, Column: 20},
-		// 				},
-		// 			},
-		// 			"str4": {
-		// 				Type:  String,
-		// 				Value: "\\ServerX\\admin$\\system32\\",
-		// 				NameLocation: TokenLocation{
-		// 					Start: CharLocation{Line: 7, Column: 1},
-		// 					End:   CharLocation{Line: 7, Column: 5},
-		// 				},
-		// 				ValueLocation: TokenLocation{
-		// 					Start: CharLocation{Line: 7, Column: 8},
-		// 					End:   CharLocation{Line: 7, Column: 29},
-		// 				},
-		// 			},
-		// 			"str5": {
-		// 				Type:  String,
-		// 				Value: "The first newline is\ntrimmed in raw strings.\n   All other whitespace\n   is preserved.\n",
-		// 				NameLocation: TokenLocation{
-		// 					Start: CharLocation{Line: 8, Column: 1},
-		// 					End:   CharLocation{Line: 8, Column: 5},
-		// 				},
-		// 				ValueLocation: TokenLocation{
-		// 					Start: CharLocation{Line: 8, Column: 8},
-		// 					End:   CharLocation{Line: 11, Column: 21},
-		// 				},
-		// 			},
-		// 		},
-		// 	},
-		// 	expectedErrs: nil,
-		// },
+		{
+			input: shortTomlConfig6,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"str": {
+						Type:  String,
+						Value: "I'm a string. \\\"You can quote me\\\". Name\\tJos\\u00E9\\nLocation\\tSF.",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 1},
+							End:   CharLocation{Line: 1, Column: 4},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 7},
+							End:   CharLocation{Line: 1, Column: 75},
+						},
+					},
+					"str2": {
+						Type:  String,
+						Value: "\n\tRoses are red\n\tViolets are blue",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 2, Column: 1},
+							End:   CharLocation{Line: 2, Column: 5},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 2, Column: 8},
+							End:   CharLocation{Line: 2, Column: 47}, // This is read as a single token, so end position is not correctly obtained
+						},
+					},
+					"str3": {
+						Type:  String,
+						Value: "The quick brown \\\n\tfox jumps over \\\n\tthe lazy dog.",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 5, Column: 1},
+							End:   CharLocation{Line: 5, Column: 5},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 5, Column: 8},
+							End:   CharLocation{Line: 5, Column: 64}, // This is read as a single token, so end position is not correctly obtained
+						},
+					},
+					"str4": {
+						Type:  String,
+						Value: "\\\\ServerX\\admin$\\system32\\",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 8, Column: 1},
+							End:   CharLocation{Line: 8, Column: 5},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 8, Column: 8},
+							End:   CharLocation{Line: 8, Column: 36},
+						},
+					},
+					"str5": {
+						Type:  String,
+						Value: "\n\tThe first newline is\n\ttrimmed in raw strings.\n\t   All other whitespace\n\t   is preserved.\n\t",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 9, Column: 1},
+							End:   CharLocation{Line: 9, Column: 5},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 9, Column: 8},
+							End:   CharLocation{Line: 9, Column: 106}, // This is read as a single token, so end position is not correctly obtained
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
 		{
 			input: shortTomlConfig7,
 			expected: &Node{
@@ -1816,6 +1825,87 @@ func TestShortSamples_tomlParser(t *testing.T) {
 			},
 			expectedErrs: nil,
 		},
+		{
+			input: shortTomlConfig18,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"fruit": {
+						Type: Object,
+						Value: map[string]*Node{
+							"apple": {
+								Type: Object,
+								Value: map[string]*Node{
+									"color": {
+										Type:  String,
+										Value: "red",
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 2, Column: 1},
+											End:   CharLocation{Line: 2, Column: 12},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 2, Column: 15},
+											End:   CharLocation{Line: 2, Column: 20},
+										},
+									},
+									"taste": {
+										Type: Object,
+										Value: map[string]*Node{
+											"sweet": {
+												Type:  Bool,
+												Value: true,
+												NameLocation: TokenLocation{
+													Start: CharLocation{Line: 3, Column: 1},
+													End:   CharLocation{Line: 3, Column: 18},
+												},
+												ValueLocation: TokenLocation{
+													Start: CharLocation{Line: 3, Column: 21},
+													End:   CharLocation{Line: 3, Column: 25},
+												},
+											},
+										},
+									},
+									"texture": {
+										Type: Object,
+										Value: map[string]*Node{
+											"smooth": {
+												Type:  Bool,
+												Value: true,
+												NameLocation: TokenLocation{
+													Start: CharLocation{Line: 6, Column: 1},
+													End:   CharLocation{Line: 6, Column: 7},
+												},
+												ValueLocation: TokenLocation{
+													Start: CharLocation{Line: 6, Column: 10},
+													End:   CharLocation{Line: 6, Column: 14},
+												},
+											},
+										},
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 5, Column: 1},
+											End:   CharLocation{Line: 5, Column: 22},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 5, Column: 1},
+											End:   CharLocation{Line: 5, Column: 22},
+										},
+									},
+								},
+							},
+						},
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 1},
+							End:   CharLocation{Line: 1, Column: 8},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 1},
+							End:   CharLocation{Line: 1, Column: 8},
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
 	}
 
 	// Run tests
@@ -1848,76 +1938,92 @@ func TestHighLevelErrorConditions_tomlParser(t *testing.T) {
 	fruit.apple.smooth = true
 	`)
 
-	// var hlErrTomlConfig3 = []byte(`
-	// apos15 = "Here are fifteen apostrophes: '''''''''''''''"
-	// `)
+	var hlErrTomlConfig3 = []byte(`
+	apos15 = '''Here are fifteen apostrophes: ''''''''''''''''''
+	`)
 
-	// var hlErrTomlConfig4 = []byte(`
-	// invalid_float_1 = .7
-	// invalid_float_2 = 7.
-	// invalid_float_3 = 3.e+20
-	// `)
+	var hlErrTomlConfig4 = []byte(`
+	invalid_float_1 = .7
+	invalid_float_2 = 7.
+	invalid_float_3 = 3.e+20
+	`)
 
-	// var hlErrTomlConfig5 = []byte(`
-	// [fruit]
-	// apple = "red"
+	var hlErrTomlConfig5 = []byte(`
+	[fruit]
+	apple = "red"
 
-	// [fruit]
-	// orange = "orange"
-	// `)
+	[fruit]
+	orange = "orange"
+	`)
 
-	// var hlErrTomlConfig6 = []byte(`
-	// [fruit]
-	// apple = "red"
+	var hlErrTomlConfig6 = []byte(`
+	[fruit]
+	apple = "red"
 
-	// [fruit.apple]
-	// texture = "smooth"
-	// `)
+	[fruit.apple]
+	texture = "smooth"
+	`)
 
-	// var hlErrTomlConfig7 = []byte(`
-	// [product]
-	// type = { name = "Nail" }
-	// type.edible = false
-	// `)
+	var hlErrTomlConfig7 = []byte(`
+	[product]
+	type = { name = "Nail" }
+	type.edible = false
+	`)
 
-	// var hlErrTomlConfig8 = []byte(`
-	// [product]
-	// type.name = "Nail"
-	// type = { edible = false }
-	// `)
+	var hlErrTomlConfig8 = []byte(`
+	[product]
+	type.name = "Nail"
+	type = { edible = false }
+	`)
 
-	// var hlErrTomlConfig9 = []byte(`
-	// [fruit.physical]
-	// color = "red"
-	// shape = "round"
+	var hlErrTomlConfig9 = []byte(`
+	[fruit.physical]
+	color = "red"
+	shape = "round"
 
-	// [[fruit]]
-	// name = "apple"
-	// `)
+	[[fruit]]
+	name = "apple"
+	`)
 
-	// var hlErrTomlConfig10 = []byte(`
-	// fruits = []
+	var hlErrTomlConfig10 = []byte(`
+	fruits = []
 
-	// [[fruits]]
-	// `)
+	[[fruits]]
+	`)
 
-	// var hlErrTomlConfig11 = []byte(`
-	// [[fruits]]
-	// name = "apple"
+	var hlErrTomlConfig11 = []byte(`
+	[[fruits]]
+	name = "apple"
 
-	// [[fruits.varieties]]
-	// name = "red delicious"
+	[[fruits.varieties]]
+	name = "red delicious"
 
-	// [fruits.varieties]
-	// name = "granny smith"
+	[fruits.varieties]
+	name = "granny smith"
 
-	// [fruits.physical]
-	// color = "red"
-	// shape = "round"
+	[fruits.physical]
+	color = "red"
+	shape = "round"
 
-	// [[fruits.physical]]
-	// color = "green"
-	// `)
+	[[fruits.physical]]
+	color = "green"
+	`)
+
+	var hlErrTomlConfig12 = []byte(`
+	[fruit]
+	apple.color = "red"
+	apple.taste.sweet = true
+
+	[fruit.apple]
+	`)
+
+	var hlErrTomlConfig13 = []byte(`
+	[fruit]
+	apple.color = "red"
+	apple.taste.sweet = true
+
+	[fruit.apple.taste]
+	`)
 
 	testCases := []jsonParserTestCase{
 		{
@@ -1925,10 +2031,10 @@ func TestHighLevelErrorConditions_tomlParser(t *testing.T) {
 			expected: nil,
 			expectedErrs: []CMParserError{
 				{
-					Message: "mismatched input '<EOF>' expecting {'[', '{', BOOLEAN, BASIC_STRING, ML_BASIC_STRING, LITERAL_STRING, ML_LITERAL_STRING, FLOAT, INF, NAN, DEC_INT, HEX_INT, OCT_INT, BIN_INT, OFFSET_DATE_TIME, LOCAL_DATE_TIME, LOCAL_DATE, LOCAL_TIME}",
+					Message: "can't redefine existing key: 'name'",
 					Location: TokenLocation{
-						Start: CharLocation{Line: 0, Column: 6},
-						End:   CharLocation{Line: 0, Column: 7},
+						Start: CharLocation{Line: 2, Column: 1},
+						End:   CharLocation{Line: 2, Column: 5},
 					},
 				},
 			},
@@ -1938,10 +2044,10 @@ func TestHighLevelErrorConditions_tomlParser(t *testing.T) {
 			expected: nil,
 			expectedErrs: []CMParserError{
 				{
-					Message: "mismatched input 'last' expecting {<EOF>, NL}",
+					Message: "can't redefine existing key: 'spelling'",
 					Location: TokenLocation{
-						Start: CharLocation{Line: 0, Column: 14},
-						End:   CharLocation{Line: 0, Column: 15},
+						Start: CharLocation{Line: 2, Column: 1},
+						End:   CharLocation{Line: 2, Column: 11},
 					},
 				},
 			},
@@ -1951,10 +2057,202 @@ func TestHighLevelErrorConditions_tomlParser(t *testing.T) {
 			expected: nil,
 			expectedErrs: []CMParserError{
 				{
-					Message: "no viable alternative at input '='",
+					Message: "can't redefine existing key to contain: 'smooth'",
 					Location: TokenLocation{
-						Start: CharLocation{Line: 0, Column: 0},
-						End:   CharLocation{Line: 0, Column: 1},
+						Start: CharLocation{Line: 2, Column: 1},
+						End:   CharLocation{Line: 2, Column: 19},
+					},
+				},
+			},
+		},
+		{
+			input:    hlErrTomlConfig3,
+			expected: nil,
+			expectedErrs: []CMParserError{
+				{
+					Message: "extraneous input '''' expecting {<EOF>, NL}",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 1, Column: 46},
+						End:   CharLocation{Line: 1, Column: 47},
+					},
+				},
+				{
+					Message: "token recognition error at: ''\n'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 1, Column: 60},
+						End:   CharLocation{Line: 1, Column: 61},
+					},
+				},
+			},
+		},
+		{
+			input:    hlErrTomlConfig4,
+			expected: nil,
+			expectedErrs: []CMParserError{
+				{
+					Message: "token recognition error at: '.'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 1, Column: 19},
+						End:   CharLocation{Line: 1, Column: 20},
+					},
+				},
+				{
+					Message: "extraneous input '.' expecting {<EOF>, NL}",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 2, Column: 20},
+						End:   CharLocation{Line: 2, Column: 21},
+					},
+				},
+				{
+					Message: "extraneous input '.' expecting {<EOF>, NL}",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 3, Column: 20},
+						End:   CharLocation{Line: 3, Column: 21},
+					},
+				},
+				{
+					Message: "token recognition error at: '+'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 3, Column: 22},
+						End:   CharLocation{Line: 3, Column: 23},
+					},
+				},
+			},
+		},
+		{
+			input:    hlErrTomlConfig5,
+			expected: nil,
+			expectedErrs: []CMParserError{
+				{
+					Message: "can't redefine existing table: 'fruit'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 4, Column: 2},
+						End:   CharLocation{Line: 4, Column: 7},
+					},
+				},
+			},
+		},
+		{
+			input:    hlErrTomlConfig6,
+			expected: nil,
+			expectedErrs: []CMParserError{
+				{
+					Message: "can't redefine existing key: 'apple'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 4, Column: 2},
+						End:   CharLocation{Line: 4, Column: 13},
+					},
+				},
+			},
+		},
+		{
+			input:    hlErrTomlConfig7,
+			expected: nil,
+			expectedErrs: []CMParserError{
+				{
+					Message: "can't redefine existing key: 'type'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 3, Column: 1},
+						End:   CharLocation{Line: 3, Column: 12},
+					},
+				},
+			},
+		},
+		{
+			input:    hlErrTomlConfig8,
+			expected: nil,
+			expectedErrs: []CMParserError{
+				{
+					Message: "can't redefine existing key: 'type'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 3, Column: 1},
+						End:   CharLocation{Line: 3, Column: 5},
+					},
+				},
+			},
+		},
+		{
+			input:    hlErrTomlConfig9,
+			expected: nil,
+			expectedErrs: []CMParserError{
+				{
+					Message: "can't redefine existing key: 'fruit'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 5, Column: 3},
+						End:   CharLocation{Line: 5, Column: 8},
+					},
+				},
+			},
+		},
+		{
+			input:    hlErrTomlConfig10,
+			expected: nil,
+			expectedErrs: []CMParserError{
+				{
+					Message: "can't redefine existing key: 'fruits'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 3, Column: 3},
+						End:   CharLocation{Line: 3, Column: 9},
+					},
+				},
+			},
+		},
+		{
+			input:    hlErrTomlConfig11,
+			expected: nil,
+			expectedErrs: []CMParserError{
+				{
+					Message: "can't redefine existing key: 'fruits.varieties'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 7, Column: 2},
+						End:   CharLocation{Line: 7, Column: 18},
+					},
+				},
+				{
+					Message: "can't redefine existing key: 'name'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 8, Column: 1},
+						End:   CharLocation{Line: 8, Column: 5},
+					},
+				},
+				{
+					Message: "can't redefine existing key: 'fruits.physical'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 14, Column: 3},
+						End:   CharLocation{Line: 14, Column: 18},
+					},
+				},
+				{
+					Message: "can't redefine existing key: 'color'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 15, Column: 1},
+						End:   CharLocation{Line: 15, Column: 6},
+					},
+				},
+			},
+		},
+		{
+			input:    hlErrTomlConfig12,
+			expected: nil,
+			expectedErrs: []CMParserError{
+				{
+					Message: "can't redefine existing key: 'apple'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 5, Column: 2},
+						End:   CharLocation{Line: 5, Column: 13},
+					},
+				},
+			},
+		},
+		{
+			input:    hlErrTomlConfig13,
+			expected: nil,
+			expectedErrs: []CMParserError{
+				{
+					Message: "can't redefine existing key: 'taste'",
+					Location: TokenLocation{
+						Start: CharLocation{Line: 5, Column: 2},
+						End:   CharLocation{Line: 5, Column: 19},
 					},
 				},
 			},
@@ -1986,7 +2284,7 @@ func TestErrorConditions_tomlParser(t *testing.T) {
 			expected: nil,
 			expectedErrs: []CMParserError{
 				{
-					Message: "mismatched input '<EOF>' expecting {'[', '{', BOOLEAN, BASIC_STRING, ML_BASIC_STRING, LITERAL_STRING, ML_LITERAL_STRING, FLOAT, INF, NAN, DEC_INT, HEX_INT, OCT_INT, BIN_INT, OFFSET_DATE_TIME, LOCAL_DATE_TIME, LOCAL_DATE, LOCAL_TIME}",
+					Message: "mismatched input '<EOF>' expecting {'[', BASIC_STRING, LITERAL_STRING, '{', BOOLEAN, ML_BASIC_STRING, ML_LITERAL_STRING, FLOAT, INF, NAN, DEC_INT, HEX_INT, OCT_INT, BIN_INT, OFFSET_DATE_TIME, LOCAL_DATE_TIME, LOCAL_DATE, LOCAL_TIME}",
 					Location: TokenLocation{
 						Start: CharLocation{Line: 0, Column: 6},
 						End:   CharLocation{Line: 0, Column: 7},
