@@ -28,9 +28,6 @@ specificationBody: SPEC_ROOT_KW LBRACE specificationItem* RBRACE;
 // fields insided curly braces.
 specificationItem: fieldName metadataExpression ( LPAREN (check SEMICOLON)+ RPAREN )? (LBRACE specificationItem* RBRACE)?;
 
-// A field name is a string literal.
-fieldName: IDENTIFIER (DOT IDENTIFIER)*;
-
 // A metadata expression is a list of metadata items inside angled brackets.
 metadataExpression: LANGLE metadataItem (COMMA metadataItem)* RANGLE;
 
@@ -55,6 +52,12 @@ primitive
     | FLOAT # float
     | BOOL # boolean
     ;
+
+fieldName: simpleName | dottedName;
+
+simpleName: LITERAL_STRING | IDENTIFIER;
+
+dottedName: simpleName (DOT simpleName)+;
 
 // A string expression is either a short string or a long string.
 stringExpr
@@ -86,12 +89,13 @@ DOT : '.' ;               // Dot
 DOUBLE_QUOTES : '""' ;      // Double quote
 
 SHORT_STRING: '"'  ('\\' (RN | .) | ~[\\\r\n"])* '"';
+LITERAL_STRING : '\'' (~['\n])*? '\'' ;
 LONG_STRING: '"' LONG_STRING_ITEM*? '"';
 INT : DIGIT+ ;               // Integer numbers
 FLOAT : DIGIT+ '.' DIGIT+ ;  // Floating point numbers
 BOOL : 'true' | 'false' ;    // Boolean values
 
-IDENTIFIER : LETTER (CHARACTER)* ;    // Typical definition of an identifier
+IDENTIFIER : (CHARACTER)+ ;    // Typical definition of an identifier
 
 WS : [ \t\r\n]+ -> skip ;    // Skip whitespace
 

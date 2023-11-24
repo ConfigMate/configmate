@@ -1,0 +1,28 @@
+[server]
+host = "localhost"
+port = 128
+ssl_enabled = false
+
+ssl_paths = { cert = "/path/to/cert.pem", key = "/path/to/key.pem" }
+
+[database]
+host = "db.example.com"
+port = 5432
+"user name" = "dbuser"
+password = "dbpassword"
+name = "dbname"
+
+[cache]
+host = "cache.example.com"
+port = 6150
+
+[api]
+endpoint = "/api/v1"
+timeout = 30
+
+[logging]
+level = "info"
+output = "logfile.log"
+
+# Array of strings for DNS servers
+dns_servers = ["8.8.8.8", "8.8.4.4"]

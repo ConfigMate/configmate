@@ -25,32 +25,9 @@ configm: generate_parsers bin/
 configm_debug: generate_parsers bin/
 	go build $(GO_FLAGS) $(GO_DEBUG_FLAGS) -o "bin/configm$(EXT)" $(GO_PKG)
 
-# Setup the ANTLR parser
-ANTLR_VERSION := 4.13.1
-ANTLR4_JAR_OUTPUT_DIR := ./lib
-
-./lib/antlr-*-complete.jar:
-	chmod +x ./scripts/download_antlr_jar.sh
-	./scripts/download_antlr_jar.sh $(ANTLR_VERSION) $(ANTLR4_JAR_OUTPUT_DIR)
-
-# Generate the parsers
-GRAMMAR_DIR := ./parsers/grammars
-ANTLR4_OUTPUT_DIR := ./parsers/gen
-
-ANTLR4_CMD = java -jar $(ANTLR4_JAR_OUTPUT_DIR)/antlr-$(ANTLR_VERSION)-complete.jar
-ANTLR_FLAGS = -Dlanguage=Go
-CLASSPATH = .:$(ANTLR4_JAR_OUTPUT_DIR)/antlr-$(ANTLR_VERSION)-complete.jar:$$CLASSPATH
-
-generate_parsers: ./lib/antlr-*-complete.jar
-	export CLASSPATH=$(CLASSPATH)
-
-	find $(GRAMMAR_DIR) -name '*.g4' -exec sh -c '\
-		file="{}"; \
-		filename=$$(basename "$$file"); \
-		package="parser_$${filename%.g4*}"; \
-		lower_case_package=$$(echo "$$package" | tr "[:upper:]" "[:lower:]"); \
-		$(ANTLR4_CMD) $(ANTLR_FLAGS) -package "$$lower_case_package" -o $(ANTLR4_OUTPUT_DIR)/$$lower_case_package "$$file" \
-	' \;
+generate_parsers:
+	chmod +x ./scripts/generate_parsers.sh
+	./scripts/generate_parsers.sh
 
 clean_parsers:
 	rm -rf lib/

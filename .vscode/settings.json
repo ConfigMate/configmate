@@ -19,7 +19,7 @@
         "*.json": "json"
     },
     "editor.minimap.enabled": false,
-    "window.zoomLevel": 1,
+    "window.zoomLevel": 0,
     // "emeraldwalk.runonsave": {
     //     "commands": [
     //         {

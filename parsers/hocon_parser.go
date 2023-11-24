@@ -3,7 +3,7 @@ package parsers
 import (
 	"fmt"
 
-	parser_hocon "github.com/ConfigMate/configmate/parsers/gen/parser_hocon/parsers/grammars"
+	"github.com/ConfigMate/configmate/parsers/gen/parser_hocon"
 	"github.com/antlr4-go/antlr/v4"
 	// "github.com/golang-collections/collections/stack"
 )
