@@ -11,7 +11,7 @@ func TestNode_Get(t *testing.T) {
 	// Test cases
 	type testCase struct {
 		configFile  *Node
-		path        string
+		key         *NodeKey
 		expected    *Node
 		expectedErr error
 	}
@@ -32,7 +32,7 @@ func TestNode_Get(t *testing.T) {
 					},
 				},
 			},
-			path:        "server.port",
+			key:         &NodeKey{Segments: []string{"server", "port"}},
 			expected:    &Node{Type: Int, Value: 8080},
 			expectedErr: nil,
 		},
@@ -46,7 +46,7 @@ func TestNode_Get(t *testing.T) {
 					},
 				},
 			},
-			path:        "server.port",
+			key:         &NodeKey{Segments: []string{"server", "port"}},
 			expected:    nil,
 			expectedErr: nil,
 		},
@@ -57,7 +57,7 @@ func TestNode_Get(t *testing.T) {
 					"server": {
 						Type: Object,
 						Value: map[string]*Node{
-							"port": {
+							"port. test": {
 								Type:  String,
 								Value: "8080",
 							},
@@ -65,87 +65,21 @@ func TestNode_Get(t *testing.T) {
 					},
 				},
 			},
-			path:        "server.port[0]",
+			key:         &NodeKey{Segments: []string{"server", "port. test", "something"}},
 			expected:    nil,
-			expectedErr: fmt.Errorf("cannot traverse leaf node port in path server.port"),
-		},
-		{
-			configFile: &Node{
-				Type: Object,
-				Value: map[string]*Node{
-					"server": {
-						Type: Object,
-						Value: map[string]*Node{
-							"dns_servers": {
-								Type: Array,
-								Value: []*Node{
-									{
-										Type:  String,
-										Value: "some.dns.server",
-									},
-									{
-										Type:  String,
-										Value: "some.other.dns.server",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			path:        "server.dns_servers[1]",
-			expected:    &Node{Type: String, Value: "some.other.dns.server"},
-			expectedErr: nil,
-		},
-		{
-			configFile: &Node{
-				Type: Object,
-				Value: map[string]*Node{
-					"dns_servers": {
-						Type: Array,
-						Value: []*Node{
-							{
-								Type:  String,
-								Value: "some.dns.server",
-							},
-						},
-					},
-				},
-			},
-			path:        "dns_servers[3.14]",
-			expected:    nil,
-			expectedErr: fmt.Errorf("failed to convert [3.14] to int in path server.dns_servers[3.14]"),
-		},
-		{
-			configFile: &Node{
-				Type: Object,
-				Value: map[string]*Node{
-					"dns_servers": {
-						Type: Array,
-						Value: []*Node{
-							{
-								Type:  String,
-								Value: "some.dns.server",
-							},
-						},
-					},
-				},
-			},
-			path:        "dns_servers[something]",
-			expected:    nil,
-			expectedErr: fmt.Errorf("failed to convert [something] to int in path server.dns_servers[3.14]"),
+			expectedErr: fmt.Errorf("cannot traverse leaf node in path server.'port. test'.something"),
 		},
 	}
 
 	// Run tests
 	for _, test := range testCases {
-		actual, err := test.configFile.Get(test.path)
+		actual, err := test.configFile.Get(test.key)
 		if err != nil && test.expectedErr == nil {
-			t.Errorf("getValueFromConfigFile(%+v, %s) returned error %s, expected no error", test.configFile, test.path, err.Error())
+			t.Errorf("getValueFromConfigFile(%+v, %s) returned error %s, expected no error", test.configFile, test.key.String(), err.Error())
 		} else if err == nil && test.expectedErr != nil {
-			t.Errorf("getValueFromConfigFile(%+v, %s) returned no error, expected error", test.configFile, test.path)
+			t.Errorf("getValueFromConfigFile(%+v, %s) returned no error, expected error", test.configFile, test.key.String())
 		} else if !reflect.DeepEqual(actual, test.expected) {
-			t.Errorf("getValueFromConfigFile(%+v, %s) returned %+v, expected %+v", test.configFile, test.path, actual, test.expected)
+			t.Errorf("getValueFromConfigFile(%+v, %s) returned %+v, expected %+v", test.configFile, test.key.String(), actual, test.expected)
 		}
 	}
 }

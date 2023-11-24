@@ -31,7 +31,7 @@ func TestParseSimple(t *testing.T) {
 		ImportsLocation:      map[string]parsers.TokenLocation{},
 		Fields: []FieldSpec{
 			{
-				Field: "server",
+				Field: &parsers.NodeKey{Segments: []string{"server"}},
 				FieldLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 3, Column: 4},
 					End:   parsers.CharLocation{Line: 3, Column: 10},
@@ -50,7 +50,7 @@ func TestParseSimple(t *testing.T) {
 				Checks:           []CheckWithLocation{},
 			},
 			{
-				Field: "server.host",
+				Field: &parsers.NodeKey{Segments: []string{"server", "host"}},
 				FieldLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 4, Column: 8},
 					End:   parsers.CharLocation{Line: 4, Column: 12},
@@ -83,7 +83,7 @@ func TestParseSimple(t *testing.T) {
 				},
 			},
 			{
-				Field: "server.port",
+				Field: &parsers.NodeKey{Segments: []string{"server", "port"}},
 				FieldLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 10, Column: 8},
 					End:   parsers.CharLocation{Line: 10, Column: 12},
@@ -116,7 +116,7 @@ func TestParseSimple(t *testing.T) {
 				},
 			},
 			{
-				Field: "server.ssl_enabled",
+				Field: &parsers.NodeKey{Segments: []string{"server", "ssl_enabled"}},
 				FieldLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 19, Column: 8},
 					End:   parsers.CharLocation{Line: 19, Column: 19},
@@ -149,10 +149,10 @@ func TestParseSimple(t *testing.T) {
 				},
 			},
 			{
-				Field: "server.dns_servers",
+				Field: &parsers.NodeKey{Segments: []string{"server", "dns. servers"}},
 				FieldLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 25, Column: 8},
-					End:   parsers.CharLocation{Line: 25, Column: 19},
+					End:   parsers.CharLocation{Line: 25, Column: 22},
 				},
 				Type: "list:string",
 				TypeLocation: parsers.TokenLocation{

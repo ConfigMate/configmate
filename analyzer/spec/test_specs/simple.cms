@@ -23,7 +23,7 @@ spec {
             notes: "This is whether or not SSL is enabled."
         > ( eq(false); )
 
-        dns_servers <
+        'dns. servers' <
             type: list<string>,
             optional: true,
             notes: "This is a list of DNS servers."

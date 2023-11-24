@@ -421,7 +421,7 @@ func (a *analyzerImpl) findAndParseAllFields(
 		// Sort file specs by field name lenght (shortest first)
 		// This guarantees parent fields are checked before child fields
 		sort.Slice(fileFields, func(i, j int) bool {
-			return len(fileFields[i].Field) < len(fileFields[j].Field)
+			return len(fileFields[i].Field.String()) < len(fileFields[j].Field.String())
 		})
 
 		for _, fspec := range fileFields {
@@ -429,12 +429,12 @@ func (a *analyzerImpl) findAndParseAllFields(
 			// field that is missing, which makes the
 			// current field optional as well
 			for optMissingField := range optMissingFields {
-				if strings.HasPrefix(fileAlias+"."+fspec.Field, optMissingField) {
-					optMissingFields[fileAlias+"."+fspec.Field] = true
+				if strings.HasPrefix(fileAlias+"."+fspec.Field.String(), optMissingField) {
+					optMissingFields[fileAlias+"."+fspec.Field.String()] = true
 					break
 				}
 			}
-			if optMissingFields[fileAlias+"."+fspec.Field] {
+			if optMissingFields[fileAlias+"."+fspec.Field.String()] {
 				continue
 			}
 
@@ -463,7 +463,7 @@ func (a *analyzerImpl) findAndParseAllFields(
 					},
 				}
 			} else if fnode == nil && fspec.Optional { // Field not found and optional
-				optMissingFields[fileAlias+"."+fspec.Field] = true
+				optMissingFields[fileAlias+"."+fspec.Field.String()] = true
 			} else { // Field found
 				t, err := types.MakeType(fspec.Type, fnode.Value)
 				if err != nil {
@@ -484,8 +484,8 @@ func (a *analyzerImpl) findAndParseAllFields(
 						},
 					}
 				} else {
-					fieldValues[fileAlias+"."+fspec.Field] = t
-					fieldLocations[fileAlias+"."+fspec.Field] = TokenLocationWithFile{
+					fieldValues[fileAlias+"."+fspec.Field.String()] = t
+					fieldLocations[fileAlias+"."+fspec.Field.String()] = TokenLocationWithFile{
 						File:     configFilePaths[fileAlias],
 						Location: fnode.ValueLocation,
 					}
@@ -513,7 +513,7 @@ func (a *analyzerImpl) runChecks(
 			// Evaluate check
 			result, skipping, err := a.checkEvaluator.Evaluate(
 				checkInfo.Check,
-				mainFileAlias+"."+fspec.Field,
+				mainFileAlias+"."+fspec.Field.String(),
 				fieldValues,
 				optMissingFields,
 			)
@@ -553,7 +553,7 @@ func (a *analyzerImpl) runChecks(
 					Field:         mainFieldSpecs[index],
 					CheckNum:      checkNum,
 					TokenList: []TokenLocationWithFile{
-						fieldLocations[mainFileAlias+"."+fspec.Field],
+						fieldLocations[mainFileAlias+"."+fspec.Field.String()],
 					},
 				})
 			}

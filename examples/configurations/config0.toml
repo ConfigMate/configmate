@@ -8,7 +8,7 @@ ssl_paths = { cert = "/path/to/cert.pem", key = "/path/to/key.pem" }
 [database]
 host = "db.example.com"
 port = 5432
-username = "dbuser"
+"user name" = "dbuser"
 password = "dbpassword"
 name = "dbname"
 

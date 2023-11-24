@@ -164,19 +164,19 @@ func (p *specParserImpl) EnterImportItem(ctx *parser_cmsl.ImportItemContext) {
 
 // EnterSpecificationItem is called when production specificationItem is entered.
 func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationItemContext) {
-	// Compute fieldName
-	fieldName := ctx.FieldName().GetText()
+	// Compute the field key
+	fieldKey := parseFieldName(ctx.FieldName())
 	if p.itemFieldStack.Len() != 0 {
-		parentField := p.itemFieldStack.Peek().(string)
-		fieldName = parentField + "." + fieldName
+		parentFieldKey := p.itemFieldStack.Peek().(*parsers.NodeKey)
+		fieldKey = parentFieldKey.Join(fieldKey)
 	}
 
 	// Add item to stack
-	p.itemFieldStack.Push(fieldName)
+	p.itemFieldStack.Push(fieldKey)
 
 	// Add item to spec
 	fieldSpecification := FieldSpec{
-		Field: fieldName,
+		Field: fieldKey,
 		FieldLocation: parsers.TokenLocation{
 			Start: parsers.CharLocation{
 				Line:   ctx.FieldName().GetStart().GetLine() - 1,
@@ -202,7 +202,7 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 			// Check if type has already been found
 			if foundType {
 				p.errs = append(p.errs, SpecParserError{
-					ErrorMessage: fmt.Sprintf("duplicate type metadata for field %s", fieldName),
+					ErrorMessage: fmt.Sprintf("duplicate type metadata for field %s", fieldKey.String()),
 					Location: parsers.TokenLocation{
 						Start: parsers.CharLocation{
 							Line:   item.GetStart().GetLine() - 1,
@@ -234,7 +234,7 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 			// Check if optional has already been found
 			if foundOptional {
 				p.errs = append(p.errs, SpecParserError{
-					ErrorMessage: fmt.Sprintf("duplicate optional metadata for field %s", fieldName),
+					ErrorMessage: fmt.Sprintf("duplicate optional metadata for field %s", fieldKey.String()),
 					Location: parsers.TokenLocation{
 						Start: parsers.CharLocation{
 							Line:   item.GetStart().GetLine() - 1,
@@ -271,7 +271,7 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 			// Check if default has already been found
 			if foundDefault {
 				p.errs = append(p.errs, SpecParserError{
-					ErrorMessage: fmt.Sprintf("duplicate default metadata for field %s", fieldName),
+					ErrorMessage: fmt.Sprintf("duplicate default metadata for field %s", fieldKey.String()),
 					Location: parsers.TokenLocation{
 						Start: parsers.CharLocation{
 							Line:   item.GetStart().GetLine() - 1,
@@ -303,7 +303,7 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 			// Check if notes has already been found
 			if foundNotes {
 				p.errs = append(p.errs, SpecParserError{
-					ErrorMessage: fmt.Sprintf("duplicate notes metadata for field %s", fieldName),
+					ErrorMessage: fmt.Sprintf("duplicate notes metadata for field %s", fieldKey.String()),
 					Location: parsers.TokenLocation{
 						Start: parsers.CharLocation{
 							Line:   item.GetStart().GetLine() - 1,
@@ -339,7 +339,7 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 
 	if !foundType {
 		p.errs = append(p.errs, SpecParserError{
-			ErrorMessage: fmt.Sprintf("missing type metadata for field %s", fieldName),
+			ErrorMessage: fmt.Sprintf("missing type metadata for field %s", fieldKey.String()),
 			Location: parsers.TokenLocation{
 				Start: parsers.CharLocation{
 					Line:   ctx.GetStart().GetLine() - 1,
@@ -378,6 +378,35 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 func (p *specParserImpl) ExitSpecificationItem(ctx *parser_cmsl.SpecificationItemContext) {
 	// Pop field from stack
 	p.itemFieldStack.Pop()
+}
+
+func parseFieldName(ctx parser_cmsl.IFieldNameContext) *parsers.NodeKey {
+	if ctx.SimpleName() != nil {
+		return &parsers.NodeKey{Segments: []string{removeSingleQuotesInKeys(ctx.SimpleName().GetText())}}
+	} else if ctx.DottedName() != nil {
+		return parseDottedName(ctx.DottedName())
+	}
+
+	panic(fmt.Sprintf("unknown field name: %s; this error should have been cought in a previous stage", ctx.GetText()))
+}
+
+func parseDottedName(ctx parser_cmsl.IDottedNameContext) *parsers.NodeKey {
+	segments := make([]string, 0)
+
+	// For each segment
+	for _, segment := range ctx.AllSimpleName() {
+		segments = append(segments, removeSingleQuotesInKeys(segment.GetText()))
+	}
+
+	return &parsers.NodeKey{Segments: segments}
+}
+
+func removeSingleQuotesInKeys(str string) string {
+	if strings.HasPrefix(str, "'") && strings.HasSuffix(str, "'") {
+		// Remove quotes
+		str = str[1 : len(str)-1]
+	}
+	return str
 }
 
 func removeStrQuotesAndCleanSpaces(str string) string {

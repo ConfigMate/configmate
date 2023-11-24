@@ -20,10 +20,6 @@ type tomlParser struct {
 	errs                  []CMParserError
 }
 
-type tomlKey struct {
-	segments []string
-}
-
 type tomlTableDefinitionMode int
 
 const (
@@ -31,10 +27,6 @@ const (
 	tomlDefModeTable
 	tomlDefModeInlineTable
 )
-
-func (tk *tomlKey) String() string {
-	return strings.Join(tk.segments, ".")
-}
 
 // Custom TOML parser
 func (p *tomlParser) Parse(data []byte) (*Node, []CMParserError) {
@@ -617,9 +609,9 @@ func (p *tomlParser) EnterDate_time(ctx *parser_toml.Date_timeContext) {
 
 // parseKey parses a key and returns the key after removing in-between spaces
 // and cleaning each simple key string
-func (p *tomlParser) parseKey(ctx parser_toml.IKeyContext) tomlKey {
+func (p *tomlParser) parseKey(ctx parser_toml.IKeyContext) NodeKey {
 	if ctx.Simple_key() != nil {
-		return tomlKey{segments: []string{p.cleanString(ctx.Simple_key().GetText())}}
+		return NodeKey{Segments: []string{p.cleanString(ctx.Simple_key().GetText())}}
 	} else if ctx.Dotted_key() != nil {
 		return p.parseDottedKey(ctx.Dotted_key())
 	}
@@ -628,10 +620,12 @@ func (p *tomlParser) parseKey(ctx parser_toml.IKeyContext) tomlKey {
 }
 
 // parseDottedKey parses a dotted key and returns the parent key and the field key.
-func (p *tomlParser) parseDottedKey(ctx parser_toml.IDotted_keyContext) tomlKey {
-	result := tomlKey{}
+func (p *tomlParser) parseDottedKey(ctx parser_toml.IDotted_keyContext) NodeKey {
+	result := NodeKey{
+		Segments: []string{},
+	}
 	for _, key := range ctx.AllSimple_key() {
-		result.segments = append(result.segments, p.cleanString(key.GetText()))
+		result.Segments = append(result.Segments, p.cleanString(key.GetText()))
 	}
 
 	return result
@@ -640,9 +634,9 @@ func (p *tomlParser) parseDottedKey(ctx parser_toml.IDotted_keyContext) tomlKey 
 // Gets a node from a path starting at parentNode. If the node doesn't exist
 // it gets created as a Null node. Intermediate nodes are created as Object nodes.
 // If an array is found in the path, the last item in the array is used.
-func (p *tomlParser) getOrCreateNode(parentNode *Node, fieldKey tomlKey, mode tomlTableDefinitionMode) (*Node, error) {
+func (p *tomlParser) getOrCreateNode(parentNode *Node, key NodeKey, mode tomlTableDefinitionMode) (*Node, error) {
 	currentNode := parentNode
-	segments := fieldKey.segments
+	segments := key.Segments
 
 	for index := 0; index < len(segments); index++ {
 		segment := segments[index]
@@ -696,7 +690,7 @@ func (p *tomlParser) getOrCreateNode(parentNode *Node, fieldKey tomlKey, mode to
 
 			// Get last item in array, if empty throw error
 			if len(arrayValue) == 0 {
-				return nil, fmt.Errorf("cannot traverse empty array in path %s", fieldKey.String())
+				return nil, fmt.Errorf("cannot traverse empty array in path %s", key.String())
 			}
 
 			// Get last item in array

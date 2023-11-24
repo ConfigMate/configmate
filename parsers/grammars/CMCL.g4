@@ -52,9 +52,11 @@ primitive
     | BOOL # boolean
     ;
 
-// A field is a list of dot separated identifiers.
-// Such as "foo", "bar.xyz".
-fieldName: IDENTIFIER (DOT IDENTIFIER)*;
+fieldName: simpleName | dottedName;
+
+simpleName: LITERAL_STRING | IDENTIFIER;
+
+dottedName: simpleName (DOT simpleName)+;
 
 // Common Tokens
 LPAREN : '(' ;            // Left parenthesis
@@ -66,6 +68,7 @@ COLON : ':' ;             // Colon
 DOT : '.' ;               // Dot
 
 SHORT_STRING: '"'  ('\\' (RN | .) | ~[\\\r\n"])* '"';
+LITERAL_STRING : '\'' (~['\n])*? '\'' ;
 INT : DIGIT+ ;               // Integer numbers
 FLOAT : DIGIT+ '.' DIGIT+ ;  // Floating point numbers
 BOOL : 'true' | 'false' ;    // Boolean values
@@ -79,7 +82,7 @@ AND_SYM: '&&';
 OR_SYM: '||';
 NOT_SYM: '!';
 
-IDENTIFIER : LETTER (CHARACTER)* ;    // Typical definition of an identifier
+IDENTIFIER : (CHARACTER)+ ;    // Typical definition of an identifier
 
 // Auxiliary lexer rules
 fragment LETTER : [a-zA-Z] ;

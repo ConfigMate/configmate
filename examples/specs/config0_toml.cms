@@ -16,7 +16,7 @@ spec {
         host <type: string>
         port <type: int> ( range(5000, 6000); )
         name <type: string>
-        username <type: string>
+        'user name' <type: string> ( eq("dbuser"); )
         password <type: string>
     }
 

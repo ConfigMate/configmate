@@ -1064,7 +1064,7 @@ func TestEvaluateSyntaxErrors(t *testing.T) {
 				fields:           map[string]types.IType{},
 				optMissingFields: map[string]bool{},
 				checks:           checks,
-				expectedErr:      fmt.Errorf("syntax errors: line 1:8 mismatched input '<EOF>' expecting {'(', '!', IDENTIFIER}"),
+				expectedErr:      fmt.Errorf("syntax errors: line 1:8 mismatched input '<EOF>' expecting {'(', LITERAL_STRING, '!', IDENTIFIER}"),
 			}
 		}(),
 		// Test 8: OR expression missing right side
@@ -1076,7 +1076,7 @@ func TestEvaluateSyntaxErrors(t *testing.T) {
 				fields:           map[string]types.IType{},
 				optMissingFields: map[string]bool{},
 				checks:           checks,
-				expectedErr:      fmt.Errorf("syntax errors: line 1:8 mismatched input '<EOF>' expecting {'(', '!', IDENTIFIER}"),
+				expectedErr:      fmt.Errorf("syntax errors: line 1:8 mismatched input '<EOF>' expecting {'(', LITERAL_STRING, '!', IDENTIFIER}"),
 			}
 		}(),
 	}

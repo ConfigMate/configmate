@@ -15,7 +15,7 @@ type Specification struct {
 }
 
 type FieldSpec struct {
-	Field    string              `json:"field"`    // Field to check
+	Field    *parsers.NodeKey    `json:"field"`    // Field to check
 	Type     string              `json:"type"`     // Type of the field
 	Optional bool                `json:"optional"` // Whether the field is optional
 	Default  string              `json:"default"`  // Default value of the field
