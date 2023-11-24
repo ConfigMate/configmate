@@ -1,0 +1,35 @@
+file: "./examples/configurations/config0.toml" toml
+
+spec {
+    server <type: object> {
+        host <type: string>
+        port <type: int>
+        ssl_enabled <type: bool> ( eq(false); )
+
+        ssl_paths <type: object> {
+            key <type: string>
+            cert <type: string>
+        }
+    }
+
+    database <type: object> {
+        host <type: string>
+        port <type: int> ( range(5000, 6000); )
+        name <type: string>
+        username <type: string>
+        password <type: string>
+    }
+
+    cache <
+        type: object,
+        optional: true
+    > {
+        host <type: string>
+        port <type: int> ( range(6000, 6200); )
+    }
+
+    logging.dns_servers <
+        type: list<string>,
+        optional: true
+    > ( len().gt(1); )
+}
