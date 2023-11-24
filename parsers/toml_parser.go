@@ -139,38 +139,54 @@ func (p *tomlParser) EnterStandard_table(ctx *parser_toml.Standard_tableContext)
 		return
 	}
 
-	// Create table node (object)
-	tableNode := &Node{
-		Type:  Object,
-		Value: map[string]*Node{},
-		NameLocation: TokenLocation{
+	var tableNode *Node
+	// Check if table already exists
+	if table, exists := parentKeyNode.Value.(map[string]*Node)[fieldKey]; exists {
+		// Add location info
+		table.NameLocation = TokenLocation{
 			Start: CharLocation{
-				Line:   ctx.Key().GetStart().GetLine() - 1,
-				Column: ctx.Key().GetStart().GetColumn(),
+				Line:   ctx.GetStart().GetLine() - 1,
+				Column: ctx.GetStart().GetColumn(),
 			},
 			End: CharLocation{
-				Line:   ctx.Key().GetStop().GetLine() - 1,
-				Column: ctx.Key().GetStop().GetColumn() + len(ctx.Key().GetStop().GetText()),
+				Line:   ctx.GetStop().GetLine() - 1,
+				Column: ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText()),
 			},
-		},
+		}
+
+		// We cannot find value location, using name location to
+		// guarantee better display result in case this is used
+		table.ValueLocation = table.NameLocation
+
+		tableNode = table
+	} else {
+		// Create table node (object)
+		tableNode = &Node{
+			Type:  Object,
+			Value: map[string]*Node{},
+			NameLocation: TokenLocation{
+				Start: CharLocation{
+					Line:   ctx.GetStart().GetLine() - 1,
+					Column: ctx.GetStart().GetColumn(),
+				},
+				End: CharLocation{
+					Line:   ctx.GetStop().GetLine() - 1,
+					Column: ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText()),
+				},
+			},
+		}
+
+		// We cannot find value location, using name location to
+		// guarantee better display result in case this is used
+		tableNode.ValueLocation = tableNode.NameLocation
+
+		// Add table node to parent key node
+		parentKeyNode.Value.(map[string]*Node)[fieldKey] = tableNode
 	}
-
-	// We cannot find value location, using name location to
-	// guarantee better display result in case this is used
-	tableNode.ValueLocation = tableNode.NameLocation
-
-	// Add table node to parent key node
-	parentKeyNode.Value.(map[string]*Node)[fieldKey] = tableNode
 
 	// Add table node to stack
 	p.stack.Push(tableNode)
 }
-
-// EnterInline_table is called when production inline_table is entered.
-func (p *tomlParser) EnterInline_table(ctx *parser_toml.Inline_tableContext) {}
-
-// ExitInline_table is called when production inline_table is exited.
-func (p *tomlParser) ExitInline_table(ctx *parser_toml.Inline_tableContext) {}
 
 // EnterArray_table is called when production array_table is entered.
 func (p *tomlParser) EnterArray_table(ctx *parser_toml.Array_tableContext) {
@@ -212,6 +228,10 @@ func (p *tomlParser) EnterArray_table(ctx *parser_toml.Array_tableContext) {
 		},
 	}
 
+	// We cannot find value location, using name location to
+	// guarantee better display result in case this is used
+	newInArrayTable.ValueLocation = newInArrayTable.NameLocation
+
 	// Check if array already exists
 	if array, exists := parentKeyNode.Value.(map[string]*Node)[fieldKey]; exists {
 		// Create new array node
@@ -228,6 +248,55 @@ func (p *tomlParser) EnterArray_table(ctx *parser_toml.Array_tableContext) {
 
 	// Add table node to stack
 	p.stack.Push(newInArrayTable)
+}
+
+// EnterInline_table is called when production inline_table is entered.
+func (p *tomlParser) EnterInline_table(ctx *parser_toml.Inline_tableContext) {
+	// Get parent node in stack
+	parentNode := p.stack.Peek().(*Node)
+
+	// If parent node is an array, append the inline table to the array
+	if parentNode.Type == Array {
+		parentNode.Value = append(parentNode.Value.([]*Node), &Node{
+			Type:  Object,
+			Value: map[string]*Node{},
+			ValueLocation: TokenLocation{
+				Start: CharLocation{
+					Line:   ctx.GetStart().GetLine() - 1,
+					Column: ctx.GetStart().GetColumn(),
+				},
+				End: CharLocation{
+					Line:   ctx.GetStop().GetLine() - 1,
+					Column: ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText()),
+				},
+			},
+		})
+
+		// Add inline table node to stack
+		p.stack.Push(parentNode.Value.([]*Node)[len(parentNode.Value.([]*Node))-1])
+	} else { // Set parent node as inline table (node created when key was found)
+		parentNode.Type = Object
+		parentNode.Value = map[string]*Node{}
+		parentNode.ValueLocation = TokenLocation{
+			Start: CharLocation{
+				Line:   ctx.GetStart().GetLine() - 1,
+				Column: ctx.GetStart().GetColumn(),
+			},
+			End: CharLocation{
+				Line:   ctx.GetStop().GetLine() - 1,
+				Column: ctx.GetStop().GetColumn() + len(ctx.GetStop().GetText()),
+			},
+		}
+
+		// Push again (redundant) to keep stack consistent
+		p.stack.Push(parentNode)
+	}
+}
+
+// ExitInline_table is called when production inline_table is exited.
+func (p *tomlParser) ExitInline_table(ctx *parser_toml.Inline_tableContext) {
+	// Pop inline table node from stack
+	p.stack.Pop()
 }
 
 // EnterArray is called when production array is entered.
@@ -499,7 +568,7 @@ func (p *tomlParser) parseDottedKey(ctx parser_toml.IDotted_keyContext) (string,
 			return parent[:len(parent)-1], p.cleanString(key.GetText())
 		}
 
-		parent += key.GetText() + "."
+		parent += p.cleanString(key.GetText()) + "."
 	}
 
 	panic("This should never happen")
@@ -526,13 +595,8 @@ func (p *tomlParser) getOrCreateNode(parentNode *Node, key string) (*Node, error
 			} else {
 				// Create a new node
 				newNode := &Node{
-					Type: Object,
-					Value: map[string]*Node{
-						segment: {
-							Type:  Object,
-							Value: map[string]*Node{},
-						},
-					},
+					Type:  Object,
+					Value: map[string]*Node{},
 				}
 
 				// Add the new node to the map

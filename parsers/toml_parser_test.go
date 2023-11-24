@@ -48,8 +48,8 @@ func TestParseSimpleConfig_tomlParser(t *testing.T) {
 								ValueLocation: TokenLocation{Start: CharLocation{Line: 4, Column: 12}, End: CharLocation{Line: 4, Column: 37}},
 							},
 						},
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 1}, End: CharLocation{Line: 2, Column: 13}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 1}, End: CharLocation{Line: 2, Column: 13}},
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 0}, End: CharLocation{Line: 2, Column: 14}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 0}, End: CharLocation{Line: 2, Column: 14}},
 					},
 					"database_settings": {
 						Type: Object,
@@ -95,8 +95,8 @@ func TestParseSimpleConfig_tomlParser(t *testing.T) {
 								ValueLocation: TokenLocation{Start: CharLocation{Line: 10, Column: 12}, End: CharLocation{Line: 10, Column: 17}},
 							},
 						},
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 6, Column: 1}, End: CharLocation{Line: 6, Column: 18}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 6, Column: 1}, End: CharLocation{Line: 6, Column: 18}},
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 6, Column: 0}, End: CharLocation{Line: 6, Column: 19}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 6, Column: 0}, End: CharLocation{Line: 6, Column: 19}},
 					},
 					"web_servers": {
 						Type: Object,
@@ -117,8 +117,8 @@ func TestParseSimpleConfig_tomlParser(t *testing.T) {
 										ValueLocation: TokenLocation{Start: CharLocation{Line: 17, Column: 15}, End: CharLocation{Line: 17, Column: 21}},
 									},
 								},
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 15, Column: 3}, End: CharLocation{Line: 15, Column: 24}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 15, Column: 3}, End: CharLocation{Line: 15, Column: 24}},
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 15, Column: 2}, End: CharLocation{Line: 15, Column: 25}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 15, Column: 2}, End: CharLocation{Line: 15, Column: 25}},
 							},
 							"secondary": {
 								Type: Object,
@@ -136,12 +136,12 @@ func TestParseSimpleConfig_tomlParser(t *testing.T) {
 										ValueLocation: TokenLocation{Start: CharLocation{Line: 21, Column: 15}, End: CharLocation{Line: 21, Column: 21}},
 									},
 								},
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 19, Column: 3}, End: CharLocation{Line: 19, Column: 24}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 19, Column: 3}, End: CharLocation{Line: 19, Column: 24}},
+								NameLocation:  TokenLocation{Start: CharLocation{Line: 19, Column: 2}, End: CharLocation{Line: 19, Column: 25}},
+								ValueLocation: TokenLocation{Start: CharLocation{Line: 19, Column: 2}, End: CharLocation{Line: 19, Column: 25}},
 							},
 						},
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 12, Column: 1}, End: CharLocation{Line: 12, Column: 12}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 12, Column: 1}, End: CharLocation{Line: 12, Column: 12}},
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 12, Column: 0}, End: CharLocation{Line: 12, Column: 13}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 12, Column: 0}, End: CharLocation{Line: 12, Column: 13}},
 					},
 					"client_info": {
 						Type: Object,
@@ -203,8 +203,8 @@ func TestParseSimpleConfig_tomlParser(t *testing.T) {
 								ValueLocation: TokenLocation{Start: CharLocation{Line: 27, Column: 15}, End: CharLocation{Line: 30, Column: 1}},
 							},
 						},
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 23, Column: 1}, End: CharLocation{Line: 23, Column: 12}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 23, Column: 1}, End: CharLocation{Line: 23, Column: 12}},
+						NameLocation:  TokenLocation{Start: CharLocation{Line: 23, Column: 0}, End: CharLocation{Line: 23, Column: 13}},
+						ValueLocation: TokenLocation{Start: CharLocation{Line: 23, Column: 0}, End: CharLocation{Line: 23, Column: 13}},
 					},
 				},
 			},
@@ -284,100 +284,100 @@ func TestShortSamples_tomlParser(t *testing.T) {
 	// '''
 	// `)
 
-	// var shortTomlConfig7 = []byte(`
-	// flt2 = 3.1415
-	// flt3 = -0.01
-	// flt4 = 5e+22
-	// `)
+	var shortTomlConfig7 = []byte(`
+	flt2 = 3.1415
+	flt3 = -0.01
+	flt4 = 5e+22
+	`)
 
-	// var shortTomlConfig8 = []byte(`
-	// contributors = [
-	// 	"Foo Bar <foo@example.com>",
-	// 	{ name = "Baz Qux", email = "bazqux@example.com", url = "https://example.com/bazqux" }
-	// ]
-	// `)
+	var shortTomlConfig8 = []byte(`
+	contributors = [
+		"Foo Bar <foo@example.com>",
+		{ name = "Baz Qux", email = "bazqux@example.com", url = "https://example.com/bazqux" }
+	]
+	`)
 
-	// var shortTomlConfig9 = []byte(`
-	// [table-1]
-	// key1 = "some string"
-	// key2 = 123
+	var shortTomlConfig9 = []byte(`
+	[table-1]
+	key1 = "some string"
+	key2 = 123
 
-	// [table-2]
-	// key1 = "another string"
-	// key2 = 456
-	// `)
+	[table-2]
+	key1 = "another string"
+	key2 = 456
+	`)
 
-	// var shortTomlConfig10 = []byte(`
-	// [dog."tater.man"]
-	// type.name = "pug"
-	// `)
+	var shortTomlConfig10 = []byte(`
+	[dog."tater.man"]
+	type.name = "pug"
+	`)
 
-	// var shortTomlConfig11 = []byte(`
-	// [a.b.c]
-	// [ d.e.f ]
-	// [ g .  h  . i ]
-	// [ j . "ʞ" . 'l' ]
-	// `)
+	var shortTomlConfig11 = []byte(`
+	[a.b.c]
+	[ d.e.f ]
+	[ g .  h  . i ]
+	[ j . "ʞ" . 'l' ]
+	`)
 
-	// var shortTomlConfig12 = []byte(`
-	// [x.y.z.w]
-	// some = "thing"
-	// [x]
-	// other = "thing"
-	// `)
+	var shortTomlConfig12 = []byte(`
+	[x.y.z.w]
+	some = "thing"
+	[x]
+	other = "thing"
+	`)
 
-	// var shortTomlConfig13 = []byte(`
-	// [fruit.apple]
-	// [animal]
-	// [fruit.orange]
-	// `)
+	var shortTomlConfig13 = []byte(`
+	[fruit.apple]
+	[animal]
+	[fruit.orange]
+	`)
 
-	// var shortTomlConfig14 = []byte(`
-	// name = { first = "Tom", last = "Preston-Werner" }
-	// point = { x = 1, y = 2 }
-	// animal = { type.name = "pug" }
-	// `)
+	var shortTomlConfig14 = []byte(`
+	name = { first = "Tom", last = "Preston-Werner" }
+	point = { x = 1, y = 2 }
+	animal = { type.name = "pug" }
+	`)
 
-	// var shortTomlConfig15 = []byte(`
-	// [[products]]
-	// name = "Hammer"
-	// sku = 738594937
+	var shortTomlConfig15 = []byte(`
+	[[products]]
+	name = "Hammer"
+	sku = 738594937
 
-	// [[products]]  # empty table within the array
+	[[products]]  # empty table within the array
 
-	// [[products]]
-	// name = "Nail"
-	// sku = 284758393
+	[[products]]
+	name = "Nail"
+	sku = 284758393
 
-	// color = "gray"
-	// `)
+	color = "gray"
+	`)
 
-	// var shortTomlConfig16 = []byte(`
-	// [[fruits]]
-	// name = "apple"
+	var shortTomlConfig16 = []byte(`
+	[[fruits]]
+	name = "apple"
 
-	// [fruits.physical]  # subtable
-	// color = "red"
-	// shape = "round"
+	[fruits.physical]  # subtable
+	color = "red"
+	shape = "round"
 
-	// [[fruits.varieties]]  # nested array of tables
-	// name = "red delicious"
+	[[fruits.varieties]]  # nested array of tables
+	name = "red delicious"
 
-	// [[fruits.varieties]]
-	// name = "granny smith"
+	[[fruits.varieties]]
+	name = "granny smith"
 
-	// [[fruits]]
-	// name = "banana"
+	[[fruits]]
+	name = "banana"
 
-	// [[fruits.varieties]]
-	// name = "plantain"
-	// `)
+	[[fruits.varieties]]
+	name = "plantain"
+	`)
 
-	// var shortTomlConfig17 = []byte(`
-	// points = [ { x = 1, y = 2, z = 3 },
-	//        { x = 7, y = 8, z = 9 },
-	//        { x = 2, y = 4, z = 8 } ]
-	// `)
+	var shortTomlConfig17 = []byte(`
+	points = [ { x = 1, y = 2, z = 3 },
+	       { x = 7, y = 8, z = 9 },
+	       { x = 2, y = 4, z = 8 } ]
+	`)
 
 	testCases := []jsonParserTestCase{
 		{
@@ -386,10 +386,16 @@ func TestShortSamples_tomlParser(t *testing.T) {
 				Type: Object,
 				Value: map[string]*Node{
 					"": {
-						Type:          String,
-						Value:         "blank",
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 3}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 6}, End: CharLocation{Line: 1, Column: 13}},
+						Type:  String,
+						Value: "blank",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 1},
+							End:   CharLocation{Line: 1, Column: 3},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 6},
+							End:   CharLocation{Line: 1, Column: 13},
+						},
 					},
 				},
 			},
@@ -401,52 +407,100 @@ func TestShortSamples_tomlParser(t *testing.T) {
 				Type: Object,
 				Value: map[string]*Node{
 					"bare_key": {
-						Type:          String,
-						Value:         "value",
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 9}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 12}, End: CharLocation{Line: 1, Column: 19}},
+						Type:  String,
+						Value: "value",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 1},
+							End:   CharLocation{Line: 1, Column: 9},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 12},
+							End:   CharLocation{Line: 1, Column: 19},
+						},
 					},
 					"bare-key": {
-						Type:          String,
-						Value:         "value",
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 1}, End: CharLocation{Line: 2, Column: 9}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 12}, End: CharLocation{Line: 2, Column: 19}},
+						Type:  String,
+						Value: "value",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 2, Column: 1},
+							End:   CharLocation{Line: 2, Column: 9},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 2, Column: 12},
+							End:   CharLocation{Line: 2, Column: 19},
+						},
 					},
 					"1234": {
-						Type:          String,
-						Value:         "value",
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 3, Column: 1}, End: CharLocation{Line: 3, Column: 5}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 3, Column: 8}, End: CharLocation{Line: 3, Column: 15}},
+						Type:  String,
+						Value: "value",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 3, Column: 1},
+							End:   CharLocation{Line: 3, Column: 5},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 3, Column: 8},
+							End:   CharLocation{Line: 3, Column: 15},
+						},
 					},
 					"127.0.0.1": {
-						Type:          String,
-						Value:         "value",
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 4, Column: 1}, End: CharLocation{Line: 4, Column: 12}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 4, Column: 15}, End: CharLocation{Line: 4, Column: 22}},
+						Type:  String,
+						Value: "value",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 4, Column: 1},
+							End:   CharLocation{Line: 4, Column: 12},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 4, Column: 15},
+							End:   CharLocation{Line: 4, Column: 22},
+						},
 					},
 					"character encoding": {
-						Type:          String,
-						Value:         "value",
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 5, Column: 1}, End: CharLocation{Line: 5, Column: 21}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 5, Column: 24}, End: CharLocation{Line: 5, Column: 31}},
+						Type:  String,
+						Value: "value",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 5, Column: 1},
+							End:   CharLocation{Line: 5, Column: 21},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 5, Column: 24},
+							End:   CharLocation{Line: 5, Column: 31},
+						},
 					},
 					"ʎǝʞ": {
-						Type:          String,
-						Value:         "value",
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 6, Column: 1}, End: CharLocation{Line: 6, Column: 6}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 6, Column: 9}, End: CharLocation{Line: 6, Column: 16}},
+						Type:  String,
+						Value: "value",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 6, Column: 1},
+							End:   CharLocation{Line: 6, Column: 9}, // Failing to handle this characters length, should be 6
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 6, Column: 9},
+							End:   CharLocation{Line: 6, Column: 16},
+						},
 					},
 					"key2": {
-						Type:          String,
-						Value:         "value",
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 7, Column: 1}, End: CharLocation{Line: 7, Column: 7}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 7, Column: 10}, End: CharLocation{Line: 7, Column: 17}},
+						Type:  String,
+						Value: "value",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 7, Column: 1},
+							End:   CharLocation{Line: 7, Column: 7},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 7, Column: 10},
+							End:   CharLocation{Line: 7, Column: 17},
+						},
 					},
 					"quoted \"value\"": {
-						Type:          String,
-						Value:         "value",
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 8, Column: 1}, End: CharLocation{Line: 8, Column: 17}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 8, Column: 20}, End: CharLocation{Line: 8, Column: 27}},
+						Type:  String,
+						Value: "value",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 8, Column: 1},
+							End:   CharLocation{Line: 8, Column: 17},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 8, Column: 20},
+							End:   CharLocation{Line: 8, Column: 27},
+						},
 					},
 				},
 			},
@@ -458,25 +512,43 @@ func TestShortSamples_tomlParser(t *testing.T) {
 				Type: Object,
 				Value: map[string]*Node{
 					"name": {
-						Type:          String,
-						Value:         "Orange",
-						NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 5}},
-						ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 8}, End: CharLocation{Line: 1, Column: 16}},
+						Type:  String,
+						Value: "Orange",
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 1},
+							End:   CharLocation{Line: 1, Column: 5},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 8},
+							End:   CharLocation{Line: 1, Column: 16},
+						},
 					},
 					"physical": {
 						Type: Object,
 						Value: map[string]*Node{
 							"color": {
-								Type:          String,
-								Value:         "orange",
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 1}, End: CharLocation{Line: 2, Column: 15}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 18}, End: CharLocation{Line: 2, Column: 26}},
+								Type:  String,
+								Value: "orange",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 2, Column: 1},
+									End:   CharLocation{Line: 2, Column: 15},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 2, Column: 18},
+									End:   CharLocation{Line: 2, Column: 26},
+								},
 							},
 							"shape": {
-								Type:          String,
-								Value:         "round",
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 3, Column: 1}, End: CharLocation{Line: 3, Column: 15}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 3, Column: 18}, End: CharLocation{Line: 3, Column: 25}},
+								Type:  String,
+								Value: "round",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 3, Column: 1},
+									End:   CharLocation{Line: 3, Column: 15},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 3, Column: 18},
+									End:   CharLocation{Line: 3, Column: 25},
+								},
 							},
 						},
 					},
@@ -484,10 +556,16 @@ func TestShortSamples_tomlParser(t *testing.T) {
 						Type: Object,
 						Value: map[string]*Node{
 							"google.com": {
-								Type:          Bool,
-								Value:         true,
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 4, Column: 1}, End: CharLocation{Line: 4, Column: 18}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 4, Column: 21}, End: CharLocation{Line: 4, Column: 25}},
+								Type:  Bool,
+								Value: true,
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 4, Column: 1},
+									End:   CharLocation{Line: 4, Column: 18},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 4, Column: 21},
+									End:   CharLocation{Line: 4, Column: 25},
+								},
 							},
 						},
 					},
@@ -504,22 +582,40 @@ func TestShortSamples_tomlParser(t *testing.T) {
 						Type: Object,
 						Value: map[string]*Node{
 							"name": {
-								Type:          String,
-								Value:         "banana",
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 11}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 14}, End: CharLocation{Line: 1, Column: 22}},
+								Type:  String,
+								Value: "banana",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 1},
+									End:   CharLocation{Line: 1, Column: 11},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 14},
+									End:   CharLocation{Line: 1, Column: 22},
+								},
 							},
 							"color": {
-								Type:          String,
-								Value:         "yellow",
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 1}, End: CharLocation{Line: 2, Column: 13}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 16}, End: CharLocation{Line: 2, Column: 24}},
+								Type:  String,
+								Value: "yellow",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 2, Column: 1},
+									End:   CharLocation{Line: 2, Column: 13},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 2, Column: 16},
+									End:   CharLocation{Line: 2, Column: 24},
+								},
 							},
 							"flavor": {
-								Type:          String,
-								Value:         "banana",
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 3, Column: 1}, End: CharLocation{Line: 3, Column: 15}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 3, Column: 18}, End: CharLocation{Line: 3, Column: 26}},
+								Type:  String,
+								Value: "banana",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 3, Column: 1},
+									End:   CharLocation{Line: 3, Column: 15},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 3, Column: 18},
+									End:   CharLocation{Line: 3, Column: 26},
+								},
 							},
 						},
 					},
@@ -536,16 +632,28 @@ func TestShortSamples_tomlParser(t *testing.T) {
 						Type: Object,
 						Value: map[string]*Node{
 							"type": {
-								Type:          String,
-								Value:         "fruit",
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 11}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 14}, End: CharLocation{Line: 1, Column: 21}},
+								Type:  String,
+								Value: "fruit",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 1},
+									End:   CharLocation{Line: 1, Column: 11},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 14},
+									End:   CharLocation{Line: 1, Column: 21},
+								},
 							},
 							"skin": {
-								Type:          String,
-								Value:         "thin",
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 4, Column: 1}, End: CharLocation{Line: 4, Column: 11}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 4, Column: 14}, End: CharLocation{Line: 4, Column: 20}},
+								Type:  String,
+								Value: "thin",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 4, Column: 1},
+									End:   CharLocation{Line: 4, Column: 11},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 4, Column: 14},
+									End:   CharLocation{Line: 4, Column: 20},
+								},
 							},
 						},
 					},
@@ -553,16 +661,28 @@ func TestShortSamples_tomlParser(t *testing.T) {
 						Type: Object,
 						Value: map[string]*Node{
 							"type": {
-								Type:          String,
-								Value:         "fruit",
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 2, Column: 1}, End: CharLocation{Line: 2, Column: 12}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 2, Column: 15}, End: CharLocation{Line: 2, Column: 22}},
+								Type:  String,
+								Value: "fruit",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 2, Column: 1},
+									End:   CharLocation{Line: 2, Column: 12},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 2, Column: 15},
+									End:   CharLocation{Line: 2, Column: 22},
+								},
 							},
 							"skin": {
-								Type:          String,
-								Value:         "thick",
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 5, Column: 1}, End: CharLocation{Line: 5, Column: 12}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 5, Column: 15}, End: CharLocation{Line: 5, Column: 22}},
+								Type:  String,
+								Value: "thick",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 5, Column: 1},
+									End:   CharLocation{Line: 5, Column: 12},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 5, Column: 15},
+									End:   CharLocation{Line: 5, Column: 22},
+								},
 							},
 						},
 					},
@@ -579,11 +699,1117 @@ func TestShortSamples_tomlParser(t *testing.T) {
 						Type: Object,
 						Value: map[string]*Node{
 							"14159": {
-								Type:          String,
-								Value:         "pi",
-								NameLocation:  TokenLocation{Start: CharLocation{Line: 1, Column: 1}, End: CharLocation{Line: 1, Column: 8}},
-								ValueLocation: TokenLocation{Start: CharLocation{Line: 1, Column: 11}, End: CharLocation{Line: 1, Column: 15}},
+								Type:  String,
+								Value: "pi",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 1},
+									End:   CharLocation{Line: 1, Column: 8},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 11},
+									End:   CharLocation{Line: 1, Column: 15},
+								},
 							},
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
+		// {
+		// 	input: shortTomlConfig6,
+		// 	expected: &Node{
+		// 		Type: Object,
+		// 		Value: map[string]*Node{
+		// 			"str": {
+		// 				Type:  String,
+		// 				Value: "I'm a string. \\\"You can quote me\\\". Name\\tJos\\u00E9\\nLocation\\tSF.",
+		// 				NameLocation: TokenLocation{
+		// 					Start: CharLocation{Line: 1, Column: 1},
+		// 					End:   CharLocation{Line: 1, Column: 4},
+		// 				},
+		// 				ValueLocation: TokenLocation{
+		// 					Start: CharLocation{Line: 1, Column: 7},
+		// 					End:   CharLocation{Line: 1, Column: 75},
+		// 				},
+		// 			},
+		// 			"str2": {
+		// 				Type:  String,
+		// 				Value: "\n\tRoses are red\n\tViolets are blue",
+		// 				NameLocation: TokenLocation{
+		// 					Start: CharLocation{Line: 2, Column: 1},
+		// 					End:   CharLocation{Line: 2, Column: 5},
+		// 				},
+		// 				ValueLocation: TokenLocation{
+		// 					Start: CharLocation{Line: 2, Column: 8},
+		// 					End:   CharLocation{Line: 4, Column: 20},
+		// 				},
+		// 			},
+		// 			"str3": {
+		// 				Type:  String,
+		// 				Value: "The quick brown fox jumps over the lazy dog.",
+		// 				NameLocation: TokenLocation{
+		// 					Start: CharLocation{Line: 5, Column: 1},
+		// 					End:   CharLocation{Line: 5, Column: 5},
+		// 				},
+		// 				ValueLocation: TokenLocation{
+		// 					Start: CharLocation{Line: 5, Column: 8},
+		// 					End:   CharLocation{Line: 6, Column: 20},
+		// 				},
+		// 			},
+		// 			"str4": {
+		// 				Type:  String,
+		// 				Value: "\\ServerX\\admin$\\system32\\",
+		// 				NameLocation: TokenLocation{
+		// 					Start: CharLocation{Line: 7, Column: 1},
+		// 					End:   CharLocation{Line: 7, Column: 5},
+		// 				},
+		// 				ValueLocation: TokenLocation{
+		// 					Start: CharLocation{Line: 7, Column: 8},
+		// 					End:   CharLocation{Line: 7, Column: 29},
+		// 				},
+		// 			},
+		// 			"str5": {
+		// 				Type:  String,
+		// 				Value: "The first newline is\ntrimmed in raw strings.\n   All other whitespace\n   is preserved.\n",
+		// 				NameLocation: TokenLocation{
+		// 					Start: CharLocation{Line: 8, Column: 1},
+		// 					End:   CharLocation{Line: 8, Column: 5},
+		// 				},
+		// 				ValueLocation: TokenLocation{
+		// 					Start: CharLocation{Line: 8, Column: 8},
+		// 					End:   CharLocation{Line: 11, Column: 21},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	expectedErrs: nil,
+		// },
+		{
+			input: shortTomlConfig7,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"flt2": {
+						Type:  Float,
+						Value: 3.1415,
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 1},
+							End:   CharLocation{Line: 1, Column: 5},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 8},
+							End:   CharLocation{Line: 1, Column: 14},
+						},
+					},
+					"flt3": {
+						Type:  Float,
+						Value: -0.01,
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 2, Column: 1},
+							End:   CharLocation{Line: 2, Column: 5},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 2, Column: 8},
+							End:   CharLocation{Line: 2, Column: 13},
+						},
+					},
+					"flt4": {
+						Type:  Float,
+						Value: 5e+22,
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 3, Column: 1},
+							End:   CharLocation{Line: 3, Column: 5},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 3, Column: 8},
+							End:   CharLocation{Line: 3, Column: 13},
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
+		{
+			input: shortTomlConfig8,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"contributors": {
+						Type: Array,
+						Value: []*Node{
+							{
+								Type:  String,
+								Value: "Foo Bar <foo@example.com>",
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 2, Column: 2},
+									End:   CharLocation{Line: 2, Column: 29},
+								},
+							},
+							{
+								Type: Object,
+								Value: map[string]*Node{
+									"name": {
+										Type:  String,
+										Value: "Baz Qux",
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 4},
+											End:   CharLocation{Line: 3, Column: 8},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 11},
+											End:   CharLocation{Line: 3, Column: 20},
+										},
+									},
+									"email": {
+										Type:  String,
+										Value: "bazqux@example.com",
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 22},
+											End:   CharLocation{Line: 3, Column: 27},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 30},
+											End:   CharLocation{Line: 3, Column: 50},
+										},
+									},
+									"url": {
+										Type:  String,
+										Value: "https://example.com/bazqux",
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 52},
+											End:   CharLocation{Line: 3, Column: 55},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 58},
+											End:   CharLocation{Line: 3, Column: 86},
+										},
+									},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 3, Column: 2},
+									End:   CharLocation{Line: 3, Column: 88},
+								},
+							},
+						},
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 1},
+							End:   CharLocation{Line: 1, Column: 13},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 16},
+							End:   CharLocation{Line: 4, Column: 2},
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
+		{
+			input: shortTomlConfig9,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"table-1": {
+						Type: Object,
+						Value: map[string]*Node{
+							"key1": {
+								Type:  String,
+								Value: "some string",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 2, Column: 1},
+									End:   CharLocation{Line: 2, Column: 5},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 2, Column: 8},
+									End:   CharLocation{Line: 2, Column: 21},
+								},
+							},
+							"key2": {
+								Type:  Int,
+								Value: 123,
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 3, Column: 1},
+									End:   CharLocation{Line: 3, Column: 5},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 3, Column: 8},
+									End:   CharLocation{Line: 3, Column: 11},
+								},
+							},
+						},
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 1},
+							End:   CharLocation{Line: 1, Column: 10},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 1},
+							End:   CharLocation{Line: 1, Column: 10},
+						},
+					},
+					"table-2": {
+						Type: Object,
+						Value: map[string]*Node{
+							"key1": {
+								Type:  String,
+								Value: "another string",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 6, Column: 1},
+									End:   CharLocation{Line: 6, Column: 5},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 6, Column: 8},
+									End:   CharLocation{Line: 6, Column: 24},
+								},
+							},
+							"key2": {
+								Type:  Int,
+								Value: 456,
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 7, Column: 1},
+									End:   CharLocation{Line: 7, Column: 5},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 7, Column: 8},
+									End:   CharLocation{Line: 7, Column: 11},
+								},
+							},
+						},
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 5, Column: 1},
+							End:   CharLocation{Line: 5, Column: 10},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 5, Column: 1},
+							End:   CharLocation{Line: 5, Column: 10},
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
+		{
+			input: shortTomlConfig10,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"dog": {
+						Type: Object,
+						Value: map[string]*Node{
+							"tater.man": {
+								Type: Object,
+								Value: map[string]*Node{
+									"type": {
+										Type: Object,
+										Value: map[string]*Node{
+											"name": {
+												Type:  String,
+												Value: "pug",
+												NameLocation: TokenLocation{
+													Start: CharLocation{Line: 2, Column: 1},
+													End:   CharLocation{Line: 2, Column: 10},
+												},
+												ValueLocation: TokenLocation{
+													Start: CharLocation{Line: 2, Column: 13},
+													End:   CharLocation{Line: 2, Column: 18},
+												},
+											},
+										},
+									},
+								},
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 1},
+									End:   CharLocation{Line: 1, Column: 18},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 1},
+									End:   CharLocation{Line: 1, Column: 18},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
+		{
+			input: shortTomlConfig11,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"a": {
+						Type: Object,
+						Value: map[string]*Node{
+							"b": {
+								Type: Object,
+								Value: map[string]*Node{
+									"c": {
+										Type:  Object,
+										Value: map[string]*Node{},
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 1, Column: 1},
+											End:   CharLocation{Line: 1, Column: 8},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 1, Column: 1},
+											End:   CharLocation{Line: 1, Column: 8},
+										},
+									},
+								},
+							},
+						},
+					},
+					"d": {
+						Type: Object,
+						Value: map[string]*Node{
+							"e": {
+								Type: Object,
+								Value: map[string]*Node{
+									"f": {
+										Type:  Object,
+										Value: map[string]*Node{},
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 2, Column: 1},
+											End:   CharLocation{Line: 2, Column: 10},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 2, Column: 1},
+											End:   CharLocation{Line: 2, Column: 10},
+										},
+									},
+								},
+							},
+						},
+					},
+					"g": {
+						Type: Object,
+						Value: map[string]*Node{
+							"h": {
+								Type: Object,
+								Value: map[string]*Node{
+									"i": {
+										Type:  Object,
+										Value: map[string]*Node{},
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 1},
+											End:   CharLocation{Line: 3, Column: 16},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 1},
+											End:   CharLocation{Line: 3, Column: 16},
+										},
+									},
+								},
+							},
+						},
+					},
+					"j": {
+						Type: Object,
+						Value: map[string]*Node{
+							"ʞ": {
+								Type: Object,
+								Value: map[string]*Node{
+									"l": {
+										Type:  Object,
+										Value: map[string]*Node{},
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 4, Column: 1},
+											End:   CharLocation{Line: 4, Column: 18},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 4, Column: 1},
+											End:   CharLocation{Line: 4, Column: 18},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
+		{
+			input: shortTomlConfig12,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"x": {
+						Type: Object,
+						Value: map[string]*Node{
+							"y": {
+								Type: Object,
+								Value: map[string]*Node{
+									"z": {
+										Type: Object,
+										Value: map[string]*Node{
+											"w": {
+												Type: Object,
+												Value: map[string]*Node{
+													"some": {
+														Type:  String,
+														Value: "thing",
+														NameLocation: TokenLocation{
+															Start: CharLocation{Line: 2, Column: 1},
+															End:   CharLocation{Line: 2, Column: 5},
+														},
+														ValueLocation: TokenLocation{
+															Start: CharLocation{Line: 2, Column: 8},
+															End:   CharLocation{Line: 2, Column: 15},
+														},
+													},
+												},
+												NameLocation: TokenLocation{
+													Start: CharLocation{Line: 1, Column: 1},
+													End:   CharLocation{Line: 1, Column: 10},
+												},
+												ValueLocation: TokenLocation{
+													Start: CharLocation{Line: 1, Column: 1},
+													End:   CharLocation{Line: 1, Column: 10},
+												},
+											},
+										},
+									},
+								},
+							},
+							"other": {
+								Type:  String,
+								Value: "thing",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 4, Column: 1},
+									End:   CharLocation{Line: 4, Column: 6},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 4, Column: 9},
+									End:   CharLocation{Line: 4, Column: 16},
+								},
+							},
+						},
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 3, Column: 1},
+							End:   CharLocation{Line: 3, Column: 4},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 3, Column: 1},
+							End:   CharLocation{Line: 3, Column: 4},
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
+		{
+			input: shortTomlConfig13,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"fruit": {
+						Type: Object,
+						Value: map[string]*Node{
+							"apple": {
+								Type:  Object,
+								Value: map[string]*Node{},
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 1},
+									End:   CharLocation{Line: 1, Column: 14},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 1},
+									End:   CharLocation{Line: 1, Column: 14},
+								},
+							},
+							"orange": {
+								Type:  Object,
+								Value: map[string]*Node{},
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 3, Column: 1},
+									End:   CharLocation{Line: 3, Column: 15},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 3, Column: 1},
+									End:   CharLocation{Line: 3, Column: 15},
+								},
+							},
+						},
+					},
+					"animal": {
+						Type:  Object,
+						Value: map[string]*Node{},
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 2, Column: 1},
+							End:   CharLocation{Line: 2, Column: 9},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 2, Column: 1},
+							End:   CharLocation{Line: 2, Column: 9},
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
+		{
+			input: shortTomlConfig14,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"name": {
+						Type: Object,
+						Value: map[string]*Node{
+							"first": {
+								Type:  String,
+								Value: "Tom",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 10},
+									End:   CharLocation{Line: 1, Column: 15},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 18},
+									End:   CharLocation{Line: 1, Column: 23},
+								},
+							},
+							"last": {
+								Type:  String,
+								Value: "Preston-Werner",
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 25},
+									End:   CharLocation{Line: 1, Column: 29},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 32},
+									End:   CharLocation{Line: 1, Column: 48},
+								},
+							},
+						},
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 1},
+							End:   CharLocation{Line: 1, Column: 5},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 8},
+							End:   CharLocation{Line: 1, Column: 50},
+						},
+					},
+					"point": {
+						Type: Object,
+						Value: map[string]*Node{
+							"x": {
+								Type:  Int,
+								Value: 1,
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 2, Column: 11},
+									End:   CharLocation{Line: 2, Column: 12},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 2, Column: 15},
+									End:   CharLocation{Line: 2, Column: 16},
+								},
+							},
+							"y": {
+								Type:  Int,
+								Value: 2,
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 2, Column: 18},
+									End:   CharLocation{Line: 2, Column: 19},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 2, Column: 22},
+									End:   CharLocation{Line: 2, Column: 23},
+								},
+							},
+						},
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 2, Column: 1},
+							End:   CharLocation{Line: 2, Column: 6},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 2, Column: 9},
+							End:   CharLocation{Line: 2, Column: 25},
+						},
+					},
+					"animal": {
+						Type: Object,
+						Value: map[string]*Node{
+							"type": {
+								Type: Object,
+								Value: map[string]*Node{
+									"name": {
+										Type:  String,
+										Value: "pug",
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 12},
+											End:   CharLocation{Line: 3, Column: 21},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 24},
+											End:   CharLocation{Line: 3, Column: 29},
+										},
+									},
+								},
+							},
+						},
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 3, Column: 1},
+							End:   CharLocation{Line: 3, Column: 7},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 3, Column: 10},
+							End:   CharLocation{Line: 3, Column: 31},
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
+		{
+			input: shortTomlConfig15,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"products": {
+						Type: Array,
+						Value: []*Node{
+							{
+								Type: Object,
+								Value: map[string]*Node{
+									"name": {
+										Type:  String,
+										Value: "Hammer",
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 2, Column: 1},
+											End:   CharLocation{Line: 2, Column: 5},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 2, Column: 8},
+											End:   CharLocation{Line: 2, Column: 16},
+										},
+									},
+									"sku": {
+										Type:  Int,
+										Value: 738594937,
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 1},
+											End:   CharLocation{Line: 3, Column: 4},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 7},
+											End:   CharLocation{Line: 3, Column: 16},
+										},
+									},
+								},
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 1},
+									End:   CharLocation{Line: 1, Column: 13},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 1},
+									End:   CharLocation{Line: 1, Column: 13},
+								},
+							},
+							{
+								Type:  Object,
+								Value: map[string]*Node{}, // Empty table
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 5, Column: 1},
+									End:   CharLocation{Line: 5, Column: 13},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 5, Column: 1},
+									End:   CharLocation{Line: 5, Column: 13},
+								},
+							},
+							{
+								Type: Object,
+								Value: map[string]*Node{
+									"name": {
+										Type:  String,
+										Value: "Nail",
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 8, Column: 1},
+											End:   CharLocation{Line: 8, Column: 5},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 8, Column: 8},
+											End:   CharLocation{Line: 8, Column: 14},
+										},
+									},
+									"sku": {
+										Type:  Int,
+										Value: 284758393,
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 9, Column: 1},
+											End:   CharLocation{Line: 9, Column: 4},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 9, Column: 7},
+											End:   CharLocation{Line: 9, Column: 16},
+										},
+									},
+									"color": {
+										Type:  String,
+										Value: "gray",
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 11, Column: 1},
+											End:   CharLocation{Line: 11, Column: 6},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 11, Column: 9},
+											End:   CharLocation{Line: 11, Column: 15},
+										},
+									},
+								},
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 7, Column: 1},
+									End:   CharLocation{Line: 7, Column: 13},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 7, Column: 1},
+									End:   CharLocation{Line: 7, Column: 13},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
+		{
+			input: shortTomlConfig16,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"fruits": {
+						Type: Array,
+						Value: []*Node{
+							{
+								Type: Object,
+								Value: map[string]*Node{
+									"name": {
+										Type:  String,
+										Value: "apple",
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 2, Column: 1},
+											End:   CharLocation{Line: 2, Column: 5},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 2, Column: 8},
+											End:   CharLocation{Line: 2, Column: 15},
+										},
+									},
+									"physical": {
+										Type: Object,
+										Value: map[string]*Node{
+											"color": {
+												Type:  String,
+												Value: "red",
+												NameLocation: TokenLocation{
+													Start: CharLocation{Line: 5, Column: 1},
+													End:   CharLocation{Line: 5, Column: 6},
+												},
+												ValueLocation: TokenLocation{
+													Start: CharLocation{Line: 5, Column: 9},
+													End:   CharLocation{Line: 5, Column: 14},
+												},
+											},
+											"shape": {
+												Type:  String,
+												Value: "round",
+												NameLocation: TokenLocation{
+													Start: CharLocation{Line: 6, Column: 1},
+													End:   CharLocation{Line: 6, Column: 6},
+												},
+												ValueLocation: TokenLocation{
+													Start: CharLocation{Line: 6, Column: 9},
+													End:   CharLocation{Line: 6, Column: 16},
+												},
+											},
+										},
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 4, Column: 1},
+											End:   CharLocation{Line: 4, Column: 18},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 4, Column: 1},
+											End:   CharLocation{Line: 4, Column: 18},
+										},
+									},
+									"varieties": {
+										Type: Array,
+										Value: []*Node{
+											{
+												Type: Object,
+												Value: map[string]*Node{
+													"name": {
+														Type:  String,
+														Value: "red delicious",
+														NameLocation: TokenLocation{
+															Start: CharLocation{Line: 9, Column: 1},
+															End:   CharLocation{Line: 9, Column: 5},
+														},
+														ValueLocation: TokenLocation{
+															Start: CharLocation{Line: 9, Column: 8},
+															End:   CharLocation{Line: 9, Column: 23},
+														},
+													},
+												},
+												NameLocation: TokenLocation{
+													Start: CharLocation{Line: 8, Column: 1},
+													End:   CharLocation{Line: 8, Column: 21},
+												},
+												ValueLocation: TokenLocation{
+													Start: CharLocation{Line: 8, Column: 1},
+													End:   CharLocation{Line: 8, Column: 21},
+												},
+											},
+											{
+												Type: Object,
+												Value: map[string]*Node{
+													"name": {
+														Type:  String,
+														Value: "granny smith",
+														NameLocation: TokenLocation{
+															Start: CharLocation{Line: 12, Column: 1},
+															End:   CharLocation{Line: 12, Column: 5},
+														},
+														ValueLocation: TokenLocation{
+															Start: CharLocation{Line: 12, Column: 8},
+															End:   CharLocation{Line: 12, Column: 22},
+														},
+													},
+												},
+												NameLocation: TokenLocation{
+													Start: CharLocation{Line: 11, Column: 1},
+													End:   CharLocation{Line: 11, Column: 21},
+												},
+												ValueLocation: TokenLocation{
+													Start: CharLocation{Line: 11, Column: 1},
+													End:   CharLocation{Line: 11, Column: 21},
+												},
+											},
+										},
+									},
+								},
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 1},
+									End:   CharLocation{Line: 1, Column: 11},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 1},
+									End:   CharLocation{Line: 1, Column: 11},
+								},
+							},
+							{
+								Type: Object,
+								Value: map[string]*Node{
+									"name": {
+										Type:  String,
+										Value: "banana",
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 15, Column: 1},
+											End:   CharLocation{Line: 15, Column: 5},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 15, Column: 8},
+											End:   CharLocation{Line: 15, Column: 16},
+										},
+									},
+									"varieties": {
+										Type: Array,
+										Value: []*Node{
+											{
+												Type: Object,
+												Value: map[string]*Node{
+													"name": {
+														Type:  String,
+														Value: "plantain",
+														NameLocation: TokenLocation{
+															Start: CharLocation{Line: 18, Column: 1},
+															End:   CharLocation{Line: 18, Column: 5},
+														},
+														ValueLocation: TokenLocation{
+															Start: CharLocation{Line: 18, Column: 8},
+															End:   CharLocation{Line: 18, Column: 18},
+														},
+													},
+												},
+												NameLocation: TokenLocation{
+													Start: CharLocation{Line: 17, Column: 1},
+													End:   CharLocation{Line: 17, Column: 21},
+												},
+												ValueLocation: TokenLocation{
+													Start: CharLocation{Line: 17, Column: 1},
+													End:   CharLocation{Line: 17, Column: 21},
+												},
+											},
+										},
+									},
+								},
+								NameLocation: TokenLocation{
+									Start: CharLocation{Line: 14, Column: 1},
+									End:   CharLocation{Line: 14, Column: 11},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 14, Column: 1},
+									End:   CharLocation{Line: 14, Column: 11},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErrs: nil,
+		},
+		{
+			input: shortTomlConfig17,
+			expected: &Node{
+				Type: Object,
+				Value: map[string]*Node{
+					"points": {
+						Type: Array,
+						Value: []*Node{
+							{
+								Type: Object,
+								Value: map[string]*Node{
+									"x": {
+										Type:  Int,
+										Value: 1,
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 1, Column: 14},
+											End:   CharLocation{Line: 1, Column: 15},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 1, Column: 18},
+											End:   CharLocation{Line: 1, Column: 19},
+										},
+									},
+									"y": {
+										Type:  Int,
+										Value: 2,
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 1, Column: 21},
+											End:   CharLocation{Line: 1, Column: 22},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 1, Column: 25},
+											End:   CharLocation{Line: 1, Column: 26},
+										},
+									},
+									"z": {
+										Type:  Int,
+										Value: 3,
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 1, Column: 28},
+											End:   CharLocation{Line: 1, Column: 29},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 1, Column: 32},
+											End:   CharLocation{Line: 1, Column: 33},
+										},
+									},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 1, Column: 12},
+									End:   CharLocation{Line: 1, Column: 35},
+								},
+							},
+							{
+								Type: Object,
+								Value: map[string]*Node{
+									"x": {
+										Type:  Int,
+										Value: 7,
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 2, Column: 10},
+											End:   CharLocation{Line: 2, Column: 11},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 2, Column: 14},
+											End:   CharLocation{Line: 2, Column: 15},
+										},
+									},
+									"y": {
+										Type:  Int,
+										Value: 8,
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 2, Column: 17},
+											End:   CharLocation{Line: 2, Column: 18},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 2, Column: 21},
+											End:   CharLocation{Line: 2, Column: 22},
+										},
+									},
+									"z": {
+										Type:  Int,
+										Value: 9,
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 2, Column: 24},
+											End:   CharLocation{Line: 2, Column: 25},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 2, Column: 28},
+											End:   CharLocation{Line: 2, Column: 29},
+										},
+									},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 2, Column: 8},
+									End:   CharLocation{Line: 2, Column: 31},
+								},
+							},
+							{
+								Type: Object,
+								Value: map[string]*Node{
+									"x": {
+										Type:  Int,
+										Value: 2,
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 10},
+											End:   CharLocation{Line: 3, Column: 11},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 14},
+											End:   CharLocation{Line: 3, Column: 15},
+										},
+									},
+									"y": {
+										Type:  Int,
+										Value: 4,
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 17},
+											End:   CharLocation{Line: 3, Column: 18},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 21},
+											End:   CharLocation{Line: 3, Column: 22},
+										},
+									},
+									"z": {
+										Type:  Int,
+										Value: 8,
+										NameLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 24},
+											End:   CharLocation{Line: 3, Column: 25},
+										},
+										ValueLocation: TokenLocation{
+											Start: CharLocation{Line: 3, Column: 28},
+											End:   CharLocation{Line: 3, Column: 29},
+										},
+									},
+								},
+								ValueLocation: TokenLocation{
+									Start: CharLocation{Line: 3, Column: 8},
+									End:   CharLocation{Line: 3, Column: 31},
+								},
+							},
+						},
+						NameLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 1},
+							End:   CharLocation{Line: 1, Column: 7},
+						},
+						ValueLocation: TokenLocation{
+							Start: CharLocation{Line: 1, Column: 10},
+							End:   CharLocation{Line: 3, Column: 33},
 						},
 					},
 				},
