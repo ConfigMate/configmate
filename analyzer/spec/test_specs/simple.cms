@@ -1,7 +1,7 @@
 file: "./examples/configurations/config0.json" json
 
 spec {
-    server <type: object> {
+    server<object> {
         host <
             type: string,
             default: "localhost",
