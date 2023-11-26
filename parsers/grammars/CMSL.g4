@@ -26,10 +26,13 @@ specificationBody: SPEC_ROOT_KW LBRACE specificationItem* RBRACE;
 // metadata inside angled brackets, optionally followed by a list of semicolon separated
 // checks (CMCL expressions), and optionally followed with the specification of underlying
 // fields insided curly braces.
-specificationItem: fieldName metadataExpression ( LPAREN (check SEMICOLON)+ RPAREN )? (LBRACE specificationItem* RBRACE)?;
+specificationItem: fieldName (longMetadataExpression | shortMetadataExpression) ( LPAREN (check SEMICOLON)+ RPAREN )? (LBRACE specificationItem* RBRACE)?;
 
-// A metadata expression is a list of metadata items inside angled brackets.
-metadataExpression: LANGLE metadataItem (COMMA metadataItem)* RANGLE;
+// A long metadata expression is a list of metadata items inside angled brackets.
+longMetadataExpression : LANGLE metadataItem (COMMA metadataItem)* RANGLE ; 
+
+// A short metadata expression is a type expression inside angled brackets.
+shortMetadataExpression : LANGLE typeExpr RANGLE ;
 
 // A metadata item is a key-value pair of strings.
 metadataItem

@@ -195,146 +195,166 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 	foundOptional := false
 	foundNotes := false
 
-	// For each metadata item
-	for _, metadataItem := range ctx.MetadataExpression().AllMetadataItem() {
-		switch item := metadataItem.(type) {
-		case *parser_cmsl.TypeMetadataContext:
-			// Check if type has already been found
-			if foundType {
-				p.errs = append(p.errs, SpecParserError{
-					ErrorMessage: fmt.Sprintf("duplicate type metadata for field %s", fieldKey.String()),
-					Location: parsers.TokenLocation{
-						Start: parsers.CharLocation{
-							Line:   item.GetStart().GetLine() - 1,
-							Column: item.GetStart().GetColumn(),
-						},
-						End: parsers.CharLocation{
-							Line:   item.GetStop().GetLine() - 1,
-							Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
-						},
-					},
-				})
-				continue
-			}
-			foundType = true
+	if ctx.ShortMetadataExpression() != nil {
+		foundType = true
+		typeExpr := ctx.ShortMetadataExpression().TypeExpr()
 
-			// Add type to field
-			fieldSpecification.Type = condenseListExpressions(item.TypeExpr().GetText())
-			fieldSpecification.TypeLocation = parsers.TokenLocation{
-				Start: parsers.CharLocation{
-					Line:   item.TypeExpr().GetStart().GetLine() - 1,
-					Column: item.TypeExpr().GetStart().GetColumn(),
-				},
-				End: parsers.CharLocation{
-					Line:   item.TypeExpr().GetStop().GetLine() - 1,
-					Column: item.TypeExpr().GetStop().GetColumn() + len(item.TypeExpr().GetStop().GetText()),
-				},
-			}
-		case *parser_cmsl.OptionalMetadataContext:
-			// Check if optional has already been found
-			if foundOptional {
-				p.errs = append(p.errs, SpecParserError{
-					ErrorMessage: fmt.Sprintf("duplicate optional metadata for field %s", fieldKey.String()),
-					Location: parsers.TokenLocation{
-						Start: parsers.CharLocation{
-							Line:   item.GetStart().GetLine() - 1,
-							Column: item.GetStart().GetColumn(),
-						},
-						End: parsers.CharLocation{
-							Line:   item.GetStop().GetLine() - 1,
-							Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
-						},
-					},
-				})
-				continue
-			}
-			foundOptional = true
-
-			// Add optional to field
-			optional, err := strconv.ParseBool(item.BOOL().GetText())
-			if err != nil {
-				panic(fmt.Sprintf("optional must be a bool, found: %s; this error should have been cought in a previous stage", item.BOOL().GetText()))
-			}
-
-			fieldSpecification.Optional = optional
-			fieldSpecification.OptionalLocation = parsers.TokenLocation{
-				Start: parsers.CharLocation{
-					Line:   item.BOOL().GetSymbol().GetLine() - 1,
-					Column: item.BOOL().GetSymbol().GetColumn(),
-				},
-				End: parsers.CharLocation{
-					Line:   item.BOOL().GetSymbol().GetLine() - 1,
-					Column: item.BOOL().GetSymbol().GetColumn() + len(item.BOOL().GetSymbol().GetText()),
-				},
-			}
-		case *parser_cmsl.DefaultMetadataContext:
-			// Check if default has already been found
-			if foundDefault {
-				p.errs = append(p.errs, SpecParserError{
-					ErrorMessage: fmt.Sprintf("duplicate default metadata for field %s", fieldKey.String()),
-					Location: parsers.TokenLocation{
-						Start: parsers.CharLocation{
-							Line:   item.GetStart().GetLine() - 1,
-							Column: item.GetStart().GetColumn(),
-						},
-						End: parsers.CharLocation{
-							Line:   item.GetStop().GetLine() - 1,
-							Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
-						},
-					},
-				})
-				continue
-			}
-			foundDefault = true
-
-			// Add default to field
-			fieldSpecification.Default = removeStrQuotesAndCleanSpaces(item.Primitive().GetText())
-			fieldSpecification.DefaultLocation = parsers.TokenLocation{
-				Start: parsers.CharLocation{
-					Line:   item.Primitive().GetStart().GetLine() - 1,
-					Column: item.Primitive().GetStart().GetColumn(),
-				},
-				End: parsers.CharLocation{
-					Line:   item.Primitive().GetStop().GetLine() - 1,
-					Column: item.Primitive().GetStop().GetColumn() + len(item.Primitive().GetStop().GetText()),
-				},
-			}
-		case *parser_cmsl.NotesMetadataContext:
-			// Check if notes has already been found
-			if foundNotes {
-				p.errs = append(p.errs, SpecParserError{
-					ErrorMessage: fmt.Sprintf("duplicate notes metadata for field %s", fieldKey.String()),
-					Location: parsers.TokenLocation{
-						Start: parsers.CharLocation{
-							Line:   item.GetStart().GetLine() - 1,
-							Column: item.GetStart().GetColumn(),
-						},
-						End: parsers.CharLocation{
-							Line:   item.GetStop().GetLine() - 1,
-							Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
-						},
-					},
-				})
-				continue
-			}
-			foundNotes = true
-
-			// Add notes to field
-			fieldSpecification.Notes = removeStrQuotesAndCleanSpaces(item.StringExpr().GetText())
-			fieldSpecification.NotesLocation = parsers.TokenLocation{
-				Start: parsers.CharLocation{
-					Line:   item.StringExpr().GetStart().GetLine() - 1,
-					Column: item.StringExpr().GetStart().GetColumn(),
-				},
-				End: parsers.CharLocation{
-					Line:   item.StringExpr().GetStop().GetLine() - 1,
-					Column: item.StringExpr().GetStop().GetColumn() + len(item.StringExpr().GetStop().GetText()),
-				},
-			}
-
-		default:
-			panic(fmt.Sprintf("unknown metadata item: %s; this error should have been cought in a previous stage", item.GetText()))
+		// Add type to field
+		fieldSpecification.Type = condenseListExpressions(typeExpr.GetText())
+		fieldSpecification.TypeLocation = parsers.TokenLocation{
+			Start: parsers.CharLocation{
+				Line:   typeExpr.GetStart().GetLine() - 1,
+				Column: typeExpr.GetStart().GetColumn(),
+			},
+			End: parsers.CharLocation{
+				Line:   typeExpr.GetStop().GetLine() - 1,
+				Column: typeExpr.GetStop().GetColumn() + len(typeExpr.GetStop().GetText()),
+			},
 		}
+	} else if ctx.LongMetadataExpression() != nil {
+		// For each metadata item
+		for _, metadataItem := range ctx.LongMetadataExpression().AllMetadataItem() {
+			switch item := metadataItem.(type) {
+			case *parser_cmsl.TypeMetadataContext:
+				// Check if type has already been found
+				if foundType {
+					p.errs = append(p.errs, SpecParserError{
+						ErrorMessage: fmt.Sprintf("duplicate type metadata for field %s", fieldKey.String()),
+						Location: parsers.TokenLocation{
+							Start: parsers.CharLocation{
+								Line:   item.GetStart().GetLine() - 1,
+								Column: item.GetStart().GetColumn(),
+							},
+							End: parsers.CharLocation{
+								Line:   item.GetStop().GetLine() - 1,
+								Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
+							},
+						},
+					})
+					continue
+				}
+				foundType = true
+
+				// Add type to field
+				fieldSpecification.Type = condenseListExpressions(item.TypeExpr().GetText())
+				fieldSpecification.TypeLocation = parsers.TokenLocation{
+					Start: parsers.CharLocation{
+						Line:   item.TypeExpr().GetStart().GetLine() - 1,
+						Column: item.TypeExpr().GetStart().GetColumn(),
+					},
+					End: parsers.CharLocation{
+						Line:   item.TypeExpr().GetStop().GetLine() - 1,
+						Column: item.TypeExpr().GetStop().GetColumn() + len(item.TypeExpr().GetStop().GetText()),
+					},
+				}
+			case *parser_cmsl.OptionalMetadataContext:
+				// Check if optional has already been found
+				if foundOptional {
+					p.errs = append(p.errs, SpecParserError{
+						ErrorMessage: fmt.Sprintf("duplicate optional metadata for field %s", fieldKey.String()),
+						Location: parsers.TokenLocation{
+							Start: parsers.CharLocation{
+								Line:   item.GetStart().GetLine() - 1,
+								Column: item.GetStart().GetColumn(),
+							},
+							End: parsers.CharLocation{
+								Line:   item.GetStop().GetLine() - 1,
+								Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
+							},
+						},
+					})
+					continue
+				}
+				foundOptional = true
+
+				// Add optional to field
+				optional, err := strconv.ParseBool(item.BOOL().GetText())
+				if err != nil {
+					panic(fmt.Sprintf("optional must be a bool, found: %s; this error should have been cought in a previous stage", item.BOOL().GetText()))
+				}
+
+				fieldSpecification.Optional = optional
+				fieldSpecification.OptionalLocation = parsers.TokenLocation{
+					Start: parsers.CharLocation{
+						Line:   item.BOOL().GetSymbol().GetLine() - 1,
+						Column: item.BOOL().GetSymbol().GetColumn(),
+					},
+					End: parsers.CharLocation{
+						Line:   item.BOOL().GetSymbol().GetLine() - 1,
+						Column: item.BOOL().GetSymbol().GetColumn() + len(item.BOOL().GetSymbol().GetText()),
+					},
+				}
+			case *parser_cmsl.DefaultMetadataContext:
+				// Check if default has already been found
+				if foundDefault {
+					p.errs = append(p.errs, SpecParserError{
+						ErrorMessage: fmt.Sprintf("duplicate default metadata for field %s", fieldKey.String()),
+						Location: parsers.TokenLocation{
+							Start: parsers.CharLocation{
+								Line:   item.GetStart().GetLine() - 1,
+								Column: item.GetStart().GetColumn(),
+							},
+							End: parsers.CharLocation{
+								Line:   item.GetStop().GetLine() - 1,
+								Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
+							},
+						},
+					})
+					continue
+				}
+				foundDefault = true
+
+				// Add default to field
+				fieldSpecification.Default = removeStrQuotesAndCleanSpaces(item.Primitive().GetText())
+				fieldSpecification.DefaultLocation = parsers.TokenLocation{
+					Start: parsers.CharLocation{
+						Line:   item.Primitive().GetStart().GetLine() - 1,
+						Column: item.Primitive().GetStart().GetColumn(),
+					},
+					End: parsers.CharLocation{
+						Line:   item.Primitive().GetStop().GetLine() - 1,
+						Column: item.Primitive().GetStop().GetColumn() + len(item.Primitive().GetStop().GetText()),
+					},
+				}
+			case *parser_cmsl.NotesMetadataContext:
+				// Check if notes has already been found
+				if foundNotes {
+					p.errs = append(p.errs, SpecParserError{
+						ErrorMessage: fmt.Sprintf("duplicate notes metadata for field %s", fieldKey.String()),
+						Location: parsers.TokenLocation{
+							Start: parsers.CharLocation{
+								Line:   item.GetStart().GetLine() - 1,
+								Column: item.GetStart().GetColumn(),
+							},
+							End: parsers.CharLocation{
+								Line:   item.GetStop().GetLine() - 1,
+								Column: item.GetStop().GetColumn() + len(item.GetStop().GetText()),
+							},
+						},
+					})
+					continue
+				}
+				foundNotes = true
+
+				// Add notes to field
+				fieldSpecification.Notes = removeStrQuotesAndCleanSpaces(item.StringExpr().GetText())
+				fieldSpecification.NotesLocation = parsers.TokenLocation{
+					Start: parsers.CharLocation{
+						Line:   item.StringExpr().GetStart().GetLine() - 1,
+						Column: item.StringExpr().GetStart().GetColumn(),
+					},
+					End: parsers.CharLocation{
+						Line:   item.StringExpr().GetStop().GetLine() - 1,
+						Column: item.StringExpr().GetStop().GetColumn() + len(item.StringExpr().GetStop().GetText()),
+					},
+				}
+
+			default:
+				panic(fmt.Sprintf("unknown metadata item: %s; this error should have been cought in a previous stage", item.GetText()))
+			}
+		}
+	} else {
+		panic(fmt.Sprintf("unknown metadata expression: %s; this error should have been cought in a previous stage", ctx.GetText()))
 	}
 
 	if !foundType {

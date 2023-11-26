@@ -38,8 +38,8 @@ func TestParseSimple(t *testing.T) {
 				},
 				Type: "object",
 				TypeLocation: parsers.TokenLocation{
-					Start: parsers.CharLocation{Line: 3, Column: 18},
-					End:   parsers.CharLocation{Line: 3, Column: 24},
+					Start: parsers.CharLocation{Line: 3, Column: 11},
+					End:   parsers.CharLocation{Line: 3, Column: 17},
 				},
 				Optional:         false,
 				OptionalLocation: parsers.TokenLocation{},
