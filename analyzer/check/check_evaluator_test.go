@@ -350,9 +350,9 @@ func TestEvaluateOptionalMissingFields(t *testing.T) {
 			optMissingFields["config.missingOptField"] = true
 			checks := []string{"eq(config.missingOptField)"} // Create checks
 
-			expectedRes, _ := types.MakeType("bool", false)                                                                 // Create expected result
-			expectedSkipped := true                                                                                         // Create expected skipped value
-			expectedErr := fmt.Errorf("skipping check because referenced optional field config.missingOptField is missing") // Create expected error
+			expectedRes, _ := types.MakeType("bool", false)                                                                   // Create expected result
+			expectedSkipped := true                                                                                           // Create expected skipped value
+			expectedErr := fmt.Errorf("skipping check because referenced optional field 'config.missingOptField' is missing") // Create expected error
 
 			return checkEvaluatorTestStructure{
 				primaryField:     primaryField,
@@ -378,9 +378,9 @@ func TestEvaluateOptionalMissingFields(t *testing.T) {
 			optMissingFields["config.missingOptField1"] = true
 			checks := []string{"range(config.missingOptField1, 128)"} // Create checks
 
-			expectedRes, _ := types.MakeType("bool", false)                                                                  // Create expected result
-			expectedSkipped := true                                                                                          // Create expected skipped value
-			expectedErr := fmt.Errorf("skipping check because referenced optional field config.missingOptField1 is missing") // Create expected error
+			expectedRes, _ := types.MakeType("bool", false)                                                                    // Create expected result
+			expectedSkipped := true                                                                                            // Create expected skipped value
+			expectedErr := fmt.Errorf("skipping check because referenced optional field 'config.missingOptField1' is missing") // Create expected error
 
 			return checkEvaluatorTestStructure{
 				primaryField:     primaryField,
@@ -858,7 +858,7 @@ func TestEvaluateErroneousExpressions(t *testing.T) {
 				checks:          checks,
 				expectedRes:     nil,
 				expectedSkipped: false,
-				expectedErr:     fmt.Errorf("field non_existent_field does not exist"),
+				expectedErr:     fmt.Errorf("field 'non_existent_field' does not exist"),
 			}
 		}(),
 		// Test 4: And expression where right side is not a boolean
@@ -916,7 +916,7 @@ func TestEvaluateErroneousExpressions(t *testing.T) {
 				checks:          checks,
 				expectedRes:     nil,
 				expectedSkipped: false,
-				expectedErr:     fmt.Errorf("list item alias otherField in foreach conflicts with existing field"),
+				expectedErr:     fmt.Errorf("list item alias 'otherField' in foreach conflicts with existing field"),
 			}
 		}(),
 		// Test 7: Calling a function on a field that does not support it

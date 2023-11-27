@@ -82,9 +82,9 @@ func (ce *checkEvaluatorImpl) Evaluate(check string, primaryField string, fields
 		// Skipping check because primary field is optional and missing
 		// Make bool false to return
 		t, _ := types.MakeType("bool", false)
-		return t, true, fmt.Errorf("skipping check because primary field %s is optional and missing", ce.primaryField)
+		return t, true, fmt.Errorf("skipping check because primary field '%s' is optional and missing", ce.primaryField)
 	} else {
-		return nil, false, fmt.Errorf("primary field %s does not exist", ce.primaryField)
+		return nil, false, fmt.Errorf("primary field '%s' does not exist", ce.primaryField)
 	}
 
 	// Evaluate check
@@ -192,14 +192,14 @@ func (ce *checkEvaluatorImpl) visitForeachCheck(node *cmclNode) (types.IType, bo
 	alias := node.children[0].value
 
 	if _, ok := ce.fields[alias]; ok {
-		return nil, false, fmt.Errorf("list item alias %s in foreach conflicts with existing field", alias)
+		return nil, false, fmt.Errorf("list item alias '%s' in foreach conflicts with existing field", alias)
 	}
 
 	// Get list to iterate over
 	listFieldName := node.children[1].value
 	list, ok := ce.fields[listFieldName]
 	if !ok {
-		return nil, false, fmt.Errorf("field %s does not exist", listFieldName)
+		return nil, false, fmt.Errorf("field '%s' does not exist", listFieldName)
 	}
 
 	// Check if the list is a list
@@ -284,10 +284,10 @@ func (ce *checkEvaluatorImpl) visitFieldExpr(node *cmclNode) (types.IType, bool,
 		// Skipping check because optional field is missing
 		// Make bool false to return
 		t, _ := types.MakeType("bool", false)
-		return t, true, fmt.Errorf("skipping check because referenced optional field %s is missing", fieldName)
+		return t, true, fmt.Errorf("skipping check because referenced optional field '%s' is missing", fieldName)
 	}
 
-	return nil, false, fmt.Errorf("field %s does not exist", fieldName)
+	return nil, false, fmt.Errorf("field '%s' does not exist", fieldName)
 }
 
 func (ce *checkEvaluatorImpl) visitFuncExpr(node *cmclNode) (types.IType, bool, error) {
@@ -464,6 +464,13 @@ func (ce *checkEvaluatorImpl) visitFunction(node *cmclNode) (types.IType, bool, 
 	// Apply function
 	result, err := field.GetMethod(functionName)(args)
 	if result == nil {
+		if err == types.OptMissFieldError {
+			// Skipping check because optional field is missing
+			// Make bool false to return
+			t, _ := types.MakeType("bool", false)
+			return t, true, fmt.Errorf("skipping check because referenced optional object field '%s' is missing", args[0].Value().(string))
+		}
+
 		return nil, false, err
 	}
 

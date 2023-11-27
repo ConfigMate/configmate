@@ -7,16 +7,21 @@ import (
 	"github.com/ConfigMate/configmate/parsers"
 )
 
+// Special error to indicate that an optional field is missing
+var OptMissFieldError error
+
 type tCustomObject struct {
-	ObjectName string
-	Fields     map[string]IType
+	ObjectName       string
+	Fields           map[string]IType
+	OptMissingFields map[string]bool
 }
 
 func customObjectFactory(objValue map[string]*parsers.Node, definition spec.ObjectDef) (IType, error) {
-	// Create a new object
-	object := &tCustomObject{
-		ObjectName: definition.Name,
-		Fields:     make(map[string]IType),
+	// Create a new customObj
+	customObj := &tCustomObject{
+		ObjectName:       definition.Name,
+		Fields:           make(map[string]IType),
+		OptMissingFields: make(map[string]bool),
 	}
 
 	for _, prop := range definition.Properties {
@@ -25,13 +30,15 @@ func customObjectFactory(objValue map[string]*parsers.Node, definition spec.Obje
 			if err != nil {
 				return nil, err
 			}
-			object.Fields[prop.Name] = t
-		} else if !prop.Optional {
+			customObj.Fields[prop.Name] = t
+		} else if prop.Optional {
+			customObj.OptMissingFields[prop.Name] = true
+		} else {
 			return nil, fmt.Errorf("missing required property %s", prop.Name)
 		}
 	}
 
-	return object, nil
+	return customObj, nil
 }
 
 func (t tCustomObject) TypeName() string {
@@ -68,6 +75,11 @@ func (t tCustomObject) GetMethod(method string) Method {
 			field, ok := args[0].(*tString)
 			if !ok {
 				return nil, fmt.Errorf("argument to %s.get must be a string", t.ObjectName)
+			}
+
+			// Check if the field is optional and missing
+			if _, ok := t.OptMissingFields[field.value]; ok {
+				return nil, OptMissFieldError
 			}
 
 			// Check that the field exists
