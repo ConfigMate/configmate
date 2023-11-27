@@ -35,10 +35,7 @@ func listFactory(typename string, value interface{}) (IType, error) {
 }
 
 func (t tList) TypeName() string {
-	if len(t.values) == 0 {
-		return "list:" + t.listType
-	}
-	return "list:" + t.values[0].TypeName()
+	return "list<" + t.listType + ">"
 }
 
 func (t tList) Value() interface{} {

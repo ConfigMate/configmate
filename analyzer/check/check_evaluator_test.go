@@ -727,7 +727,7 @@ func TestEvaluateControlExpressions(t *testing.T) {
 				{Value: 10},
 				{Value: 15},
 			}
-			pFValue, _ := types.MakeType("list:int", listItems)
+			pFValue, _ := types.MakeType("list<int>", listItems)
 			fields := map[string]types.IType{primaryField: pFValue}
 
 			checks := []string{"foreach(li : this){ li.gt(0) }"}
@@ -759,7 +759,7 @@ func TestEvaluateControlExpressions(t *testing.T) {
 				{Value: innerListItems1},
 				{Value: innerListItems2},
 			}
-			pFValue, _ := types.MakeType("list:list:int", listItems)
+			pFValue, _ := types.MakeType("list<list<int>>", listItems)
 			fields := map[string]types.IType{primaryField: pFValue}
 
 			checks := []string{"foreach(li : this){ foreach(innerLi : li){ innerLi.gt(0) } }"}
