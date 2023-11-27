@@ -6,7 +6,7 @@ ssl_enabled = false
 ssl_paths = { cert = "/path/to/cert.pem", key = "/path/to/key.pem" }
 
 [database]
-host = "db.example.com"
+host = "localhost"
 port = 5432
 "user name" = "dbuser"
 password = "dbpassword"

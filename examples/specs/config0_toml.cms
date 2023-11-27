@@ -2,7 +2,9 @@ config: "./examples/configurations/config0.toml" toml
 
 spec {
     server <object> {
-        host <string>
+        host <string> (
+            eq(database.host);
+        )
         port <int>
         ssl_enabled <bool> ( eq(false); )
 
