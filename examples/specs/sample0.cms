@@ -1,4 +1,4 @@
-file: "./examples/configurations/sample_config.json" json
+config: "./examples/configurations/sample_config.json" json
 
 spec {
     console <type: object> {
@@ -20,7 +20,7 @@ spec {
             type: host,
             default: "some.host.com",
             description: "Determines the address the proxy is bound to"
-        > ( is("some.host.com"); reachable(); join(bindPort).listening(); )
+        > ( is("some.host.com"); reachable(); addPort(bindPort).listening(); )
 
         certification <type: object, optional: true> {
             cert <
@@ -38,7 +38,7 @@ spec {
     }
 
     dns_servers <
-        type: list:host,
+        type: list<host>,
         description: "List of DNS servers"
     > ( at(0).reachable(); )
 }

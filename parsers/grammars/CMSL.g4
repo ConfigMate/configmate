@@ -8,10 +8,10 @@ cmsl: specification EOF;
 
 // A CMSL specification contains a file declaration, a list of imports,
 // a specification body, and an optional list of custom object types.
-specification: fileDeclaration importStatement? specificationBody objectDefinitions?;
+specification: configDeclaration importStatement? specificationBody objectDefinitions?;
 
 // A file declaration contains the path and format of the file.
-fileDeclaration: FILE_DCLR_KW COLON SHORT_STRING IDENTIFIER;
+configDeclaration: CONFIG_DCLR_KW COLON SHORT_STRING IDENTIFIER;
 
 // An import contains the name of the file to import.
 importStatement: IMPORT_KW LPAREN importItem (COMMA importItem)* RPAREN;
@@ -34,8 +34,8 @@ specificationItem: fieldName (longMetadataExpression | shortMetadataExpression) 
 // A long metadata expression is a list of metadata items inside angled brackets.
 longMetadataExpression : LANGLE metadataItem (COMMA metadataItem)* RANGLE ; 
 
-// A short metadata expression is a type expression inside angled brackets.
-shortMetadataExpression : LANGLE typeExpr RANGLE ;
+// A short metadata expression is a type expression inside angled brackets with an optional 'optional' keyword after it.
+shortMetadataExpression : LANGLE typeExpr RANGLE OPTIONAL_METAD_KW?;
 
 // A metadata item is a key-value pair of strings.
 metadataItem
@@ -58,7 +58,7 @@ objectDefinition
 
 // A definition of a property of a custom object type.
 objectPropertyDefinition
-    : simpleName shortMetadataExpression OPTIONAL_METAD_KW?
+    : simpleName shortMetadataExpression
     ;
 
 // A primitive is a string, an integer, a float, or a boolean.
@@ -82,7 +82,7 @@ stringExpr
     ;
 
 // Keywords
-FILE_DCLR_KW : 'file' ;     // File declaration keyword
+CONFIG_DCLR_KW : 'config' ;     // Config declaration keyword
 IMPORT_KW : 'import' ;     // Import keyword
 SPEC_ROOT_KW : 'spec' ;     // Specification keyword
 OBJ_DEF_KW : 'objects' ;     // Object definition keyword
@@ -92,7 +92,7 @@ DEFAULT_METAD_KW : 'default' ;   // Default keyword
 NOTES_METAD_KW : 'notes' ;       // Notes keyword
 LIST_TYPE_KW : 'list' ;         // List keyword
 
-// Tokens
+// Common Tokens
 LPAREN : '(' ;            // Left parenthesis
 RPAREN : ')' ;            // Right parenthesis
 LBRACE : '{' ;            // Left curly brace
@@ -111,6 +111,15 @@ LONG_STRING: '"' LONG_STRING_ITEM*? '"';
 INT : DIGIT+ ;               // Integer numbers
 FLOAT : DIGIT+ '.' DIGIT+ ;  // Floating point numbers
 BOOL : 'true' | 'false' ;    // Boolean values
+
+// CMCL Tokens
+IF_SYM: 'if';
+ELSEIF_SYM: 'elseif';
+ELSE_SYM: 'else';
+FOREACH_SYM: 'foreach';
+AND_SYM: '&&';
+OR_SYM: '||';
+NOT_SYM: '!';
 
 IDENTIFIER : (CHARACTER)+ ;    // Typical definition of an identifier
 

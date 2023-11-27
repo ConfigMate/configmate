@@ -58,13 +58,13 @@ func (p *semanticTokenProviderImpl) GetSemanticTokens(content []byte) ([]ParsedT
 }
 
 // EnterFileDeclaration is called when production fileDeclaration is entered.
-func (s *semanticTokenProviderImpl) EnterFileDeclaration(ctx *parser_cmsl.FileDeclarationContext) {
-	// Add the file keyword token
-	fileKeyword := ctx.FILE_DCLR_KW()
+func (s *semanticTokenProviderImpl) EnterConfigDeclaration(ctx *parser_cmsl.ConfigDeclarationContext) {
+	// Add the config keyword token
+	configKeyword := ctx.CONFIG_DCLR_KW()
 	s.tokens = append(s.tokens, ParsedToken{
-		Line:      fileKeyword.GetSymbol().GetLine() - 1,
-		Column:    fileKeyword.GetSymbol().GetColumn(),
-		Length:    len(fileKeyword.GetText()),
+		Line:      configKeyword.GetSymbol().GetLine() - 1,
+		Column:    configKeyword.GetSymbol().GetColumn(),
+		Length:    len(configKeyword.GetText()),
 		TokenType: STTKeyword,
 	})
 
@@ -166,17 +166,6 @@ func (s *semanticTokenProviderImpl) EnterObjectPropertyDefinition(ctx *parser_cm
 		Length:    len(objectPropertyTypeName.GetText()),
 		TokenType: STTVariable,
 	})
-
-	// Add the optional property token if present
-	if ctx.OPTIONAL_METAD_KW() != nil {
-		optionalKeyword := ctx.OPTIONAL_METAD_KW()
-		s.tokens = append(s.tokens, ParsedToken{
-			Line:      optionalKeyword.GetSymbol().GetLine() - 1,
-			Column:    optionalKeyword.GetSymbol().GetColumn(),
-			Length:    len(optionalKeyword.GetText()),
-			TokenType: STTKeyword,
-		})
-	}
 }
 
 // EnterFieldName is called when production fieldName is entered.
@@ -188,6 +177,20 @@ func (s *semanticTokenProviderImpl) EnterFieldName(ctx *parser_cmsl.FieldNameCon
 		Length:    len(ctx.GetText()),
 		TokenType: STTVariable,
 	})
+}
+
+// EnterShortMetadataExpression is called when production shortMetadataExpression is entered.
+func (s *semanticTokenProviderImpl) EnterShortMetadataExpression(ctx *parser_cmsl.ShortMetadataExpressionContext) {
+	if ctx.OPTIONAL_METAD_KW() != nil {
+		// Add the optional keyword token
+		optionalKeyword := ctx.OPTIONAL_METAD_KW()
+		s.tokens = append(s.tokens, ParsedToken{
+			Line:      optionalKeyword.GetSymbol().GetLine() - 1,
+			Column:    optionalKeyword.GetSymbol().GetColumn(),
+			Length:    len(optionalKeyword.GetText()),
+			TokenType: STTKeyword,
+		})
+	}
 }
 
 // EnterTypeMetadata is called when production typeMetadata is entered.

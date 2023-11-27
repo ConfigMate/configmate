@@ -39,14 +39,14 @@ func (t tFloat) Methods() []string {
 
 func (t tFloat) MethodDescription(method string) string {
 	tFloatMethodDescriptions := map[string]string{
-		"eq":       "float.eq(arg float) : Checks that the value is equal to the argument",
-		"gt":       "float.gt(arg float) : Checks that the value is greater than the argument",
-		"gte":      "float.gte(arg float) : Checks that the value is greater than or equal to the argument",
-		"lt":       "float.lt(arg float) : Checks that the value is less than the argument",
-		"lte":      "float.lte(arg float) : Checks that the value is less than or equal to the argument",
-		"range":    "float.range(min float, max float) : Checks that the value is within the range",
-		"toInt":    "float.toInt() : Converts the value to an int",
-		"toString": "float.toString() : Converts the value to a string",
+		"eq":       "float.eq(arg float) bool : Checks that the value is equal to the argument",
+		"gt":       "float.gt(arg float) bool : Checks that the value is greater than the argument",
+		"gte":      "float.gte(arg float) bool : Checks that the value is greater than or equal to the argument",
+		"lt":       "float.lt(arg float) bool : Checks that the value is less than the argument",
+		"lte":      "float.lte(arg float) bool : Checks that the value is less than or equal to the argument",
+		"range":    "float.range(min float, max float) bool : Checks that the value is within the range",
+		"toInt":    "float.toInt() int : Converts the value to an int",
+		"toString": "float.toString() string : Converts the value to a string",
 	}
 
 	return tFloatMethodDescriptions[method]

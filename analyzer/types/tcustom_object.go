@@ -57,7 +57,7 @@ func (t tCustomObject) Methods() []string {
 
 func (t tCustomObject) MethodDescription(method string) string {
 	tCustomObjectMethodsDescriptions := map[string]string{
-		"get": t.ObjectName + ".get(field string) : Gets the specified field",
+		"get": t.ObjectName + ".get(field string) fieldtype : Gets the specified field",
 	}
 
 	return tCustomObjectMethodsDescriptions[method]

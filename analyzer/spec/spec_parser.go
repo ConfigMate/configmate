@@ -106,7 +106,7 @@ func (p *specParserImpl) Parse(spec []byte) (*Specification, []SpecParserError) 
 }
 
 // EnterFileDeclaration is called when production fileDeclaration is entered.
-func (p *specParserImpl) EnterFileDeclaration(ctx *parser_cmsl.FileDeclarationContext) {
+func (p *specParserImpl) EnterConfigDeclaration(ctx *parser_cmsl.ConfigDeclarationContext) {
 	// Set values of file and fileLocation in spec
 	p.spec.File = removeStrQuotesAndCleanSpaces(ctx.SHORT_STRING().GetText())
 	p.spec.FileLocation = parsers.TokenLocation{
@@ -200,7 +200,7 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 		typeExpr := ctx.ShortMetadataExpression().TypeExpr()
 
 		// Add type to field
-		fieldSpecification.Type = condenseListExpressions(typeExpr.GetText())
+		fieldSpecification.Type = typeExpr.GetText()
 		fieldSpecification.TypeLocation = parsers.TokenLocation{
 			Start: parsers.CharLocation{
 				Line:   typeExpr.GetStart().GetLine() - 1,
@@ -210,6 +210,20 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 				Line:   typeExpr.GetStop().GetLine() - 1,
 				Column: typeExpr.GetStop().GetColumn() + len(typeExpr.GetStop().GetText()),
 			},
+		}
+
+		if ctx.ShortMetadataExpression().OPTIONAL_METAD_KW() != nil {
+			fieldSpecification.Optional = true
+			fieldSpecification.OptionalLocation = parsers.TokenLocation{
+				Start: parsers.CharLocation{
+					Line:   ctx.ShortMetadataExpression().OPTIONAL_METAD_KW().GetSymbol().GetLine() - 1,
+					Column: ctx.ShortMetadataExpression().OPTIONAL_METAD_KW().GetSymbol().GetColumn(),
+				},
+				End: parsers.CharLocation{
+					Line:   ctx.ShortMetadataExpression().OPTIONAL_METAD_KW().GetSymbol().GetLine() - 1,
+					Column: ctx.ShortMetadataExpression().OPTIONAL_METAD_KW().GetSymbol().GetColumn() + len(ctx.ShortMetadataExpression().OPTIONAL_METAD_KW().GetSymbol().GetText()),
+				},
+			}
 		}
 	} else if ctx.LongMetadataExpression() != nil {
 		// For each metadata item
@@ -236,7 +250,7 @@ func (p *specParserImpl) EnterSpecificationItem(ctx *parser_cmsl.SpecificationIt
 				foundType = true
 
 				// Add type to field
-				fieldSpecification.Type = condenseListExpressions(item.TypeExpr().GetText())
+				fieldSpecification.Type = item.TypeExpr().GetText()
 				fieldSpecification.TypeLocation = parsers.TokenLocation{
 					Start: parsers.CharLocation{
 						Line:   item.TypeExpr().GetStart().GetLine() - 1,
@@ -437,7 +451,7 @@ func (p *specParserImpl) EnterObjectDefinition(ctx *parser_cmsl.ObjectDefinition
 		}
 
 		// Get property type
-		objectPropertyDefinition.Type = condenseListExpressions(propertyDef.ShortMetadataExpression().TypeExpr().GetText())
+		objectPropertyDefinition.Type = propertyDef.ShortMetadataExpression().TypeExpr().GetText()
 		objectPropertyDefinition.TypeLocation = parsers.TokenLocation{
 			Start: parsers.CharLocation{
 				Line:   propertyDef.ShortMetadataExpression().TypeExpr().GetStart().GetLine() - 1,
@@ -450,16 +464,16 @@ func (p *specParserImpl) EnterObjectDefinition(ctx *parser_cmsl.ObjectDefinition
 		}
 
 		// Get property optional
-		if propertyDef.OPTIONAL_METAD_KW() != nil {
+		if propertyDef.ShortMetadataExpression().OPTIONAL_METAD_KW() != nil {
 			objectPropertyDefinition.Optional = true
 			objectPropertyDefinition.OptionalLocation = parsers.TokenLocation{
 				Start: parsers.CharLocation{
-					Line:   propertyDef.OPTIONAL_METAD_KW().GetSymbol().GetLine() - 1,
-					Column: propertyDef.OPTIONAL_METAD_KW().GetSymbol().GetColumn(),
+					Line:   propertyDef.ShortMetadataExpression().OPTIONAL_METAD_KW().GetSymbol().GetLine() - 1,
+					Column: propertyDef.ShortMetadataExpression().OPTIONAL_METAD_KW().GetSymbol().GetColumn(),
 				},
 				End: parsers.CharLocation{
-					Line:   propertyDef.OPTIONAL_METAD_KW().GetSymbol().GetLine() - 1,
-					Column: propertyDef.OPTIONAL_METAD_KW().GetSymbol().GetColumn() + len(propertyDef.OPTIONAL_METAD_KW().GetSymbol().GetText()),
+					Line:   propertyDef.ShortMetadataExpression().OPTIONAL_METAD_KW().GetSymbol().GetLine() - 1,
+					Column: propertyDef.ShortMetadataExpression().OPTIONAL_METAD_KW().GetSymbol().GetColumn() + len(propertyDef.ShortMetadataExpression().OPTIONAL_METAD_KW().GetSymbol().GetText()),
 				},
 			}
 		}
@@ -518,16 +532,4 @@ func removeStrQuotesAndCleanSpaces(str string) string {
 	str = strings.TrimSpace(str)
 
 	return str
-}
-
-func condenseListExpressions(typeStr string) string {
-	result := ""
-
-	for strings.HasPrefix(typeStr, "list<") && strings.HasSuffix(typeStr, ">") {
-		result = result + "list:"
-		typeStr = typeStr[5 : len(typeStr)-1]
-	}
-
-	result = result + typeStr
-	return result
 }

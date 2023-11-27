@@ -434,12 +434,12 @@ func (a *analyzerImpl) findAndParseAllFields(
 			// field that is missing, which makes the
 			// current field optional as well
 			for optMissingField := range optMissingFields {
-				if strings.HasPrefix(fileAlias+"."+fspec.Field.String(), optMissingField) {
-					optMissingFields[fileAlias+"."+fspec.Field.String()] = true
+				if strings.HasPrefix(getUniqueName(fileAlias, fspec.Field.String()), optMissingField) {
+					optMissingFields[getUniqueName(fileAlias, fspec.Field.String())] = true
 					break
 				}
 			}
-			if optMissingFields[fileAlias+"."+fspec.Field.String()] {
+			if optMissingFields[getUniqueName(fileAlias, fspec.Field.String())] {
 				continue
 			}
 
@@ -447,7 +447,7 @@ func (a *analyzerImpl) findAndParseAllFields(
 			fnode, err := files[fileAlias].Get(fspec.Field)
 			if err != nil {
 				return nil, nil, nil, &SpecError{
-					AnalyzerMsg: fmt.Sprintf("Failed to get field %s from file %s", fspec.Field, configFilePaths[fileAlias]),
+					AnalyzerMsg: fmt.Sprintf("Failed to get field %s from file %s", fspec.Field.String(), configFilePaths[fileAlias]),
 					ErrorMsgs:   []string{err.Error()},
 					TokenList: []TokenLocationWithFile{
 						{
@@ -458,7 +458,7 @@ func (a *analyzerImpl) findAndParseAllFields(
 				}
 			} else if fnode == nil && !fspec.Optional { // Field not found and not optial
 				return nil, nil, nil, &SpecError{
-					AnalyzerMsg: fmt.Sprintf("Field %s not found in file %s", fspec.Field, configFilePaths[fileAlias]),
+					AnalyzerMsg: fmt.Sprintf("Field %s not found in file %s", fspec.Field.String(), configFilePaths[fileAlias]),
 					ErrorMsgs:   []string{},
 					TokenList: []TokenLocationWithFile{
 						{
@@ -468,13 +468,13 @@ func (a *analyzerImpl) findAndParseAllFields(
 					},
 				}
 			} else if fnode == nil && fspec.Optional { // Field not found and optional
-				optMissingFields[fileAlias+"."+fspec.Field.String()] = true
+				optMissingFields[getUniqueName(fileAlias, fspec.Field.String())] = true
 			} else { // Field found
 				t, err := types.MakeType(fspec.Type, fnode.Value)
 				if err != nil {
 					return nil, nil, nil, &SpecError{
 						AnalyzerMsg: fmt.Sprintf("failed to parse field %s from file %s as type %s",
-							fspec.Field, configFilePaths[fileAlias], fspec.Type,
+							fspec.Field.String(), configFilePaths[fileAlias], fspec.Type,
 						),
 						ErrorMsgs: []string{err.Error()},
 						TokenList: []TokenLocationWithFile{
@@ -489,8 +489,8 @@ func (a *analyzerImpl) findAndParseAllFields(
 						},
 					}
 				} else {
-					fieldValues[fileAlias+"."+fspec.Field.String()] = t
-					fieldLocations[fileAlias+"."+fspec.Field.String()] = TokenLocationWithFile{
+					fieldValues[getUniqueName(fileAlias, fspec.Field.String())] = t
+					fieldLocations[getUniqueName(fileAlias, fspec.Field.String())] = TokenLocationWithFile{
 						File:     configFilePaths[fileAlias],
 						Location: fnode.ValueLocation,
 					}
@@ -518,13 +518,13 @@ func (a *analyzerImpl) runChecks(
 			// Evaluate check
 			result, skipping, err := a.checkEvaluator.Evaluate(
 				checkInfo.Check,
-				mainFileAlias+"."+fspec.Field.String(),
+				fspec.Field.String(),
 				fieldValues,
 				optMissingFields,
 			)
 			if result == nil {
 				return nil, &SpecError{
-					AnalyzerMsg: fmt.Sprintf("failed to evaluate check %s for field %s", checkInfo.Check, fspec.Field),
+					AnalyzerMsg: fmt.Sprintf("failed to evaluate check %s for field %s", checkInfo.Check, fspec.Field.String()),
 					ErrorMsgs:   []string{err.Error()},
 					TokenList: []TokenLocationWithFile{
 						{
@@ -558,7 +558,7 @@ func (a *analyzerImpl) runChecks(
 					Field:         mainFieldSpecs[index],
 					CheckNum:      checkNum,
 					TokenList: []TokenLocationWithFile{
-						fieldLocations[mainFileAlias+"."+fspec.Field.String()],
+						fieldLocations[fspec.Field.String()],
 					},
 				})
 			}
@@ -566,4 +566,11 @@ func (a *analyzerImpl) runChecks(
 	}
 
 	return res, nil
+}
+
+func getUniqueName(fileAlias string, fieldName string) string {
+	if fileAlias == mainFileAlias {
+		return fieldName
+	}
+	return fileAlias + "." + fieldName
 }

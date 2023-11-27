@@ -203,7 +203,7 @@ func (ce *checkEvaluatorImpl) visitForeachCheck(node *cmclNode) (types.IType, bo
 	}
 
 	// Check if the list is a list
-	if !strings.HasPrefix(list.TypeName(), "list:") {
+	if !strings.HasPrefix(list.TypeName(), "list<") || !strings.HasSuffix(list.TypeName(), ">") {
 		return nil, false, fmt.Errorf("foreach argument must be a list")
 	}
 

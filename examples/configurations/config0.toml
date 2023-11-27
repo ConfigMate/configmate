@@ -6,15 +6,15 @@ ssl_enabled = false
 ssl_paths = { cert = "/path/to/cert.pem", key = "/path/to/key.pem" }
 
 [database]
-host = "db.example.com"
+host = "localhost"
 port = 5432
 "user name" = "dbuser"
 password = "dbpassword"
 name = "dbname"
 
 [cache]
-host = "cache.example.com"
-port = 6150
+host = "google.com"
+port = 443
 
 [api]
 endpoint = "/api/v1"

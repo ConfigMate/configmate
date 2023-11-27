@@ -11,13 +11,21 @@ type tList struct {
 	values   []IType
 }
 
-func listFactory(typename string, values []*parsers.Node) (IType, error) {
-	var err error
+func listFactory(typename string, value interface{}) (IType, error) {
+	// Check that the value is a list
+	listValues, ok := value.([]*parsers.Node)
+	if !ok {
+		return nil, fmt.Errorf("value is not a list")
+	}
+
+	// Create a new list
 	list := &tList{
 		listType: typename,
-		values:   make([]IType, len(values)),
+		values:   make([]IType, len(listValues)),
 	}
-	for i, value := range values {
+
+	for i, value := range listValues {
+		var err error
 		if list.values[i], err = MakeType(typename, value.Value); err != nil {
 			return nil, err
 		}
@@ -27,10 +35,7 @@ func listFactory(typename string, values []*parsers.Node) (IType, error) {
 }
 
 func (t tList) TypeName() string {
-	if len(t.values) == 0 {
-		return "list:" + t.listType
-	}
-	return "list:" + t.values[0].TypeName()
+	return "list<" + t.listType + ">"
 }
 
 func (t tList) Value() interface{} {
@@ -46,8 +51,8 @@ func (t tList) Methods() []string {
 
 func (t tList) MethodDescription(method string) string {
 	tListMethodsDescriptions := map[string]string{
-		"at":  "list.at(index int) - returns the element at the given index",
-		"len": "list.len() - returns the length of the list",
+		"at":  "list.at(index int) elementtype - returns the element at the given index",
+		"len": "list.len() int - returns the length of the list",
 	}
 
 	return tListMethodsDescriptions[method]

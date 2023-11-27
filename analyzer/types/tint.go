@@ -40,14 +40,14 @@ func (t tInt) Methods() []string {
 
 func (t tInt) MethodDescription(method string) string {
 	tIntMethodsDescriptions := map[string]string{
-		"eq":       "int.eq(arg int) : Checks that the value is equal to the argument",
-		"gt":       "int.gt(arg int) : Checks that the value is greater than the argument",
-		"gte":      "int.gte(arg int) : Checks that the value is greater than or equal to the argument",
-		"lt":       "int.lt(arg int) : Checks that the value is less than the argument",
-		"lte":      "int.lte(arg int) : Checks that the value is less than or equal to the argument",
-		"range":    "int.range(min int, max int) : Checks that the value is in the range [min, max]",
-		"toFloat":  "int.toFloat() : Converts the value to a float",
-		"toString": "int.toString() : Converts the value to a string",
+		"eq":       "int.eq(arg int) bool : Checks that the value is equal to the argument",
+		"gt":       "int.gt(arg int) bool : Checks that the value is greater than the argument",
+		"gte":      "int.gte(arg int) bool : Checks that the value is greater than or equal to the argument",
+		"lt":       "int.lt(arg int) bool : Checks that the value is less than the argument",
+		"lte":      "int.lte(arg int) bool : Checks that the value is less than or equal to the argument",
+		"range":    "int.range(min int, max int) bool : Checks that the value is in the range [min, max]",
+		"toFloat":  "int.toFloat() float : Converts the value to a float",
+		"toString": "int.toString() string : Converts the value to a string",
 	}
 
 	return tIntMethodsDescriptions[method]

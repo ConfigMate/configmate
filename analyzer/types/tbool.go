@@ -34,8 +34,8 @@ func (t tBool) Methods() []string {
 
 func (t tBool) MethodDescription(method string) string {
 	tBoolMethodDescriptions := map[string]string{
-		"eq":       "bool.eq(arg bool) : Checks that the value is equal to the argument",
-		"toString": "bool.toString() : Converts the value to a string",
+		"eq":       "bool.eq(arg bool) bool : Checks that the value is equal to the argument",
+		"toString": "bool.toString() string : Converts the value to a string",
 	}
 
 	return tBoolMethodDescriptions[method]

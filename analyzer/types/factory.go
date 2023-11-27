@@ -28,19 +28,23 @@ type tFactoryMethod func(value interface{}) (IType, error)
 func init() {
 	tf = typeFactory{
 		factories: map[string]tFactoryMethod{
-			"bool":   boolFactory,
-			"int":    intFactory,
-			"float":  floatFactory,
-			"string": stringFactory,
-			"object": objectFactory,
+			"bool":      boolFactory,
+			"int":       intFactory,
+			"float":     floatFactory,
+			"string":    stringFactory,
+			"object":    objectFactory,
+			"host":      hostFactory,
+			"port":      portFactory,
+			"host_port": hostPortFactory,
+			"file":      fileFactory,
 		},
 		customObjTypes: make(map[string]spec.ObjectDef),
 	}
 }
 
 func (tf *typeFactory) makeType(typename string, value interface{}) (IType, error) {
-	if strings.HasPrefix(typename, "list:") {
-		return listFactory(typename[5:], value.([]*parsers.Node))
+	if strings.HasPrefix(typename, "list<") && strings.HasSuffix(typename, ">") {
+		return listFactory(typename[5:len(typename)-1], value)
 	}
 
 	if customDef, ok := tf.customObjTypes[typename]; ok {
