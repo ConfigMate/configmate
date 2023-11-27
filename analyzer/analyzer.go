@@ -52,7 +52,6 @@ const mainFileAlias = "main"
 type analyzerImpl struct {
 	specParser     spec.SpecParser
 	checkEvaluator check.CheckEvaluator
-
 	fileFetcher    files.FileFetcher
 	parserProvider parsers.ParserProvider
 }
@@ -104,6 +103,9 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string, specFileContent
 	// Create fields map
 	fields := make(map[string][]spec.FieldSpec)
 	fields[mainFileAlias] = mainSpec.Fields
+
+	// Add custom types to type factory
+	types.AddCustomObjTypes(mainSpec.Objects)
 
 	// Get main config file
 	mainConfigContent, err := a.fileFetcher.FetchFile(mainSpec.File)
@@ -245,6 +247,9 @@ func (a *analyzerImpl) AnalyzeSpecification(specFilePath string, specFileContent
 
 		// Add imported spec file to fields map
 		fields[alias] = importedSpec.Fields
+
+		// Add custom types to type factory
+		types.AddCustomObjTypes(importedSpec.Objects)
 
 		// Get imported config file
 		importedConfigContent, err := a.fileFetcher.FetchFile(importedSpec.File)

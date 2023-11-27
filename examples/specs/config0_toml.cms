@@ -21,15 +21,20 @@ spec {
     }
 
     cache <
-        type: object,
+        type: cache_details,
         optional: true
-    > {
-        host <type: string>
-        port <type: int> ( range(6000, 6200); )
-    }
+    > ( get("port").range(6000, 6200); ) 
+    
 
     logging.dns_servers <
         type: list<string>,
         optional: true
     > ( len().gt(1); )
+}
+
+objects {
+    cache_details {
+        host <string>
+        port <int>
+    }
 }
