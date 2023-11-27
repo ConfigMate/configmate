@@ -41,13 +41,7 @@ func TestParseSimple(t *testing.T) {
 					Start: parsers.CharLocation{Line: 3, Column: 11},
 					End:   parsers.CharLocation{Line: 3, Column: 17},
 				},
-				Optional:         false,
-				OptionalLocation: parsers.TokenLocation{},
-				Default:          "",
-				DefaultLocation:  parsers.TokenLocation{},
-				Notes:            "",
-				NotesLocation:    parsers.TokenLocation{},
-				Checks:           []CheckWithLocation{},
+				Checks: []CheckWithLocation{},
 			},
 			{
 				Field: &parsers.NodeKey{Segments: []string{"server", "host"}},
@@ -60,9 +54,7 @@ func TestParseSimple(t *testing.T) {
 					Start: parsers.CharLocation{Line: 5, Column: 18},
 					End:   parsers.CharLocation{Line: 5, Column: 24},
 				},
-				Optional:         false,
-				OptionalLocation: parsers.TokenLocation{},
-				Default:          "localhost",
+				Default: "localhost",
 				DefaultLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 6, Column: 21},
 					End:   parsers.CharLocation{Line: 6, Column: 32},
@@ -93,9 +85,7 @@ func TestParseSimple(t *testing.T) {
 					Start: parsers.CharLocation{Line: 11, Column: 18},
 					End:   parsers.CharLocation{Line: 11, Column: 21},
 				},
-				Optional:         false,
-				OptionalLocation: parsers.TokenLocation{},
-				Default:          "80",
+				Default: "80",
 				DefaultLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 12, Column: 21},
 					End:   parsers.CharLocation{Line: 12, Column: 23},
@@ -126,9 +116,7 @@ func TestParseSimple(t *testing.T) {
 					Start: parsers.CharLocation{Line: 20, Column: 18},
 					End:   parsers.CharLocation{Line: 20, Column: 22},
 				},
-				Optional:         false,
-				OptionalLocation: parsers.TokenLocation{},
-				Default:          "false",
+				Default: "false",
 				DefaultLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 21, Column: 21},
 					End:   parsers.CharLocation{Line: 21, Column: 26},
@@ -164,9 +152,7 @@ func TestParseSimple(t *testing.T) {
 					Start: parsers.CharLocation{Line: 27, Column: 22},
 					End:   parsers.CharLocation{Line: 27, Column: 26},
 				},
-				Default:         "",
-				DefaultLocation: parsers.TokenLocation{},
-				Notes:           "This is a list of DNS servers.",
+				Notes: "This is a list of DNS servers.",
 				NotesLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 28, Column: 19},
 					End:   parsers.CharLocation{Line: 28, Column: 51},
@@ -177,6 +163,71 @@ func TestParseSimple(t *testing.T) {
 						Location: parsers.TokenLocation{
 							Start: parsers.CharLocation{Line: 29, Column: 12},
 							End:   parsers.CharLocation{Line: 29, Column: 24},
+						},
+					},
+				},
+			},
+			{
+				Field: &parsers.NodeKey{Segments: []string{"server", "apis"}},
+				FieldLocation: parsers.TokenLocation{
+					Start: parsers.CharLocation{Line: 31, Column: 8},
+					End:   parsers.CharLocation{Line: 31, Column: 12},
+				},
+				Type: "list:api_info",
+				TypeLocation: parsers.TokenLocation{
+					Start: parsers.CharLocation{Line: 31, Column: 13},
+					End:   parsers.CharLocation{Line: 31, Column: 27},
+				},
+				Checks: []CheckWithLocation{},
+			},
+		},
+		Objects: []ObjectDef{
+			{
+				Name: "api_info",
+				NameLocation: parsers.TokenLocation{
+					Start: parsers.CharLocation{Line: 36, Column: 4},
+					End:   parsers.CharLocation{Line: 36, Column: 12},
+				},
+				Properties: []ObjectPropertyDef{
+					{
+						Name: "endpoint",
+						NameLocation: parsers.TokenLocation{
+							Start: parsers.CharLocation{Line: 37, Column: 8},
+							End:   parsers.CharLocation{Line: 37, Column: 16},
+						},
+						Type: "string",
+						TypeLocation: parsers.TokenLocation{
+							Start: parsers.CharLocation{Line: 37, Column: 17},
+							End:   parsers.CharLocation{Line: 37, Column: 23},
+						},
+					},
+					{
+						Name: "timeout",
+						NameLocation: parsers.TokenLocation{
+							Start: parsers.CharLocation{Line: 38, Column: 8},
+							End:   parsers.CharLocation{Line: 38, Column: 15},
+						},
+						Type: "int",
+						TypeLocation: parsers.TokenLocation{
+							Start: parsers.CharLocation{Line: 38, Column: 16},
+							End:   parsers.CharLocation{Line: 38, Column: 19},
+						},
+						Optional: true,
+						OptionalLocation: parsers.TokenLocation{
+							Start: parsers.CharLocation{Line: 38, Column: 21},
+							End:   parsers.CharLocation{Line: 38, Column: 29},
+						},
+					},
+					{
+						Name: "method",
+						NameLocation: parsers.TokenLocation{
+							Start: parsers.CharLocation{Line: 39, Column: 8},
+							End:   parsers.CharLocation{Line: 39, Column: 14},
+						},
+						Type: "string",
+						TypeLocation: parsers.TokenLocation{
+							Start: parsers.CharLocation{Line: 39, Column: 15},
+							End:   parsers.CharLocation{Line: 39, Column: 21},
 						},
 					},
 				},

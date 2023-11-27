@@ -7,6 +7,7 @@ type Specification struct {
 	FileFormat string            `json:"file_format"` // Format of the file
 	Imports    map[string]string `json:"imports"`     // Imported rulebooks with their aliases
 	Fields     []FieldSpec       `json:"fields"`      // Node that holds the specification of the file
+	Objects    []ObjectDef       `json:"objects"`     // List of object definitions
 
 	FileLocation         parsers.TokenLocation            `json:"file_location"`          // Location of the file specification
 	FileFormatLocation   parsers.TokenLocation            `json:"file_format_location"`   // Location of the file format
@@ -32,4 +33,21 @@ type FieldSpec struct {
 type CheckWithLocation struct {
 	Check    string                `json:"check"`    // Name of the check
 	Location parsers.TokenLocation `json:"location"` // Location of the check
+}
+
+type ObjectDef struct {
+	Name       string              `json:"name"`       // Name of the object
+	Properties []ObjectPropertyDef `json:"properties"` // List of properties of the object
+
+	NameLocation parsers.TokenLocation `json:"name_location"` // Location of the name
+}
+
+type ObjectPropertyDef struct {
+	Name     string `json:"name"`     // Name of the property
+	Type     string `json:"type"`     // Type of the property
+	Optional bool   `json:"optional"` // Whether the property is optional
+
+	NameLocation     parsers.TokenLocation `json:"name_location"`     // Location of the name
+	TypeLocation     parsers.TokenLocation `json:"type_location"`     // Location of the type
+	OptionalLocation parsers.TokenLocation `json:"optional_location"` // Location of the optional field
 }

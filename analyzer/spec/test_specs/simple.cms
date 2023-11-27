@@ -28,5 +28,15 @@ spec {
             optional: true,
             notes: "This is a list of DNS servers."
         > ( len().gte(3); )
+
+        apis<list<api_info>>
+    }
+}
+
+objects {
+    api_info {
+        endpoint<string>
+        timeout<int> optional
+        method<string>
     }
 }

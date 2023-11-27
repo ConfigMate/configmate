@@ -8,7 +8,7 @@ cmsl: specification EOF;
 
 // A CMSL specification contains a file declaration, a list of imports,
 // a specification body, and an optional list of custom object types.
-specification: fileDeclaration importStatement? specificationBody;
+specification: fileDeclaration importStatement? specificationBody objectDefinitions?;
 
 // A file declaration contains the path and format of the file.
 fileDeclaration: FILE_DCLR_KW COLON SHORT_STRING IDENTIFIER;
@@ -21,6 +21,9 @@ importItem: IDENTIFIER COLON SHORT_STRING;
 
 // A specification body contains a list of declarations.
 specificationBody: SPEC_ROOT_KW LBRACE specificationItem* RBRACE;
+
+// A collection of custom object types.
+objectDefinitions: OBJ_DEF_KW LBRACE objectDefinition* RBRACE;
 
 // A specification item starts with the field name, followed by the
 // metadata inside angled brackets, optionally followed by a list of semicolon separated
@@ -48,6 +51,16 @@ typeExpr
     | LIST_TYPE_KW LANGLE typeExpr RANGLE
     ;
 
+// A definition of a custom object type.
+objectDefinition
+    : IDENTIFIER LBRACE objectPropertyDefinition* RBRACE
+    ;
+
+// A definition of a property of a custom object type.
+objectPropertyDefinition
+    : simpleName shortMetadataExpression OPTIONAL_METAD_KW?
+    ;
+
 // A primitive is a string, an integer, a float, or a boolean.
 primitive
     : SHORT_STRING # string
@@ -72,6 +85,7 @@ stringExpr
 FILE_DCLR_KW : 'file' ;     // File declaration keyword
 IMPORT_KW : 'import' ;     // Import keyword
 SPEC_ROOT_KW : 'spec' ;     // Specification keyword
+OBJ_DEF_KW : 'objects' ;     // Object definition keyword
 TYPE_METAD_KW : 'type' ;         // Type keyword
 OPTIONAL_METAD_KW : 'optional' ; // Optional keyword
 DEFAULT_METAD_KW : 'default' ;   // Default keyword

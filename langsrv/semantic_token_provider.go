@@ -132,6 +132,53 @@ func (s *semanticTokenProviderImpl) EnterSpecificationBody(ctx *parser_cmsl.Spec
 	})
 }
 
+// EnterObjectDefinitions is called when production objectDefinitions is entered.
+func (s *semanticTokenProviderImpl) EnterObjectDefinitions(ctx *parser_cmsl.ObjectDefinitionsContext) {
+	// Add the object keyword token
+	objectKeyword := ctx.OBJ_DEF_KW()
+	s.tokens = append(s.tokens, ParsedToken{
+		Line:      objectKeyword.GetSymbol().GetLine() - 1,
+		Column:    objectKeyword.GetSymbol().GetColumn(),
+		Length:    len(objectKeyword.GetText()),
+		TokenType: STTKeyword,
+	})
+}
+
+// EnterObjectDefinition is called when production objectDefinition is entered.
+func (s *semanticTokenProviderImpl) EnterObjectDefinition(ctx *parser_cmsl.ObjectDefinitionContext) {
+	// Add the object type name
+	objectTypeName := ctx.IDENTIFIER()
+	s.tokens = append(s.tokens, ParsedToken{
+		Line:      objectTypeName.GetSymbol().GetLine() - 1,
+		Column:    objectTypeName.GetSymbol().GetColumn(),
+		Length:    len(objectTypeName.GetText()),
+		TokenType: STTType,
+	})
+}
+
+// ObjectPropertyDefinition is called when production objectPropertyDefinition is entered.
+func (s *semanticTokenProviderImpl) EnterObjectPropertyDefinition(ctx *parser_cmsl.ObjectPropertyDefinitionContext) {
+	// Add the object property type name
+	objectPropertyTypeName := ctx.SimpleName()
+	s.tokens = append(s.tokens, ParsedToken{
+		Line:      objectPropertyTypeName.GetStart().GetLine() - 1,
+		Column:    objectPropertyTypeName.GetStart().GetColumn(),
+		Length:    len(objectPropertyTypeName.GetText()),
+		TokenType: STTVariable,
+	})
+
+	// Add the optional property token if present
+	if ctx.OPTIONAL_METAD_KW() != nil {
+		optionalKeyword := ctx.OPTIONAL_METAD_KW()
+		s.tokens = append(s.tokens, ParsedToken{
+			Line:      optionalKeyword.GetSymbol().GetLine() - 1,
+			Column:    optionalKeyword.GetSymbol().GetColumn(),
+			Length:    len(optionalKeyword.GetText()),
+			TokenType: STTKeyword,
+		})
+	}
+}
+
 // EnterFieldName is called when production fieldName is entered.
 func (s *semanticTokenProviderImpl) EnterFieldName(ctx *parser_cmsl.FieldNameContext) {
 	// Add the field name token

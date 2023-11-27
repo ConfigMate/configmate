@@ -400,6 +400,78 @@ func (p *specParserImpl) ExitSpecificationItem(ctx *parser_cmsl.SpecificationIte
 	p.itemFieldStack.Pop()
 }
 
+// EnterObjectDefinition is called when production objectDefinition is entered.
+func (p *specParserImpl) EnterObjectDefinition(ctx *parser_cmsl.ObjectDefinitionContext) {
+	// Create object definition structure
+	objectDefinition := ObjectDef{}
+
+	// Get object type name and locations
+	objectDefinition.Name = ctx.IDENTIFIER().GetText()
+	objectDefinition.NameLocation = parsers.TokenLocation{
+		Start: parsers.CharLocation{
+			Line:   ctx.IDENTIFIER().GetSymbol().GetLine() - 1,
+			Column: ctx.IDENTIFIER().GetSymbol().GetColumn(),
+		},
+		End: parsers.CharLocation{
+			Line:   ctx.IDENTIFIER().GetSymbol().GetLine() - 1,
+			Column: ctx.IDENTIFIER().GetSymbol().GetColumn() + len(ctx.IDENTIFIER().GetText()),
+		},
+	}
+
+	// Add object properties
+	for _, propertyDef := range ctx.AllObjectPropertyDefinition() {
+		// Create object property definition structure
+		objectPropertyDefinition := ObjectPropertyDef{}
+
+		// Get property name
+		objectPropertyDefinition.Name = removeSingleQuotesInKeys(propertyDef.SimpleName().GetText())
+		objectPropertyDefinition.NameLocation = parsers.TokenLocation{
+			Start: parsers.CharLocation{
+				Line:   propertyDef.SimpleName().GetStart().GetLine() - 1,
+				Column: propertyDef.SimpleName().GetStart().GetColumn(),
+			},
+			End: parsers.CharLocation{
+				Line:   propertyDef.SimpleName().GetStop().GetLine() - 1,
+				Column: propertyDef.SimpleName().GetStop().GetColumn() + len(propertyDef.SimpleName().GetStop().GetText()),
+			},
+		}
+
+		// Get property type
+		objectPropertyDefinition.Type = condenseListExpressions(propertyDef.ShortMetadataExpression().TypeExpr().GetText())
+		objectPropertyDefinition.TypeLocation = parsers.TokenLocation{
+			Start: parsers.CharLocation{
+				Line:   propertyDef.ShortMetadataExpression().TypeExpr().GetStart().GetLine() - 1,
+				Column: propertyDef.ShortMetadataExpression().TypeExpr().GetStart().GetColumn(),
+			},
+			End: parsers.CharLocation{
+				Line:   propertyDef.ShortMetadataExpression().TypeExpr().GetStop().GetLine() - 1,
+				Column: propertyDef.ShortMetadataExpression().TypeExpr().GetStop().GetColumn() + len(propertyDef.ShortMetadataExpression().TypeExpr().GetStop().GetText()),
+			},
+		}
+
+		// Get property optional
+		if propertyDef.OPTIONAL_METAD_KW() != nil {
+			objectPropertyDefinition.Optional = true
+			objectPropertyDefinition.OptionalLocation = parsers.TokenLocation{
+				Start: parsers.CharLocation{
+					Line:   propertyDef.OPTIONAL_METAD_KW().GetSymbol().GetLine() - 1,
+					Column: propertyDef.OPTIONAL_METAD_KW().GetSymbol().GetColumn(),
+				},
+				End: parsers.CharLocation{
+					Line:   propertyDef.OPTIONAL_METAD_KW().GetSymbol().GetLine() - 1,
+					Column: propertyDef.OPTIONAL_METAD_KW().GetSymbol().GetColumn() + len(propertyDef.OPTIONAL_METAD_KW().GetSymbol().GetText()),
+				},
+			}
+		}
+
+		// Add property to object definition
+		objectDefinition.Properties = append(objectDefinition.Properties, objectPropertyDefinition)
+	}
+
+	// Add object definition to spec
+	p.spec.Objects = append(p.spec.Objects, objectDefinition)
+}
+
 func parseFieldName(ctx parser_cmsl.IFieldNameContext) *parsers.NodeKey {
 	if ctx.SimpleName() != nil {
 		return &parsers.NodeKey{Segments: []string{removeSingleQuotesInKeys(ctx.SimpleName().GetText())}}
