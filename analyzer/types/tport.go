@@ -41,9 +41,9 @@ func (t tPort) Methods() []string {
 
 func (t tPort) MethodDescription(method string) string {
 	tPortMethodsDescriptions := map[string]string{
-		"open":  "port.open() : Checks that the port is open",
-		"live":  "port.live() : Checks that the port is live",
-		"toInt": "port.toInt() : Converts the value to an int",
+		"open":  "port.open() bool : Checks that the port is open",
+		"live":  "port.live() bool : Checks that the port is live",
+		"toInt": "port.toInt() int : Converts the value to an int",
 	}
 
 	return tPortMethodsDescriptions[method]

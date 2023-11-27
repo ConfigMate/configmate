@@ -36,6 +36,7 @@ func init() {
 			"host":      hostFactory,
 			"port":      portFactory,
 			"host_port": hostPortFactory,
+			"file":      fileFactory,
 		},
 		customObjTypes: make(map[string]spec.ObjectDef),
 	}

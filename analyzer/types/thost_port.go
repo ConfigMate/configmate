@@ -44,10 +44,10 @@ func (t tHostPort) Methods() []string {
 
 func (t tHostPort) MethodDescription(method string) string {
 	tHostPortMethodsDescriptions := map[string]string{
-		"live":     "host_port.live() : Checks that the host:port is live",
-		"getHost":  "host_port.getHost() : Gets the host",
-		"getPort":  "host_port.getPort() : Gets the port",
-		"toString": "host_port.toString() : Converts the value to a string",
+		"live":     "host_port.live() bool : Checks that the host:port is live",
+		"getHost":  "host_port.getHost() host : Gets the host",
+		"getPort":  "host_port.getPort() port : Gets the port",
+		"toString": "host_port.toString() string : Converts the value to a string",
 	}
 
 	return tHostPortMethodsDescriptions[method]

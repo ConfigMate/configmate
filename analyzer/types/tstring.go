@@ -34,8 +34,8 @@ func (t tString) Methods() []string {
 
 func (t tString) MethodDescription(method string) string {
 	tStringMethodsDescriptions := map[string]string{
-		"eq":    "string.eq(s string) : Checks that the value is equal to s",
-		"regex": "string.regex(pattern string) : Checks that the value matches the pattern",
+		"eq":    "string.eq(s string) bool : Checks that the value is equal to s",
+		"regex": "string.regex(pattern string) bool : Checks that the value matches the pattern",
 	}
 
 	return tStringMethodsDescriptions[method]

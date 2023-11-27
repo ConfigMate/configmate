@@ -46,8 +46,8 @@ func (t tList) Methods() []string {
 
 func (t tList) MethodDescription(method string) string {
 	tListMethodsDescriptions := map[string]string{
-		"at":  "list.at(index int) - returns the element at the given index",
-		"len": "list.len() - returns the length of the list",
+		"at":  "list.at(index int) elementtype - returns the element at the given index",
+		"len": "list.len() int - returns the length of the list",
 	}
 
 	return tListMethodsDescriptions[method]

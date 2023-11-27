@@ -42,9 +42,9 @@ func (t tHost) Methods() []string {
 
 func (t tHost) MethodDescription(method string) string {
 	tHostMethodsDescriptions := map[string]string{
-		"reachable": "host.reachable() : Checks that the host is reachable",
-		"addPort":   "host.addPort(p port) : Adds a port to the host to form a host_port type",
-		"toString":  "host.toString() : Converts the value to a string",
+		"reachable": "host.reachable() bool : Checks that the host is reachable",
+		"addPort":   "host.addPort(p port) host_port : Adds a port to the host to form a host_port type",
+		"toString":  "host.toString() string : Converts the value to a string",
 	}
 
 	return tHostMethodsDescriptions[method]
