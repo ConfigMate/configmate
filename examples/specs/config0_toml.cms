@@ -24,8 +24,7 @@ spec {
         type: cache_details,
         optional: true
     > ( 
-        get("host").reachable();
-        get("port").range(6000, 6200); 
+        get("host").addPort(get("port")).live();
     ) 
     
 
@@ -43,6 +42,6 @@ spec {
 objects {
     cache_details {
         host <host>
-        port <int>
+        port <port>
     }
 }

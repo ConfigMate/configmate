@@ -65,7 +65,33 @@ func (t tHost) GetMethod(method string) Method {
 
 			return &tBool{value: true}, nil
 		},
-		// TODO: addPort
+		"addPort": func(args []IType) (IType, error) {
+			// Check that the correct number of arguments were passed
+			if len(args) != 1 {
+				return nil, fmt.Errorf("host.addPort expects 1 argument")
+			}
+
+			// Cast argument to port type
+			var port IType
+			var ok bool
+			port, ok = args[0].(*tPort)
+			if !ok {
+				// Cast argument to int type
+				i, ok := args[0].(*tInt)
+				if !ok {
+					return nil, fmt.Errorf("host.addPort expects a port or int argument")
+				}
+
+				// Make port from the int
+				var err error
+				port, err = portFactory(i.value)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			return &tHostPort{host: t.value, port: port.(*tPort).value}, nil
+		},
 		"toString": func(args []IType) (IType, error) {
 			// Check that the correct number of arguments were passed
 			if len(args) != 0 {

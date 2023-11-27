@@ -28,12 +28,14 @@ type tFactoryMethod func(value interface{}) (IType, error)
 func init() {
 	tf = typeFactory{
 		factories: map[string]tFactoryMethod{
-			"bool":   boolFactory,
-			"int":    intFactory,
-			"float":  floatFactory,
-			"string": stringFactory,
-			"object": objectFactory,
-			"host":   hostFactory,
+			"bool":      boolFactory,
+			"int":       intFactory,
+			"float":     floatFactory,
+			"string":    stringFactory,
+			"object":    objectFactory,
+			"host":      hostFactory,
+			"port":      portFactory,
+			"host_port": hostPortFactory,
 		},
 		customObjTypes: make(map[string]spec.ObjectDef),
 	}
