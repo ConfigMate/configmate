@@ -1,4 +1,4 @@
-file: "./examples/configurations/config0.toml" toml
+config: "./examples/configurations/config0.toml" toml
 
 spec {
     server <type: object> {

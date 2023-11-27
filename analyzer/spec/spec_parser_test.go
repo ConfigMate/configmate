@@ -18,13 +18,13 @@ func TestParseSimple(t *testing.T) {
 	expectedSpec := &Specification{
 		File: "./examples/configurations/config0.json",
 		FileLocation: parsers.TokenLocation{
-			Start: parsers.CharLocation{Line: 0, Column: 6},
-			End:   parsers.CharLocation{Line: 0, Column: 46},
+			Start: parsers.CharLocation{Line: 0, Column: 8},
+			End:   parsers.CharLocation{Line: 0, Column: 48},
 		},
 		FileFormat: "json",
 		FileFormatLocation: parsers.TokenLocation{
-			Start: parsers.CharLocation{Line: 0, Column: 47},
-			End:   parsers.CharLocation{Line: 0, Column: 51},
+			Start: parsers.CharLocation{Line: 0, Column: 49},
+			End:   parsers.CharLocation{Line: 0, Column: 53},
 		},
 		Imports:              map[string]string{},
 		ImportsAliasLocation: map[string]parsers.TokenLocation{},
@@ -255,13 +255,13 @@ func TestParseWithImports(t *testing.T) {
 	expectedSpec := &Specification{
 		File: "./some/file.json",
 		FileLocation: parsers.TokenLocation{
-			Start: parsers.CharLocation{Line: 0, Column: 6},
-			End:   parsers.CharLocation{Line: 0, Column: 24},
+			Start: parsers.CharLocation{Line: 0, Column: 8},
+			End:   parsers.CharLocation{Line: 0, Column: 26},
 		},
 		FileFormat: "json",
 		FileFormatLocation: parsers.TokenLocation{
-			Start: parsers.CharLocation{Line: 0, Column: 25},
-			End:   parsers.CharLocation{Line: 0, Column: 29},
+			Start: parsers.CharLocation{Line: 0, Column: 27},
+			End:   parsers.CharLocation{Line: 0, Column: 31},
 		},
 		Imports: map[string]string{
 			"someSpec":      "./specs/someSpec.cms",
@@ -365,8 +365,8 @@ func TestParserLexerSyntaxErrors(t *testing.T) {
 		{
 			ErrorMessage: "mismatched input '\"./examples/configurations/config0.json' json\\n\\nspec {\\n    server <type: object> {\\n        host <\\n            type: string,\\n            default: \"' expecting SHORT_STRING",
 			Location: parsers.TokenLocation{
-				Start: parsers.CharLocation{Line: 0, Column: 6},
-				End:   parsers.CharLocation{Line: 0, Column: 7},
+				Start: parsers.CharLocation{Line: 0, Column: 8},
+				End:   parsers.CharLocation{Line: 0, Column: 9},
 			},
 		},
 		{
@@ -398,8 +398,8 @@ func TestParserSyntaxErrors(t *testing.T) {
 		{
 			ErrorMessage: "extraneous input ':' expecting IDENTIFIER",
 			Location: parsers.TokenLocation{
-				Start: parsers.CharLocation{Line: 0, Column: 47},
-				End:   parsers.CharLocation{Line: 0, Column: 48},
+				Start: parsers.CharLocation{Line: 0, Column: 49},
+				End:   parsers.CharLocation{Line: 0, Column: 50},
 			},
 		},
 		{

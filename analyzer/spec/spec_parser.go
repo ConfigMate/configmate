@@ -106,7 +106,7 @@ func (p *specParserImpl) Parse(spec []byte) (*Specification, []SpecParserError) 
 }
 
 // EnterFileDeclaration is called when production fileDeclaration is entered.
-func (p *specParserImpl) EnterFileDeclaration(ctx *parser_cmsl.FileDeclarationContext) {
+func (p *specParserImpl) EnterConfigDeclaration(ctx *parser_cmsl.ConfigDeclarationContext) {
 	// Set values of file and fileLocation in spec
 	p.spec.File = removeStrQuotesAndCleanSpaces(ctx.SHORT_STRING().GetText())
 	p.spec.FileLocation = parsers.TokenLocation{

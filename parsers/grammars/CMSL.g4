@@ -8,10 +8,10 @@ cmsl: specification EOF;
 
 // A CMSL specification contains a file declaration, a list of imports,
 // a specification body, and an optional list of custom object types.
-specification: fileDeclaration importStatement? specificationBody objectDefinitions?;
+specification: configDeclaration importStatement? specificationBody objectDefinitions?;
 
 // A file declaration contains the path and format of the file.
-fileDeclaration: FILE_DCLR_KW COLON SHORT_STRING IDENTIFIER;
+configDeclaration: CONFIG_DCLR_KW COLON SHORT_STRING IDENTIFIER;
 
 // An import contains the name of the file to import.
 importStatement: IMPORT_KW LPAREN importItem (COMMA importItem)* RPAREN;
@@ -82,7 +82,7 @@ stringExpr
     ;
 
 // Keywords
-FILE_DCLR_KW : 'file' ;     // File declaration keyword
+CONFIG_DCLR_KW : 'config' ;     // Config declaration keyword
 IMPORT_KW : 'import' ;     // Import keyword
 SPEC_ROOT_KW : 'spec' ;     // Specification keyword
 OBJ_DEF_KW : 'objects' ;     // Object definition keyword

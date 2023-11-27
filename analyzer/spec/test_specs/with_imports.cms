@@ -1,4 +1,4 @@
-file: "./some/file.json" json
+config: "./some/file.json" json
 
 import(
     someSpec: "./specs/someSpec.cms",
