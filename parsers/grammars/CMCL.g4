@@ -84,13 +84,14 @@ NOT_SYM: '!';
 
 IDENTIFIER : (CHARACTER)+ ;    // Typical definition of an identifier
 
+WS: [ \t\r\n]+ -> skip;
+
 // Auxiliary lexer rules
 fragment LETTER : [a-zA-Z] ;
 fragment DIGIT : [0-9] ;
 fragment CHARACTER : [a-zA-Z0-9_-] ;
 fragment RN : '\r'? '\n';
 
-WS: [ \t\r\n]+ -> skip;
 
 
 

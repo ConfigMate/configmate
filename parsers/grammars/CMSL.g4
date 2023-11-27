@@ -92,7 +92,7 @@ DEFAULT_METAD_KW : 'default' ;   // Default keyword
 NOTES_METAD_KW : 'notes' ;       // Notes keyword
 LIST_TYPE_KW : 'list' ;         // List keyword
 
-// Tokens
+// Common Tokens
 LPAREN : '(' ;            // Left parenthesis
 RPAREN : ')' ;            // Right parenthesis
 LBRACE : '{' ;            // Left curly brace
@@ -111,6 +111,15 @@ LONG_STRING: '"' LONG_STRING_ITEM*? '"';
 INT : DIGIT+ ;               // Integer numbers
 FLOAT : DIGIT+ '.' DIGIT+ ;  // Floating point numbers
 BOOL : 'true' | 'false' ;    // Boolean values
+
+// CMCL Tokens
+IF_SYM: 'if';
+ELSEIF_SYM: 'elseif';
+ELSE_SYM: 'else';
+FOREACH_SYM: 'foreach';
+AND_SYM: '&&';
+OR_SYM: '||';
+NOT_SYM: '!';
 
 IDENTIFIER : (CHARACTER)+ ;    // Typical definition of an identifier
 

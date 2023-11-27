@@ -13,7 +13,7 @@ password = "dbpassword"
 name = "dbname"
 
 [cache]
-host = "cache.example.com"
+host = "google.com"
 port = 6150
 
 [api]

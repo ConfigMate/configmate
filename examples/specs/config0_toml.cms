@@ -12,7 +12,7 @@ spec {
         }
     }
 
-    database <type: object> {
+    database <object> {
         host <type: string>
         port <type: int> ( range(5000, 6000); )
         name <type: string>
@@ -23,18 +23,26 @@ spec {
     cache <
         type: cache_details,
         optional: true
-    > ( get("port").range(6000, 6200); ) 
+    > ( 
+        get("host").reachable();
+        get("port").range(6000, 6200); 
+    ) 
     
 
     logging.dns_servers <
-        type: list<string>,
+        type: list<host>,
         optional: true
-    > ( len().gt(1); )
+    > ( 
+    len().gt(1);
+    foreach(s : this) {
+        s.reachable()
+    };
+    )
 }
 
 objects {
     cache_details {
-        host <string>
+        host <host>
         port <int>
     }
 }

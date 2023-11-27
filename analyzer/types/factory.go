@@ -33,6 +33,7 @@ func init() {
 			"float":  floatFactory,
 			"string": stringFactory,
 			"object": objectFactory,
+			"host":   hostFactory,
 		},
 		customObjTypes: make(map[string]spec.ObjectDef),
 	}
