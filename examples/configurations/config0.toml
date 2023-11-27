@@ -13,7 +13,8 @@ password = "dbpassword"
 name = "dbname"
 
 [cache]
-address = "google.com:443"
+host = "google.com"
+port = 443
 
 [api]
 endpoint = "/api/v1"

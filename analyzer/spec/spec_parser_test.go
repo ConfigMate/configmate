@@ -41,6 +41,11 @@ func TestParseSimple(t *testing.T) {
 					Start: parsers.CharLocation{Line: 3, Column: 11},
 					End:   parsers.CharLocation{Line: 3, Column: 17},
 				},
+				Optional: true,
+				OptionalLocation: parsers.TokenLocation{
+					Start: parsers.CharLocation{Line: 3, Column: 19},
+					End:   parsers.CharLocation{Line: 3, Column: 27},
+				},
 				Checks: []CheckWithLocation{},
 			},
 			{
@@ -142,7 +147,7 @@ func TestParseSimple(t *testing.T) {
 					Start: parsers.CharLocation{Line: 25, Column: 8},
 					End:   parsers.CharLocation{Line: 25, Column: 22},
 				},
-				Type: "list:string",
+				Type: "list<string>",
 				TypeLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 26, Column: 18},
 					End:   parsers.CharLocation{Line: 26, Column: 30},
@@ -173,7 +178,7 @@ func TestParseSimple(t *testing.T) {
 					Start: parsers.CharLocation{Line: 31, Column: 8},
 					End:   parsers.CharLocation{Line: 31, Column: 12},
 				},
-				Type: "list:api_info",
+				Type: "list<api_info>",
 				TypeLocation: parsers.TokenLocation{
 					Start: parsers.CharLocation{Line: 31, Column: 13},
 					End:   parsers.CharLocation{Line: 31, Column: 27},

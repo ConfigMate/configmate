@@ -48,7 +48,7 @@ func (t tFile) MethodDescription(method string) string {
 		"isDir":        "file.isDir() bool : Checks that the file is a directory",
 		"parentExists": "file.parentExists() bool : Checks that the parent directory exists",
 		"size":         "file.size() int : Gets the size of the file in bytes",
-		"perms":        "file.perms() string : Gets the permissions of the file as a string (\"rwxr-xr-x\")",
+		"perms":        "file.perms() string : Gets the permissions of the file as a string (e.g. \"0644\")",
 		"user":         "file.user() string : Gets the user that owns the file",
 		"group":        "file.group() string : Gets the group that owns the file",
 		"toString":     "file.toString() string : Converts the value to a string",
@@ -71,7 +71,11 @@ func (t tFile) GetMethod(method string) Method {
 				return nil, err
 			}
 
-			return &tBool{value: exists}, nil
+			if !exists {
+				return &tBool{value: false}, fmt.Errorf("file does not exist")
+			}
+
+			return &tBool{value: true}, nil
 		},
 		"isDir": func(args []IType) (IType, error) {
 			// Check that the correct number of arguments were passed
@@ -93,7 +97,11 @@ func (t tFile) GetMethod(method string) Method {
 				return nil, err
 			}
 
-			return &tBool{value: isDir}, nil
+			if !isDir {
+				return &tBool{value: false}, fmt.Errorf("file is not a directory")
+			}
+
+			return &tBool{value: true}, nil
 		},
 		"parentExists": func(args []IType) (IType, error) {
 			// Check that the correct number of arguments were passed
@@ -115,7 +123,11 @@ func (t tFile) GetMethod(method string) Method {
 				return nil, err
 			}
 
-			return &tBool{value: parentExists}, nil
+			if !parentExists {
+				return &tBool{value: false}, fmt.Errorf("parent directory does not exist")
+			}
+
+			return &tBool{value: true}, nil
 		},
 		"size": func(args []IType) (IType, error) {
 			// Check that the correct number of arguments were passed
@@ -159,7 +171,7 @@ func (t tFile) GetMethod(method string) Method {
 				return nil, err
 			}
 
-			return &tString{value: perms.String()}, nil
+			return &tString{value: fmt.Sprintf("%04o", perms&os.ModePerm)}, nil
 		},
 		"user": func(args []IType) (IType, error) {
 			// Check that the correct number of arguments were passed

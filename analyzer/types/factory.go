@@ -43,8 +43,8 @@ func init() {
 }
 
 func (tf *typeFactory) makeType(typename string, value interface{}) (IType, error) {
-	if strings.HasPrefix(typename, "list:") {
-		return listFactory(typename[5:], value.([]*parsers.Node))
+	if strings.HasPrefix(typename, "list<") && strings.HasSuffix(typename, ">") {
+		return listFactory(typename[5:len(typename)-1], value)
 	}
 
 	if customDef, ok := tf.customObjTypes[typename]; ok {

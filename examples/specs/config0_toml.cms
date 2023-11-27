@@ -1,41 +1,35 @@
 config: "./examples/configurations/config0.toml" toml
 
 spec {
-    server <type: object> {
-        host <type: string>
-        port <type: int>
-        ssl_enabled <type: bool> ( eq(false); )
+    server <object> {
+        host <string>
+        port <int>
+        ssl_enabled <bool> ( eq(false); )
 
-        ssl_paths <type: object> {
-            key <type: string>
-            cert <type: string>
+        ssl_paths <object> {
+            key <file>
+            cert <file>
         }
     }
 
     database <object> {
-        host <type: string>
-        port <type: int> ( range(5000, 6000); )
-        name <type: string>
-        'user name' <type: string> ( eq("dbuser"); )
-        password <type: string>
+        host <string>
+        port <int> ( range(5000, 6000); )
+        name <string>
+        'user name' <string> ( eq("dbuser"); )
+        password <string>
     }
 
-    cache <
-        type: cache_details,
-        optional: true
-    > ( 
+    cache <cache_details> optional ( 
         get("host").addPort(get("port")).live();
     ) 
     
 
-    logging.dns_servers <
-        type: list<host>,
-        optional: true
-    > ( 
-    len().gt(1);
-    foreach(s : this) {
-        s.reachable()
-    };
+    logging.dns_servers <list<host>> optional ( 
+        len().gt(1);
+        foreach(s : this) {
+            s.reachable()
+        };
     )
 }
 

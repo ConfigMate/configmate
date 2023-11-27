@@ -11,13 +11,21 @@ type tList struct {
 	values   []IType
 }
 
-func listFactory(typename string, values []*parsers.Node) (IType, error) {
-	var err error
+func listFactory(typename string, value interface{}) (IType, error) {
+	// Check that the value is a list
+	listValues, ok := value.([]*parsers.Node)
+	if !ok {
+		return nil, fmt.Errorf("value is not a list")
+	}
+
+	// Create a new list
 	list := &tList{
 		listType: typename,
-		values:   make([]IType, len(values)),
+		values:   make([]IType, len(listValues)),
 	}
-	for i, value := range values {
+
+	for i, value := range listValues {
+		var err error
 		if list.values[i], err = MakeType(typename, value.Value); err != nil {
 			return nil, err
 		}

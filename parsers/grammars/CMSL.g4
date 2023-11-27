@@ -34,8 +34,8 @@ specificationItem: fieldName (longMetadataExpression | shortMetadataExpression) 
 // A long metadata expression is a list of metadata items inside angled brackets.
 longMetadataExpression : LANGLE metadataItem (COMMA metadataItem)* RANGLE ; 
 
-// A short metadata expression is a type expression inside angled brackets.
-shortMetadataExpression : LANGLE typeExpr RANGLE ;
+// A short metadata expression is a type expression inside angled brackets with an optional 'optional' keyword after it.
+shortMetadataExpression : LANGLE typeExpr RANGLE OPTIONAL_METAD_KW?;
 
 // A metadata item is a key-value pair of strings.
 metadataItem
@@ -58,7 +58,7 @@ objectDefinition
 
 // A definition of a property of a custom object type.
 objectPropertyDefinition
-    : simpleName shortMetadataExpression OPTIONAL_METAD_KW?
+    : simpleName shortMetadataExpression
     ;
 
 // A primitive is a string, an integer, a float, or a boolean.
