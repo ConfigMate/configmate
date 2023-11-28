@@ -35,3 +35,6 @@ lib/
 
 # Generater code by ANTLR parser generator
 .antlr/
+
+// VSCode settings
+.vscode/settings.json
