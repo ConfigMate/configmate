@@ -42,7 +42,7 @@ function
     : IDENTIFIER LPAREN argument (COMMA argument)* RPAREN
     | IDENTIFIER LPAREN RPAREN;
 
-argument: primitive | check;
+argument: primitive | expression;
 
 // A primitive is a string, an integer, a float, or a boolean.
 primitive
