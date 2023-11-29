@@ -24,9 +24,9 @@ atom
     | LPAREN expression RPAREN # parenExpr
     ;
 
-if: IF_SYM LPAREN check RPAREN LBRACE check RBRACE (elseif)* (else)?;
+if: IF_SYM LPAREN expression RPAREN LBRACE check RBRACE (elseif)* (else)?;
 
-elseif: ELSEIF_SYM LPAREN check RPAREN LBRACE check RBRACE;
+elseif: ELSEIF_SYM LPAREN expression RPAREN LBRACE check RBRACE;
 
 else: ELSE_SYM LBRACE check RBRACE;
 
