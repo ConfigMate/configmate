@@ -7,6 +7,10 @@ import (
 	"github.com/ConfigMate/configmate/parsers"
 )
 
+var tCustomObjectMethodsDescriptions map[string]string = map[string]string{
+	"get": "custom_object.get(field string) fieldtype : Gets the specified field",
+}
+
 // Special error to indicate that an optional field is missing
 var OptMissFieldError error
 
@@ -47,20 +51,6 @@ func (t tCustomObject) TypeName() string {
 
 func (t tCustomObject) Value() interface{} {
 	return t.Fields
-}
-
-func (t tCustomObject) Methods() []string {
-	return []string{
-		"get",
-	}
-}
-
-func (t tCustomObject) MethodDescription(method string) string {
-	tCustomObjectMethodsDescriptions := map[string]string{
-		"get": t.ObjectName + ".get(field string) fieldtype : Gets the specified field",
-	}
-
-	return tCustomObjectMethodsDescriptions[method]
 }
 
 func (t tCustomObject) GetMethod(method string) Method {

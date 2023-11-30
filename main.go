@@ -7,6 +7,7 @@ import (
 	"github.com/ConfigMate/configmate/analyzer"
 	"github.com/ConfigMate/configmate/analyzer/check"
 	"github.com/ConfigMate/configmate/analyzer/spec"
+	"github.com/ConfigMate/configmate/analyzer/types"
 	"github.com/ConfigMate/configmate/files"
 	"github.com/ConfigMate/configmate/parsers"
 	"github.com/ConfigMate/configmate/server"
@@ -55,9 +56,49 @@ func main() {
 				},
 			},
 			{
+				Name:      "types",
+				Usage:     "Print supported types.",
+				UsageText: "configm types",
+				Action: func(c *cli.Context) error {
+					fmt.Println("Supported Types:")
+					for _, t := range types.GetTypes() {
+						fmt.Printf("\t%s\n", t)
+					}
+
+					return nil
+				},
+			},
+			{
+				Name:      "methods",
+				Usage:     "Print supported methods.",
+				UsageText: "configm methods <type>",
+				Action: func(c *cli.Context) error {
+					// Check number of arguments
+					if c.NArg() != 1 {
+						return fmt.Errorf("invalid number of arguments")
+					}
+
+					// Get the type from the arguments
+					t := c.Args().Get(0)
+
+					// Get methods
+					methods := types.GetTypeInfo(t)
+					if methods == nil {
+						return fmt.Errorf("invalid type")
+					}
+
+					fmt.Printf("Supported Methods for %s:\n", t)
+					for m, desc := range methods {
+						fmt.Printf("\t%s: %s\n", m, desc)
+					}
+
+					return nil
+				},
+			},
+			{
 				Name:      "check",
-				Usage:     "Check configuration files for errors in content.",
-				UsageText: "configm check <path-to-rulebook>",
+				Usage:     "Check a configuration file specification.",
+				UsageText: "configm check <path-to-specification>",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{
 						Name:    "skipped",
@@ -141,6 +182,7 @@ func main() {
 				Name:      "serve",
 				Usage:     "Start a web server to check configuration files for errors in content.",
 				UsageText: "configm serve --port <port>",
+				Hidden:    true,
 				Flags: []cli.Flag{
 					&cli.IntFlag{
 						Name:    "port",

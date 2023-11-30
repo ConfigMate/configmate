@@ -7,6 +7,12 @@ import (
 	"time"
 )
 
+var tPortMethodsDescriptions map[string]string = map[string]string{
+	"open":  "port.open() bool : Checks that the port is open",
+	"live":  "port.live() bool : Checks that the port is live",
+	"toInt": "port.toInt() int : Converts the value to an int",
+}
+
 type tPort struct {
 	value int
 }
@@ -29,24 +35,6 @@ func (t tPort) TypeName() string {
 
 func (t tPort) Value() interface{} {
 	return t.value
-}
-
-func (t tPort) Methods() []string {
-	return []string{
-		"open",
-		"live",
-		"toInt",
-	}
-}
-
-func (t tPort) MethodDescription(method string) string {
-	tPortMethodsDescriptions := map[string]string{
-		"open":  "port.open() bool : Checks that the port is open",
-		"live":  "port.live() bool : Checks that the port is live",
-		"toInt": "port.toInt() int : Converts the value to an int",
-	}
-
-	return tPortMethodsDescriptions[method]
 }
 
 func (t tPort) GetMethod(method string) Method {

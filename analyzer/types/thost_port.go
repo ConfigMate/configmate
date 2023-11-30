@@ -7,6 +7,13 @@ import (
 	"time"
 )
 
+var tHostPortMethodsDescriptions map[string]string = map[string]string{
+	"live":     "host_port.live() bool : Checks that the host:port is live",
+	"getHost":  "host_port.getHost() host : Gets the host",
+	"getPort":  "host_port.getPort() port : Gets the port",
+	"toString": "host_port.toString() string : Converts the value to a string",
+}
+
 type tHostPort struct {
 	host string
 	port int
@@ -31,26 +38,6 @@ func (t tHostPort) TypeName() string {
 
 func (t tHostPort) Value() interface{} {
 	return t.host + ":" + strconv.Itoa(t.port)
-}
-
-func (t tHostPort) Methods() []string {
-	return []string{
-		"live",
-		"getHost",
-		"getPort",
-		"toString",
-	}
-}
-
-func (t tHostPort) MethodDescription(method string) string {
-	tHostPortMethodsDescriptions := map[string]string{
-		"live":     "host_port.live() bool : Checks that the host:port is live",
-		"getHost":  "host_port.getHost() host : Gets the host",
-		"getPort":  "host_port.getPort() port : Gets the port",
-		"toString": "host_port.toString() string : Converts the value to a string",
-	}
-
-	return tHostPortMethodsDescriptions[method]
 }
 
 func (t tHostPort) GetMethod(method string) Method {
