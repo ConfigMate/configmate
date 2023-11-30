@@ -6,6 +6,11 @@ import (
 	"github.com/ConfigMate/configmate/parsers"
 )
 
+var tListMethodsDescriptions map[string]string = map[string]string{
+	"at":  "list.at(index int) elementtype - returns the element at the given index",
+	"len": "list.len() int - returns the length of the list",
+}
+
 type tList struct {
 	listType string
 	values   []IType
@@ -40,22 +45,6 @@ func (t tList) TypeName() string {
 
 func (t tList) Value() interface{} {
 	return t.values
-}
-
-func (t tList) Methods() []string {
-	return []string{
-		"at",
-		"len",
-	}
-}
-
-func (t tList) MethodDescription(method string) string {
-	tListMethodsDescriptions := map[string]string{
-		"at":  "list.at(index int) elementtype - returns the element at the given index",
-		"len": "list.len() int - returns the length of the list",
-	}
-
-	return tListMethodsDescriptions[method]
 }
 
 func (t tList) GetMethod(method string) Method {

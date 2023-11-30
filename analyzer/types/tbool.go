@@ -5,6 +5,11 @@ import (
 	"strconv"
 )
 
+var tBoolMethodsDescriptions map[string]string = map[string]string{
+	"eq":       "bool.eq(arg bool) bool : Checks that the value is equal to the argument",
+	"toString": "bool.toString() string : Converts the value to a string",
+}
+
 type tBool struct {
 	value bool
 }
@@ -23,22 +28,6 @@ func (t tBool) TypeName() string {
 
 func (t tBool) Value() interface{} {
 	return t.value
-}
-
-func (t tBool) Methods() []string {
-	return []string{
-		"eq",
-		"toString",
-	}
-}
-
-func (t tBool) MethodDescription(method string) string {
-	tBoolMethodDescriptions := map[string]string{
-		"eq":       "bool.eq(arg bool) bool : Checks that the value is equal to the argument",
-		"toString": "bool.toString() string : Converts the value to a string",
-	}
-
-	return tBoolMethodDescriptions[method]
 }
 
 func (t tBool) GetMethod(method string) Method {

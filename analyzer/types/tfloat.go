@@ -4,6 +4,17 @@ import (
 	"fmt"
 )
 
+var tFloatMethodsDescriptions map[string]string = map[string]string{
+	"eq":       "float.eq(arg float) bool : Checks that the value is equal to the argument",
+	"gt":       "float.gt(arg float) bool : Checks that the value is greater than the argument",
+	"gte":      "float.gte(arg float) bool : Checks that the value is greater than or equal to the argument",
+	"lt":       "float.lt(arg float) bool : Checks that the value is less than the argument",
+	"lte":      "float.lte(arg float) bool : Checks that the value is less than or equal to the argument",
+	"range":    "float.range(min float, max float) bool : Checks that the value is within the range",
+	"toInt":    "float.toInt() int : Converts the value to an int",
+	"toString": "float.toString() string : Converts the value to a string",
+}
+
 type tFloat struct {
 	value float64
 }
@@ -22,34 +33,6 @@ func (t tFloat) TypeName() string {
 
 func (t tFloat) Value() interface{} {
 	return t.value
-}
-
-func (t tFloat) Methods() []string {
-	return []string{
-		"eq",
-		"gt",
-		"gte",
-		"lt",
-		"lte",
-		"range",
-		"toInt",
-		"toString",
-	}
-}
-
-func (t tFloat) MethodDescription(method string) string {
-	tFloatMethodDescriptions := map[string]string{
-		"eq":       "float.eq(arg float) bool : Checks that the value is equal to the argument",
-		"gt":       "float.gt(arg float) bool : Checks that the value is greater than the argument",
-		"gte":      "float.gte(arg float) bool : Checks that the value is greater than or equal to the argument",
-		"lt":       "float.lt(arg float) bool : Checks that the value is less than the argument",
-		"lte":      "float.lte(arg float) bool : Checks that the value is less than or equal to the argument",
-		"range":    "float.range(min float, max float) bool : Checks that the value is within the range",
-		"toInt":    "float.toInt() int : Converts the value to an int",
-		"toString": "float.toString() string : Converts the value to a string",
-	}
-
-	return tFloatMethodDescriptions[method]
 }
 
 func (t tFloat) GetMethod(method string) Method {

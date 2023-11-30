@@ -9,6 +9,17 @@ import (
 	"syscall"
 )
 
+var tFileMethodsDescriptions map[string]string = map[string]string{
+	"exists":       "file.exists() bool : Checks that the file exists",
+	"isDir":        "file.isDir() bool : Checks that the file is a directory",
+	"parentExists": "file.parentExists() bool : Checks that the parent directory exists",
+	"size":         "file.size() int : Gets the size of the file in bytes",
+	"perms":        "file.perms() string : Gets the permissions of the file as a string (e.g. \"0644\")",
+	"user":         "file.user() string : Gets the user that owns the file",
+	"group":        "file.group() string : Gets the group that owns the file",
+	"toString":     "file.toString() string : Converts the value to a string",
+}
+
 type tFile struct {
 	path string
 }
@@ -27,34 +38,6 @@ func (t tFile) TypeName() string {
 
 func (t tFile) Value() interface{} {
 	return t.path
-}
-
-func (t tFile) Methods() []string {
-	return []string{
-		"exists",
-		"isDir",
-		"parentExists",
-		"size",
-		"perms",
-		"user",
-		"group",
-		"toString",
-	}
-}
-
-func (t tFile) MethodDescription(method string) string {
-	tFileMethodsDescriptions := map[string]string{
-		"exists":       "file.exists() bool : Checks that the file exists",
-		"isDir":        "file.isDir() bool : Checks that the file is a directory",
-		"parentExists": "file.parentExists() bool : Checks that the parent directory exists",
-		"size":         "file.size() int : Gets the size of the file in bytes",
-		"perms":        "file.perms() string : Gets the permissions of the file as a string (e.g. \"0644\")",
-		"user":         "file.user() string : Gets the user that owns the file",
-		"group":        "file.group() string : Gets the group that owns the file",
-		"toString":     "file.toString() string : Converts the value to a string",
-	}
-
-	return tFileMethodsDescriptions[method]
 }
 
 func (t tFile) GetMethod(method string) Method {

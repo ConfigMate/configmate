@@ -14,7 +14,5 @@ type Method func(args []IType) (IType, error)
 type IType interface {
 	TypeName() string
 	Value() interface{}
-	Methods() []string
-	MethodDescription(string) string
 	GetMethod(string) Method
 }

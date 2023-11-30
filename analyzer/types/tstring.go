@@ -5,6 +5,11 @@ import (
 	"regexp"
 )
 
+var tStringMethodsDescriptions map[string]string = map[string]string{
+	"eq":    "string.eq(s string) bool : Checks that the value is equal to s",
+	"regex": "string.regex(pattern string) bool : Checks that the value matches the pattern",
+}
+
 type tString struct {
 	value string
 }
@@ -23,22 +28,6 @@ func (t tString) TypeName() string {
 
 func (t tString) Value() interface{} {
 	return t.value
-}
-
-func (t tString) Methods() []string {
-	return []string{
-		"eq",
-		"regex",
-	}
-}
-
-func (t tString) MethodDescription(method string) string {
-	tStringMethodsDescriptions := map[string]string{
-		"eq":    "string.eq(s string) bool : Checks that the value is equal to s",
-		"regex": "string.regex(pattern string) bool : Checks that the value matches the pattern",
-	}
-
-	return tStringMethodsDescriptions[method]
 }
 
 func (t tString) GetMethod(method string) Method {

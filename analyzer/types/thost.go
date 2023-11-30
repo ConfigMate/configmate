@@ -8,6 +8,12 @@ import (
 	probing "github.com/prometheus-community/pro-bing"
 )
 
+var tHostMethodsDescriptions map[string]string = map[string]string{
+	"reachable": "host.reachable() bool : Checks that the host is reachable",
+	"addPort":   "host.addPort(p port) host_port : Adds a port to the host to form a host_port type",
+	"toString":  "host.toString() string : Converts the value to a string",
+}
+
 type tHost struct {
 	value string
 }
@@ -30,24 +36,6 @@ func (t tHost) TypeName() string {
 
 func (t tHost) Value() interface{} {
 	return t.value
-}
-
-func (t tHost) Methods() []string {
-	return []string{
-		"reachable",
-		"addPort",
-		"toString",
-	}
-}
-
-func (t tHost) MethodDescription(method string) string {
-	tHostMethodsDescriptions := map[string]string{
-		"reachable": "host.reachable() bool : Checks that the host is reachable",
-		"addPort":   "host.addPort(p port) host_port : Adds a port to the host to form a host_port type",
-		"toString":  "host.toString() string : Converts the value to a string",
-	}
-
-	return tHostMethodsDescriptions[method]
 }
 
 func (t tHost) GetMethod(method string) Method {
