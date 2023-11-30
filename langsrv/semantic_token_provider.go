@@ -1,6 +1,8 @@
 package langsrv
 
 import (
+	"sort"
+
 	"github.com/ConfigMate/configmate/parsers/gen/parser_cmsl"
 	"github.com/antlr4-go/antlr/v4"
 )
@@ -43,8 +45,16 @@ func (p *semanticTokenProviderImpl) GetSemanticTokens(content []byte) ([]ParsedT
 	// Create lexer
 	input := antlr.NewInputStream(string(content))
 	lexer := parser_cmsl.NewCMSLLexer(input)
+
+	// Remove default error listener
+	lexer.RemoveErrorListeners()
+
 	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	parser := parser_cmsl.NewCMSLParser(stream)
+
+	// Remove default error listener
+	parser.RemoveErrorListeners()
+
 	tree := parser.Cmsl()
 
 	// Zero out the tokens
@@ -53,6 +63,17 @@ func (p *semanticTokenProviderImpl) GetSemanticTokens(content []byte) ([]ParsedT
 	// Walk the tree
 	walker := antlr.NewParseTreeWalker()
 	walker.Walk(p, tree)
+
+	// Reorder the tokens by line and column
+	sort.Slice(p.tokens, func(i, j int) bool {
+		// Same line, different column
+		if p.tokens[i].Line == p.tokens[j].Line {
+			return p.tokens[i].Column < p.tokens[j].Column
+		}
+
+		// Different line
+		return p.tokens[i].Line < p.tokens[j].Line
+	})
 
 	return p.tokens, nil
 }
